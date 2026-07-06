@@ -53,12 +53,14 @@ struct TodoExpandedView: View {
 
     private func row(_ todo: Todo) -> some View {
         HStack(spacing: 10) {
-            Button { store.complete(todo.id) } label: {
+            Button { withAnimation(NotchMotion.micro) { store.complete(todo.id) } } label: {
                 Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))
+                    .contentTransition(.symbolEffect(.replace))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel(todo.isDone ? "Mark incomplete" : "Complete task")
 
             Text(todo.title)
                 .font(.system(size: 13))

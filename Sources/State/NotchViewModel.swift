@@ -59,6 +59,7 @@ final class NotchViewModel: ObservableObject {
     private var hudDismiss: DispatchWorkItem?
     private var notifDismiss: DispatchWorkItem?
     private var collapseWork: DispatchWorkItem?
+    private var hoverIntentWork: DispatchWorkItem?
     private var goalObserver: AnyCancellable?
 
     // Thin aliases onto the shared motion vocabulary (NotchMotion).
@@ -258,13 +259,21 @@ final class NotchViewModel: ObservableObject {
 
     func hoverChanged(_ hovering: Bool) {
         collapseWork?.cancel()
+        hoverIntentWork?.cancel()
         lastMoveKind = .state
         if hovering {
-            // Expand directly on hover — no click required.
-            if interaction != .expanded {
-                if settings.hapticFeedback { HapticService.tap() }
-                withAnimation(Self.morph) { interaction = .expanded }
+            guard interaction != .expanded else { return }
+            // Acknowledge the hover instantly with a slight magnetic growth, but
+            // wait out a short dwell before fully expanding, so a mouse-past
+            // across the notch doesn't detonate the whole panel.
+            withAnimation(NotchMotion.micro) { interaction = .hovering }
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                if self.settings.hapticFeedback { HapticService.tap() }
+                withAnimation(Self.morph) { self.interaction = .expanded }
             }
+            hoverIntentWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.hoverDwell, execute: work)
         } else {
             // Grace delay before collapsing so brief exits don't flicker.
             let work = DispatchWorkItem { [weak self] in
