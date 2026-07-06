@@ -4,7 +4,7 @@ import SwiftUI
 enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
-    case nowPlaying, calendar, fileTray, dictation, stats, claudeStats, timer, clipboard, privacyDot, lockScreen
+    case nowPlaying, calendar, fileTray, dictation, stats, claudeStats, timer, clipboard, privacyDot
     case permissions, about
 
     var id: String { rawValue }
@@ -26,7 +26,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return "Timer"
         case .clipboard: return "Clipboard"
         case .privacyDot: return "Privacy"
-        case .lockScreen: return "Lock Screen"
         case .permissions: return "Permissions"
         case .about: return "About"
         }
@@ -49,7 +48,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return "timer"
         case .clipboard: return "doc.on.clipboard.fill"
         case .privacyDot: return "checkmark.shield.fill"
-        case .lockScreen: return "lock.fill"
         case .permissions: return "hand.raised.fill"
         case .about: return "info.circle.fill"
         }
@@ -72,7 +70,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return .orange
         case .clipboard: return .indigo
         case .privacyDot: return .green
-        case .lockScreen: return .black
         case .permissions: return .blue
         case .about: return .gray
         }
@@ -94,7 +91,7 @@ struct SettingsView: View {
                 }
                 Section("Live Activities") {
                     ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
-                             .stats, .claudeStats, .timer, .clipboard, .privacyDot, .lockScreen]) { row($0) }
+                             .stats, .claudeStats, .timer, .clipboard, .privacyDot]) { row($0) }
                 }
                 Section("Notchless") {
                     ForEach([SettingsSection.permissions, .about]) { row($0) }
