@@ -28,8 +28,10 @@ struct GoalExpandedView: View {
                     .font(.system(size: 12)).foregroundStyle(.white.opacity(0.5))
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                VStack(spacing: 8) {
-                    ForEach(store.goals) { goal in row(goal) }
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(store.goals) { goal in row(goal) }
+                    }
                 }
                 quickLog
             }
