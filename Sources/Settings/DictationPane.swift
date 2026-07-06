@@ -276,13 +276,6 @@ struct DictationPane: View {
     @ViewBuilder private var styleTab: some View {
         SectionLabel("Personalization")
         CardGroup {
-            LabeledRow("Your name") {
-                TextField("Optional", text: $settings.userName)
-                    .textFieldStyle(.roundedBorder).frame(width: 220)
-            }
-            Text("Used for a friendly greeting on the dictation cue.")
-                .font(.caption).foregroundStyle(.secondary)
-            Divider()
             ToggleRow(title: "Context-aware cleanup", isOn: $settings.contextAwareCleanup)
             Text("Tailors cleanup to the app you're dictating into — preserves code in editors, stays casual in chat — and learns each app's tone over time.")
                 .font(.caption).foregroundStyle(.secondary)

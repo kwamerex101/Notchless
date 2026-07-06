@@ -1,53 +1,67 @@
 import SwiftUI
 
-/// The 4-bar audio visualizer shown beside now-playing content. Decorative:
-/// bars breathe on a timer when playing, rest flat when paused (Alcove's bars
-/// are not a real spectrum — see PLAN.md §1.4).
+/// A compact audio visualizer shown beside now-playing content. Mirrors
+/// symmetrically from the centre bar; when a live `spectrum` is present it
+/// tracks real audio, otherwise it breathes on a timer while playing and rests
+/// low when paused.
 struct VisualizerBars: View {
     var isPlaying: Bool
     var color: Color = .white
-    var barCount: Int = 4
+    var barCount: Int = 5
     var height: CGFloat = 14
-    /// When non-empty, real live audio-band levels (low→high) drive the bars;
-    /// otherwise they fall back to a decorative breathing animation.
+    /// When non-empty, real live audio-band levels (low→high) drive the bars.
     var spectrum: [CGFloat] = []
 
     @State private var phase: [CGFloat]
 
-    init(isPlaying: Bool, color: Color = .white, barCount: Int = 4, height: CGFloat = 14, spectrum: [CGFloat] = []) {
+    init(isPlaying: Bool, color: Color = .white, barCount: Int = 5, height: CGFloat = 14, spectrum: [CGFloat] = []) {
         self.isPlaying = isPlaying
         self.color = color
         self.barCount = barCount
         self.height = height
         self.spectrum = spectrum
-        _phase = State(initialValue: (0..<barCount).map { _ in CGFloat.random(in: 0.3...1) })
+        _phase = State(initialValue: Self.freshPhase(barCount))
     }
 
-    private let timer = Timer.publish(every: 0.16, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 0.11, on: .main, in: .common).autoconnect()
 
     private var useSpectrum: Bool { isPlaying && !spectrum.isEmpty }
+    private var center: Int { (barCount - 1) / 2 }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 2) {
+        HStack(alignment: .center, spacing: 2.5) {
             ForEach(0..<barCount, id: \.self) { i in
                 Capsule()
-                    .fill(color)
-                    .frame(width: 2.5, height: max(2, height * level(i)))
+                    .fill(color.opacity(isPlaying ? 1 : 0.5))
+                    .frame(width: 2.5, height: max(2.5, height * level(i)))
             }
         }
         .frame(height: height)
-        .animation(.spring(response: 0.18, dampingFraction: 0.6), value: spectrum)
-        .animation(.easeInOut(duration: 0.16), value: phase)
+        .animation(.spring(response: 0.16, dampingFraction: 0.6), value: spectrum)
+        .animation(.spring(response: 0.22, dampingFraction: 0.55), value: phase)
         .onReceive(timer) { _ in
             guard isPlaying, !useSpectrum else { return }
-            phase = phase.map { _ in CGFloat.random(in: 0.25...1) }
+            phase = Self.freshPhase(barCount)
         }
     }
 
+    /// Height fraction for a bar, mirrored around the centre so the shape reads
+    /// as a symmetric equalizer.
     private func level(_ i: Int) -> CGFloat {
+        let distance = abs(i - center)
         if useSpectrum {
-            return spectrum[min(i, spectrum.count - 1)]
+            return max(0.14, spectrum[min(distance, spectrum.count - 1)])
         }
-        return isPlaying ? phase[i] : 0.2
+        if isPlaying {
+            // Taller toward the centre for a lively equalizer shape.
+            let falloff = 1 - CGFloat(distance) / CGFloat(center + 1) * 0.4
+            return phase[i] * falloff
+        }
+        // Resting: a gentle centre-weighted line, not flat dots.
+        return 0.18 + (1 - CGFloat(distance) / CGFloat(center + 1)) * 0.12
+    }
+
+    private static func freshPhase(_ count: Int) -> [CGFloat] {
+        (0..<count).map { _ in CGFloat.random(in: 0.3...1) }
     }
 }
