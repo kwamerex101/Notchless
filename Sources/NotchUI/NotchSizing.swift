@@ -45,9 +45,11 @@ struct NotchSizing {
             case .claudeUsage:
                 return NotchSizing(width: w + 120, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .goals:
-                // Wide enough for the ring + percent on one wing and the full
-                // abbreviated amount on the other (w + 96 clipped the amount).
-                return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // Each wing must clear the notch: the leading ring + percent (up
+                // to "100%") needs ~64pt past the edge inset, so the notch's left
+                // edge — at (width − w)/2 — has to sit beyond that. +190 keeps a
+                // 3-digit percent fully visible; w + 150 clipped it into the notch.
+                return NotchSizing(width: w + 190, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
