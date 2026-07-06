@@ -16,6 +16,7 @@ struct IdleCompactView: View {
     /// All concurrently-live activities (for the pager dots) and the order used.
     var liveActivities: [NotchActivity] = []
     let metrics: NotchMetrics
+    @ObservedObject private var todos = TodoStore.shared
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
     /// `topRadius + bottomRadius` (≈ 8 + 11 = 19pt) inward at its widest, so the
@@ -80,6 +81,15 @@ struct IdleCompactView: View {
             Image(systemName: "doc.on.clipboard")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+        case .todos:
+            Button {
+                if let id = todos.next?.id { todos.complete(id) }
+            } label: {
+                Image(systemName: "circle")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
         case .privacy:
             HStack(spacing: 4) {
                 if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
@@ -122,6 +132,13 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
         case .clipboard:
             ClipboardBadge()
+        case .todos:
+            Text(todos.next?.title ?? "All clear")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 96, alignment: .trailing)
         case .privacy:
             HStack(spacing: 6) {
                 if privacy?.cameraActive ?? false {
