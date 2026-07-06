@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum PermissionKind {
-    case calendar, location, bluetooth, accessibility, camera
+    case calendar, location, bluetooth, accessibility, camera, microphone
 }
 
 /// An app shown as an example icon on a priming card.
@@ -91,6 +91,14 @@ struct OnboardingStep: Identifiable {
             appLabels: ["Mirror", "Calls", "Look sharp"],
             subtitle: "Choose \"Allow\" once macOS requests camera access. You can open it any time from the menu.",
             permission: .camera, highlightAllow: true
+        ),
+        OnboardingStep(
+            title: "Notchless can type for you — just speak.",
+            badgeSymbol: "mic.fill", badgeColor: .teal,
+            apps: [.symbol("waveform"), .symbol("keyboard"), .symbol("text.cursor")],
+            appLabels: ["Speak", "It types", "Anywhere"],
+            subtitle: "Choose \"Allow\" once macOS requests Microphone and Speech Recognition. Hold Control + Option and talk — dictation runs on-device.",
+            permission: .microphone, highlightAllow: true
         ),
         OnboardingStep(
             title: "You're all set.",

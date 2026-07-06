@@ -3,6 +3,7 @@ import CoreLocation
 import CoreBluetooth
 import ApplicationServices
 import AVFoundation
+import Speech
 import AppKit
 
 /// Triggers the real system permission prompts, one per onboarding step.
@@ -29,6 +30,9 @@ final class PermissionRequester: NSObject {
             _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
         case .camera:
             AVCaptureDevice.requestAccess(for: .video) { _ in }
+        case .microphone:
+            AVCaptureDevice.requestAccess(for: .audio) { _ in }
+            SFSpeechRecognizer.requestAuthorization { _ in }
         }
     }
 }

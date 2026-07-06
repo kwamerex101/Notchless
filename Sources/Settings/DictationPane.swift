@@ -41,6 +41,32 @@ struct DictationPane: View {
                         ForEach(microphones, id: \.uid) { Text($0.name).tag($0.uid) }
                     }.labelsHidden().frame(width: 190)
                 }
+                Divider()
+                HStack {
+                    Text("Max recording length")
+                    Spacer()
+                    Slider(value: Binding(
+                        get: { Double(settings.maxRecordingSeconds) },
+                        set: { settings.maxRecordingSeconds = Int($0) }
+                    ), in: 10...300, step: 10).frame(width: 150)
+                    Text("\(settings.maxRecordingSeconds)s").frame(width: 40, alignment: .trailing)
+                }
+                Divider()
+                ToggleRow(title: "Sound cues", isOn: $settings.soundCues)
+            }
+
+            SectionLabel("AI cleanup")
+            CardGroup {
+                HStack {
+                    Text("Polish transcript")
+                    Spacer()
+                    Picker("", selection: $settings.cleanup) {
+                        ForEach(DictationCleanup.allCases) { Text($0.title).tag($0) }
+                    }.labelsHidden().frame(width: 150)
+                }
+                Text("When on, transcripts are tidied via the local Claude CLI (uses your Claude Code sign-in). Falls back to the raw text if it's not installed.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             SectionLabel("Output")

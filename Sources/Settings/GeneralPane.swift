@@ -90,11 +90,11 @@ struct SectionLabel: View {
 
 struct CardGroup<Content: View>: View {
     @ViewBuilder var content: Content
+    private let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
     var body: some View {
         VStack(spacing: 10) { content }
             .padding(14)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor)))
+            .liquidGlass(in: shape, fallback: .regularMaterial)
     }
 }
 
