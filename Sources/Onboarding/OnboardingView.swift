@@ -74,8 +74,6 @@ struct OnboardingView: View {
             .padding(.bottom, 26)
         }
         .frame(width: 420, height: 620)
-        .background(ThemedBackground())
-        .tint(AppTheme.accent)
     }
 
     private func advance() {
@@ -113,13 +111,13 @@ struct PrimingIllustration: View {
             }
 
             VStack(spacing: 7) {
-                Capsule().fill(.white.opacity(0.22)).frame(width: 150, height: 7)
-                Capsule().fill(.white.opacity(0.14)).frame(width: 100, height: 7)
+                Capsule().fill(.primary.opacity(0.22)).frame(width: 150, height: 7)
+                Capsule().fill(.primary.opacity(0.14)).frame(width: 100, height: 7)
             }
 
             HStack(spacing: 12) {
-                Capsule().fill(.white.opacity(0.14)).frame(width: 80, height: 20)
-                Capsule().fill(step.highlightAllow ? Color.teal : .white.opacity(0.14))
+                Capsule().fill(.primary.opacity(0.14)).frame(width: 80, height: 20)
+                Capsule().fill(step.highlightAllow ? Color.teal : .primary.opacity(0.14))
                     .frame(width: 80, height: 20)
             }
             .padding(.top, 4)
@@ -128,7 +126,7 @@ struct PrimingIllustration: View {
         .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous),
                      fallback: .ultraThinMaterial)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .stroke(.white.opacity(0.10), lineWidth: 1))
+            .stroke(.primary.opacity(0.10), lineWidth: 1))
     }
 }
 

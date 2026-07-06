@@ -16,6 +16,7 @@ final class NotchViewModel: ObservableObject {
     @Published var nowPlaying: NowPlayingInfo?
     @Published var calendar: CalendarSnapshot?
     @Published var battery: BatteryInfo?
+    @Published var stats: SystemStats?
     /// Vibrant color sampled from the current artwork (album-art glow).
     @Published var artworkColor: Color?
 
@@ -112,6 +113,7 @@ final class NotchViewModel: ObservableObject {
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
         case .dictation: return true  // the mic-ready cue always rests in the notch
         case .battery: return battery != nil
+        case .stats: return stats != nil
         }
     }
 
