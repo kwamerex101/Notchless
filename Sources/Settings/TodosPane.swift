@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Settings for the notch task list: enable toggle plus full management of the
-/// tasks (add, rename, delete, reorder, clear). Shares `TodoStore.shared` with
+/// tasks (add, rename, delete, clear). Shares `TodoStore.shared` with
 /// the notch, so edits here reflect live in the notch and vice versa.
 struct TodosPane: View {
     @ObservedObject var settings: SettingsStore
