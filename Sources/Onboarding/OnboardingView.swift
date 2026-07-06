@@ -135,30 +135,42 @@ struct PrimingIllustration: View {
 struct AppIconRow: View {
     let step: OnboardingStep
 
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(step.apps.enumerated()), id: \.offset) { i, app in
-                VStack(spacing: 6) {
-                    icon(for: app)
-                        .frame(width: 46, height: 46)
-                    Text(label(i, app))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                if i < step.apps.count - 1 {
-                    Divider().frame(height: 44)
-                }
+    /// Pair each app with its label, then drop any real app that isn't
+    /// installed — we only show icons the user actually has.
+    private var items: [(app: AppRef, label: String)] {
+        step.apps.enumerated().compactMap { i, app in
+            let label = i < step.appLabels.count ? step.appLabels[i] : app.label
+            switch app {
+            case .bundle(let id):
+                guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) != nil else { return nil }
+            case .symbol:
+                break
             }
+            return (app, label)
         }
-        .padding(.vertical, 14)
-        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous),
-                     fallback: .thinMaterial)
     }
 
-    private func label(_ i: Int, _ app: AppRef) -> String {
-        if i < step.appLabels.count { return step.appLabels[i] }
-        return app.label
+    var body: some View {
+        if !items.isEmpty {
+            HStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.offset) { i, item in
+                    VStack(spacing: 6) {
+                        icon(for: item.app)
+                            .frame(width: 46, height: 46)
+                        Text(item.label)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    if i < items.count - 1 {
+                        Divider().frame(height: 44)
+                    }
+                }
+            }
+            .padding(.vertical, 14)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous),
+                         fallback: .thinMaterial)
+        }
     }
 
     @ViewBuilder private func icon(for app: AppRef) -> some View {
