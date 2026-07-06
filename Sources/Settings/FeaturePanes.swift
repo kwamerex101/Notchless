@@ -115,6 +115,9 @@ struct NowPlayingPane: View {
                 ToggleRow(title: "Swipe to seek", isOn: $settings.swipeToSeek)
                 Text("Two-finger swipe left/right on the notch scrubs the current track ±10s.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                ToggleRow(title: "Show tab bar in expanded view", isOn: $settings.showTabBar)
+                Text("A row of page icons across the top of the expanded notch; tap or swipe to move between pages.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
         }
