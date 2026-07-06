@@ -26,7 +26,11 @@ struct PermissionsPane: View {
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .onAppear { model.refresh() }
+        .onAppear { model.startAutoRefresh() }
+        .onDisappear { model.stopAutoRefresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refresh()
+        }
     }
 }
 
