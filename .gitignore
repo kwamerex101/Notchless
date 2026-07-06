@@ -1,0 +1,23 @@
+# Xcode / build
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+
+# XcodeGen generates the project from project.yml
+DynamicIsland.xcodeproj/
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Scratch reference video (large binary); keep frames, drop the mp4 from git
+references/*.mp4
+
+# reference frames (large, not code)
+references/video-frames/
+references/bursts/

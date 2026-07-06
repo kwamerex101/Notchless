@@ -1,0 +1,36 @@
+name: Notchless
+options:
+  bundleIdPrefix: com.rexdanquah
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"          # Phase 1 uses Swift 5 language mode; flip to 6 during hardening
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Notchless:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+      - path: Resources/Adapter
+        type: folder
+        buildPhase: resources
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
+    settings:
+      base:
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Resources/Notchless.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.rexdanquah.Notchless
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_HARDENED_RUNTIME: NO   # off during dev; enable + entitlements before release
+        CODE_SIGN_STYLE: Automatic
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
