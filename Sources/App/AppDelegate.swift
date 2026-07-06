@@ -30,7 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
         GoalSelfTest.run()   // no-op unless DI_GOAL_SELFTEST is set
+        #endif
         NSApp.setActivationPolicy(.accessory)
         buildPanel()
 
@@ -131,7 +133,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let metrics = NotchGeometry.metrics(for: screen)
         let frame = panelFrame(for: metrics)
 
+        #if DEBUG
         DebugRender.run(metrics: metrics)  // no-op unless DI_DEBUG_RENDER is set
+        #endif
         let panel = NotchPanel(contentRect: frame)
         let host = NotchHostingView(rootView: makeRootView(metrics), model: model, metrics: metrics)
         host.onMediaCommand = { [weak self] in self?.media.send($0) }

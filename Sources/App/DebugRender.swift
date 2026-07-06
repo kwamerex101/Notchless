@@ -1,3 +1,4 @@
+#if DEBUG
 import SwiftUI
 import AppKit
 
@@ -145,3 +146,5 @@ enum DebugRender {
         }
     }
 }
+
+#endif
