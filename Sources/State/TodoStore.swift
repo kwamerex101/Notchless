@@ -156,6 +156,52 @@ final class TodoStore: ObservableObject {
         persist()
     }
 
+    func addSubtask(to parentID: UUID, title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.append(Subtask(title: trimmed))
+        persist()
+    }
+
+    /// Flips a subtask's done state (it stays in the list, struck through). If
+    /// that leaves every subtask done, the parent auto-completes (hybrid rule):
+    /// `complete` runs its strike-through-then-vanish, taking the subtasks along.
+    func toggleSubtask(_ subtaskID: UUID, in parentID: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }),
+              let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
+        items[i].subtasks[j].isDone.toggle()
+        persist()
+        if items[i].allSubtasksDone { complete(parentID) }
+    }
+
+    func updateSubtaskTitle(_ subtaskID: UUID, in parentID: UUID, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let i = items.firstIndex(where: { $0.id == parentID }),
+              let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
+        items[i].subtasks[j].title = trimmed
+        persist()
+    }
+
+    func removeSubtask(_ subtaskID: UUID, from parentID: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.removeAll { $0.id == subtaskID }
+        persist()
+    }
+
+    func moveSubtask(in parentID: UUID, from source: IndexSet, to destination: Int) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.move(fromOffsets: source, toOffset: destination)
+        persist()
+    }
+
+    func updateNotes(of parentID: UUID, to notes: String) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].notes = notes
+        persist()
+    }
+
     func clear() {
         items.removeAll()
         persist()
