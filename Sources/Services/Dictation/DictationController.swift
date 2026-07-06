@@ -1,15 +1,17 @@
 import AppKit
 
 /// Orchestrates a dictation session: hold the hotkey → record → transcribe →
-/// paste into the frontmost app, driving the notch through its phases. The
-/// transcriber is injected so ListenToMe's Whisper/Parakeet backends can be
-/// swapped in behind `DictationTranscriber` later.
+/// polish → deliver, driving the notch through its phases. Reads all behaviour
+/// from `model.dictationSettings`. The transcriber is injected so ListenToMe's
+/// Whisper/Parakeet backends can be swapped in behind `DictationTranscriber`.
 @MainActor
 final class DictationController {
     private let model: NotchViewModel
     private let hotkey = DictationHotkey()
     private var transcriber: DictationTranscriber
     private var isRecording = false
+
+    private var settings: DictationSettings { model.dictationSettings }
 
     init(model: NotchViewModel, transcriber: DictationTranscriber? = nil) {
         self.model = model
@@ -22,6 +24,7 @@ final class DictationController {
         }
         hotkey.onPress = { [weak self] in self?.beginRecording() }
         hotkey.onRelease = { [weak self] in self?.endRecording() }
+        hotkey.requiredFlags = settings.hotkey.requiredFlags
         hotkey.start()
     }
 
@@ -31,8 +34,13 @@ final class DictationController {
     }
 
     private func beginRecording() {
-        guard !isRecording else { return }
+        guard settings.enabled, !isRecording else { return }
         isRecording = true
+        // Pick up any hotkey change since launch.
+        hotkey.requiredFlags = settings.hotkey.requiredFlags
+        if let speech = transcriber as? SpeechTranscriber {
+            speech.configure(languageID: settings.languageID, microphoneUID: settings.microphoneUID)
+        }
         model.setDictation(.recording)
         Task {
             do {
@@ -49,13 +57,19 @@ final class DictationController {
         isRecording = false
         model.setDictation(.transcribing)
         Task {
-            let text = await transcriber.finish()
-            if text.isEmpty {
+            let raw = await transcriber.finish()
+            guard !raw.isEmpty else {
                 model.setDictation(.error("Couldn't hear that"))
-            } else {
-                Paster.paste(text)
-                model.setDictation(.success(text))
+                return
             }
+            let polished = TextPolish.apply(
+                raw,
+                dictionary: model.dictationDictionary.terms,
+                capitalize: settings.autoCapitalize
+            )
+            model.dictationHistory.add(polished, retentionDays: settings.historyRetentionDays)
+            DictationOutputRouter.deliver(polished, to: settings.output)
+            model.setDictation(.success(polished))
         }
     }
 }

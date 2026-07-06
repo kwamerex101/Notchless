@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
 import Speech
+import CoreAudio
+import AudioToolbox
 
 /// On-device dictation using Apple's Speech framework + AVAudioEngine mic
 /// capture. Private by default: recognition runs on-device when supported.
@@ -10,8 +12,16 @@ final class SpeechTranscriber: DictationTranscriber {
     var onLevel: ((CGFloat) -> Void)?
 
     private let engine = AVAudioEngine()
-    private let recognizer = SFSpeechRecognizer(locale: Locale.current)
+    private var recognizer = SFSpeechRecognizer(locale: Locale.current)
     private var request: SFSpeechAudioBufferRecognitionRequest?
+
+    /// Applied on the next `start()`.
+    func configure(languageID: String, microphoneUID: String) {
+        let locale = Locale(identifier: languageID)
+        recognizer = SFSpeechRecognizer(locale: locale) ?? recognizer
+        self.microphoneUID = microphoneUID
+    }
+    private var microphoneUID = ""
     private var task: SFSpeechRecognitionTask?
     private var latest = ""
     private var finishContinuation: CheckedContinuation<String, Never>?
@@ -42,6 +52,8 @@ final class SpeechTranscriber: DictationTranscriber {
                 if error != nil { self.completeFinish() }
             }
         }
+
+        applyPreferredInputDevice()
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
@@ -94,6 +106,31 @@ final class SpeechTranscriber: DictationTranscriber {
             engine.stop()
             engine.inputNode.removeTap(onBus: 0)
         }
+    }
+
+    /// Points AVAudioEngine's input at the user's chosen device (best-effort;
+    /// falls back to the system default). Must run before the engine starts.
+    private func applyPreferredInputDevice() {
+        guard !microphoneUID.isEmpty,
+              var deviceID = Self.deviceID(forUID: microphoneUID),
+              let unit = engine.inputNode.audioUnit else { return }
+        AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice,
+                             kAudioUnitScope_Global, 0, &deviceID, UInt32(MemoryLayout<AudioDeviceID>.size))
+    }
+
+    private static func deviceID(forUID uid: String) -> AudioDeviceID? {
+        var deviceID = AudioDeviceID(0)
+        var cfUID = uid as CFString
+        var translation = AudioValueTranslation(
+            mInputData: &cfUID, mInputDataSize: UInt32(MemoryLayout<CFString>.size),
+            mOutputData: &deviceID, mOutputDataSize: UInt32(MemoryLayout<AudioDeviceID>.size))
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDeviceForUID,
+            mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+        var size = UInt32(MemoryLayout<AudioValueTranslation>.size)
+        let status = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject),
+                                                &address, 0, nil, &size, &translation)
+        return status == noErr && deviceID != 0 ? deviceID : nil
     }
 
     private static func level(from buffer: AVAudioPCMBuffer) -> CGFloat {
