@@ -20,7 +20,7 @@ struct NowPlayingExpandedView: View {
             transport
         }
         .padding(.top, metrics.notchHeight + 6)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 19)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         // Album-art glow is painted at the panel level (NotchRootView) so it sits

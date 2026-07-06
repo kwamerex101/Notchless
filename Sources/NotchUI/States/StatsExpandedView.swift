@@ -22,7 +22,7 @@ struct StatsExpandedView: View {
             }
         }
         .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 19)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }

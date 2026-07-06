@@ -135,12 +135,13 @@ struct IdleCompactView: View {
         case .clipboard:
             ClipboardBadge()
         case .todos:
-            Text(todos.next?.title ?? "All clear")
-                .font(.system(size: 13, weight: .semibold))
+            // Tight wing beside the notch — show a monogram (initials) instead of
+            // a title that would just truncate to nothing legible.
+            Text(todos.next?.initials ?? "✓")
+                .font(.system(size: 13, weight: .bold).monospaced())
                 .foregroundStyle(.white)
                 .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: 96, alignment: .trailing)
+                .frame(maxWidth: 60, alignment: .trailing)
         case .privacy:
             HStack(spacing: 6) {
                 if privacy?.cameraActive ?? false {

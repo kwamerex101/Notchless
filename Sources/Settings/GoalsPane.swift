@@ -38,7 +38,9 @@ struct GoalsPane: View {
 
             if !store.goals.isEmpty {
                 SectionLabel("Active goals")
-                ForEach(store.goals) { goal in goalCard(goal) }
+                ForEach(store.goals) { goal in
+                    GoalSettingsCard(goal: goal, symbol: settings.currencySymbol)
+                }
             }
 
             if !store.completed.isEmpty {
@@ -58,36 +60,6 @@ struct GoalsPane: View {
         newName = ""; newTarget = ""
     }
 
-    private func goalCard(_ goal: Goal) -> some View {
-        CardGroup {
-            HStack {
-                Text(goal.name).font(.headline)
-                Spacer()
-                Button { store.setPinned(goal.id) } label: {
-                    Image(systemName: goal.id == store.pinnedID ? "pin.fill" : "pin")
-                }.buttonStyle(.borderless).help("Pin as the notch cue")
-                Button(role: .destructive) { store.deleteGoal(goal.id) } label: {
-                    Image(systemName: "trash")
-                }.buttonStyle(.borderless)
-            }
-            Text("\(goalFormatAmount(goal.current, symbol: settings.currencySymbol)) / \(goalFormatAmount(goal.target, symbol: settings.currencySymbol)) · \(goal.percent)%")
-                .font(.callout).foregroundStyle(.secondary)
-            if !goal.contributions.isEmpty {
-                Divider()
-                ForEach(goal.contributions) { c in
-                    HStack {
-                        Text(c.label)
-                        Spacer()
-                        Text(goalFormatAmount(c.amount, symbol: settings.currencySymbol)).foregroundStyle(.secondary)
-                        Button { store.removeContribution(goalID: goal.id, contributionID: c.id) } label: {
-                            Image(systemName: "minus.circle")
-                        }.buttonStyle(.borderless)
-                    }.font(.caption)
-                }
-            }
-        }
-    }
-
     private func completedRow(_ goal: Goal) -> some View {
         CardGroup {
             HStack {
@@ -100,5 +72,71 @@ struct GoalsPane: View {
                 }.buttonStyle(.borderless)
             }
         }
+    }
+}
+
+/// One active goal in Settings: progress, a quick-log row to add a contribution
+/// (amount + label) without leaving Settings, and the running list of logged
+/// contributions (each removable). Mirrors the notch's quick-log.
+private struct GoalSettingsCard: View {
+    @ObservedObject private var store = GoalStore.shared
+    let goal: Goal
+    let symbol: String
+
+    @State private var amountText = ""
+    @State private var labelText = ""
+
+    /// Re-fetch the live goal so progress + the list update after logging.
+    private var live: Goal { store.goals.first { $0.id == goal.id } ?? goal }
+
+    private var canLog: Bool {
+        Decimal(string: amountText.trimmingCharacters(in: .whitespaces)) != nil
+            && !labelText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    var body: some View {
+        CardGroup {
+            HStack {
+                Text(live.name).font(.headline)
+                Spacer()
+                Button { store.setPinned(live.id) } label: {
+                    Image(systemName: live.id == store.pinnedID ? "pin.fill" : "pin")
+                }.buttonStyle(.borderless).help("Pin as the notch cue")
+                Button(role: .destructive) { store.deleteGoal(live.id) } label: {
+                    Image(systemName: "trash")
+                }.buttonStyle(.borderless)
+            }
+            Text("\(goalFormatAmount(live.current, symbol: symbol)) / \(goalFormatAmount(live.target, symbol: symbol)) · \(live.percent)%")
+                .font(.callout).foregroundStyle(.secondary)
+
+            // Quick-log: add a contribution (amount + label) right here.
+            HStack(spacing: 6) {
+                TextField("Amount", text: $amountText).frame(width: 90)
+                TextField("Label (e.g. Salary, MTN)", text: $labelText)
+                    .onSubmit(log)
+                Button("Log", action: log).disabled(!canLog)
+            }
+
+            if !live.contributions.isEmpty {
+                Divider()
+                ForEach(live.contributions) { c in
+                    HStack {
+                        Text(c.label)
+                        Spacer()
+                        Text(goalFormatAmount(c.amount, symbol: symbol)).foregroundStyle(.secondary)
+                        Button { store.removeContribution(goalID: live.id, contributionID: c.id) } label: {
+                            Image(systemName: "minus.circle")
+                        }.buttonStyle(.borderless)
+                    }.font(.caption)
+                }
+            }
+        }
+    }
+
+    private func log() {
+        guard let amount = Decimal(string: amountText.trimmingCharacters(in: .whitespaces)),
+              !labelText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        _ = store.logContribution(goalID: live.id, amount: amount, label: labelText)
+        amountText = ""; labelText = ""
     }
 }
