@@ -19,6 +19,8 @@ final class NotchViewModel: ObservableObject {
     @Published var stats: SystemStats?
     @Published var notchTimer: NotchTimerInfo?
     @Published var privacy: PrivacyStatus?
+    /// The activity the user cycled to in the Auto carousel (nil = default top).
+    @Published private var manualActivity: NotchActivity?
     /// Live audio-band levels (low→high) from the system-audio tap, driving the
     /// now-playing visualizer. Empty when not capturing.
     @Published var musicSpectrum: [CGFloat] = []
@@ -74,43 +76,64 @@ final class NotchViewModel: ObservableObject {
         return .bare
     }
 
-    /// The concrete activity to rest in the notch at idle, or nil for a bare
-    /// notch. In Auto mode this is whatever Live Activity is currently live.
-    private func resolvedIdleActivity(hovering: Bool) -> NotchActivity? {
-        // The privacy dot always takes precedence — like macOS's own indicator,
-        // it shows whenever the camera/mic is in use, whatever the idle mode.
-        if let privacy, privacy.isActive { return .privacy }
+    /// Every Live Activity that's currently live, in priority order. In Auto
+    /// mode the user can cycle through these (e.g. media vs. the mic dot on a
+    /// call); the first is the default shown.
+    var liveActivities: [NotchActivity] {
+        var result: [NotchActivity] = []
+        if privacy?.isActive ?? false { result.append(.privacy) }
+        if notchTimer?.isActive ?? false { result.append(.timer) }
+        if nowPlaying != nil { result.append(.playing) }
+        if let battery, battery.isPluggedIn || battery.isCharging { result.append(.battery) }
+        return result
+    }
 
+    /// The concrete activity to rest in the notch at idle, or nil for a bare
+    /// notch. In Auto mode this is whatever Live Activity is currently live —
+    /// or the one the user cycled to.
+    private func resolvedIdleActivity(hovering: Bool) -> NotchActivity? {
         switch settings.idleActivity {
-        case .none:
-            return nil
         case .auto:
-            // Show only what's actually happening — nothing otherwise.
-            return autoIdleActivity()
+            return autoCarouselActivity()
+        case .none:
+            // The privacy dot still shows, like macOS's own indicator.
+            return (privacy?.isActive ?? false) ? .privacy : nil
         default:
+            if privacy?.isActive ?? false { return .privacy }
             let idle = settings.idleActivity
             if hovering { return idle }
             return hasIdleContent(idle) ? idle : nil
         }
     }
 
-    /// Ordered Live-Activity providers for Auto mode; the first live one wins.
-    /// New activities (timers, screen recording, AirDrop…) slot in here.
-    private func autoIdleActivity() -> NotchActivity? {
-        if let notchTimer, notchTimer.isActive { return .timer }
-        if nowPlaying != nil { return .playing }
-        // Surface the battery when plugged in / charging — a meaningful moment.
-        if let battery, battery.isPluggedIn || battery.isCharging { return .battery }
-        return nil
+    /// The current activity in the Auto carousel: the user's manual pick if it's
+    /// still live, else the top-priority live one.
+    private func autoCarouselActivity() -> NotchActivity? {
+        let live = liveActivities
+        guard !live.isEmpty else { return nil }
+        if let manual = manualActivity, live.contains(manual) { return manual }
+        return live.first
+    }
+
+    /// Advances the Auto carousel to the next live activity (horizontal swipe).
+    func cycleLiveActivity() {
+        let live = liveActivities
+        guard live.count >= 2 else { return }
+        let current = manualActivity.flatMap { live.contains($0) ? $0 : nil } ?? live[0]
+        let index = live.firstIndex(of: current) ?? 0
+        manualActivity = live[(index + 1) % live.count]
     }
 
     /// Which activity a click/hover expands into.
     var activeExpandedActivity: NotchActivity {
-        if let privacy, privacy.isActive { return .privacy }
         switch settings.idleActivity {
-        case .none, .auto:
+        case .auto:
+            return autoCarouselActivity() ?? (nowPlaying != nil ? .playing : .calendar)
+        case .none:
+            if privacy?.isActive ?? false { return .privacy }
             return nowPlaying != nil ? .playing : .calendar
         default:
+            if privacy?.isActive ?? false { return .privacy }
             return settings.idleActivity
         }
     }
@@ -118,7 +141,7 @@ final class NotchViewModel: ObservableObject {
     private func hasIdleContent(_ activity: NotchActivity) -> Bool {
         switch activity {
         case .none: return false
-        case .auto: return autoIdleActivity() != nil
+        case .auto: return !liveActivities.isEmpty
         case .playing: return nowPlaying != nil
         case .calendar: return true
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
