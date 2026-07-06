@@ -84,7 +84,7 @@ struct NotchSizing {
             case .privacy:
                 return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:
-                return NotchSizing(width: max(w + 40, 440), height: 150, topRadius: 10, bottomRadius: 24)
+                return NotchSizing(width: max(w + 40, 300), height: 196, topRadius: 10, bottomRadius: 24)
             }
         }
     }
