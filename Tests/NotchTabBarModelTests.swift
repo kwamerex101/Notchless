@@ -36,4 +36,35 @@ final class NotchTabBarModelTests: XCTestCase {
             XCTAssertFalse(activity.tabGlyph.isEmpty, "\(activity) missing glyph")
         }
     }
+
+    func test_select_worksInFixedIdleMode() {
+        SettingsStore.shared.idleActivity = .none
+        let model = NotchViewModel()                 // nothing live
+        XCTAssertTrue(model.carouselActivities.contains(.stats))
+        model.select(.stats)
+        XCTAssertEqual(model.activeExpandedActivity, .stats)
+    }
+
+    func test_collapse_resetsManualPickInFixedMode() {
+        SettingsStore.shared.idleActivity = .none
+        let model = NotchViewModel()
+        model.select(.stats)
+        XCTAssertEqual(model.activeExpandedActivity, .stats)
+        model.collapse()
+        // Fixed .none mode with nothing live falls back to .calendar.
+        XCTAssertEqual(model.activeExpandedActivity, .calendar)
+    }
+
+    func test_collapse_keepsManualPickInAutoMode() {
+        SettingsStore.shared.idleActivity = .auto
+        let model = NotchViewModel()
+        model.nowPlaying = NowPlayingInfo(
+            title: "T", artist: "A", album: nil, artwork: nil,
+            isPlaying: true, elapsed: 0, duration: 100,
+            bundleIdentifier: nil, appName: nil
+        )
+        model.select(.stats)
+        model.collapse()
+        XCTAssertEqual(model.activeExpandedActivity, .stats)  // sticky in Auto
+    }
 }

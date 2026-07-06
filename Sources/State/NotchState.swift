@@ -35,6 +35,24 @@ enum NotchActivity: String, CaseIterable, Codable {
         case .claudeUsage: return "sparkle"
         }
     }
+
+    /// Human-readable name for this page (VoiceOver, tab accessibility).
+    var tabLabel: String {
+        switch self {
+        case .auto, .none: return "Notch"
+        case .playing:     return "Now Playing"
+        case .calendar:    return "Calendar"
+        case .duo:         return "Now Playing & Calendar"
+        case .dictation:   return "Dictation"
+        case .battery:     return "Battery"
+        case .stats:       return "System Stats"
+        case .timer:       return "Timer"
+        case .clipboard:   return "Clipboard"
+        case .todos:       return "To-Dos"
+        case .privacy:     return "Privacy"
+        case .claudeUsage: return "Claude Usage"
+        }
+    }
 }
 
 /// The two hardware HUDs that replace the system OSD.

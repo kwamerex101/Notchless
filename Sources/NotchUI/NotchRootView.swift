@@ -23,7 +23,7 @@ struct NotchRootView: View {
                 .background {
                     if expanded, model.settings.progressiveBlur {
                         ProgressiveBlur()
-                            .frame(width: sizing.width + 24, height: sizing.height + 20)
+                            .frame(width: sizing.width + 24, height: panelHeight + 20)
                             .clipShape(RoundedRectangle(cornerRadius: sizing.bottomRadius + 6, style: .continuous))
                             .opacity(0.5)
                             .allowsHitTesting(false)
@@ -72,7 +72,6 @@ struct NotchRootView: View {
                     NotchTabBar(activities: model.carouselActivities,
                                 active: activity,
                                 battery: model.battery,
-                                metrics: metrics,
                                 onSelect: { model.select($0) })
                     expandedBody(activity)
                 }

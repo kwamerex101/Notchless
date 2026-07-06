@@ -7,7 +7,6 @@ struct NotchTabBar: View {
     let activities: [NotchActivity]
     let active: NotchActivity
     let battery: BatteryInfo?
-    let metrics: NotchMetrics
     var onSelect: (NotchActivity) -> Void
 
     /// Reserved height of the strip; Task 4 grows the panel by this amount.
@@ -23,7 +22,7 @@ struct NotchTabBar: View {
                     .frame(width: 18, height: 18)
                     .contentShape(Rectangle())
                     .onTapGesture { onSelect(activity) }
-                    .accessibilityLabel(Text(String(describing: activity)))
+                    .accessibilityLabel(Text(activity.tabLabel))
                     .accessibilityAddTraits(activity == active ? [.isSelected, .isButton] : .isButton)
             }
             Spacer(minLength: 8)

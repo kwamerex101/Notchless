@@ -147,15 +147,21 @@ final class NotchViewModel: ObservableObject {
 
     /// Jumps the carousel straight to `activity` (a tab tap). Mirrors what a
     /// swipe does for one step: sets the manual pick and gives haptic feedback.
-    /// Ignored if `activity` isn't a current carousel page.
+    /// Ignored if `activity` isn't a current carousel page. Unlike
+    /// `cycleLiveActivity()`, this intentionally has no `liveActivities`
+    /// emptiness guard — the info pages (calendar/stats/claudeUsage) are
+    /// tappable even when nothing is live.
     func select(_ activity: NotchActivity) {
         guard carouselActivities.contains(activity) else { return }
         withAnimation(Self.morph) { manualActivity = activity }
         if settings.hapticFeedback { HapticService.tap() }
     }
 
-    /// Which activity a click/hover expands into.
+    /// Which activity a click/hover expands into. An explicit pick — a tab tap
+    /// or a swipe — wins in every mode as long as it's still a valid carousel
+    /// page; otherwise we fall back to the mode's default resting activity.
     var activeExpandedActivity: NotchActivity {
+        if let manual = manualActivity, carouselActivities.contains(manual) { return manual }
         switch settings.idleActivity {
         case .auto:
             return autoCarouselActivity() ?? (nowPlaying != nil ? .playing : .calendar)
@@ -200,7 +206,10 @@ final class NotchViewModel: ObservableObject {
             // Grace delay before collapsing so brief exits don't flicker.
             let work = DispatchWorkItem { [weak self] in
                 guard let self else { return }
-                withAnimation(Self.morph) { self.interaction = .collapsed }
+                withAnimation(Self.morph) {
+                    self.interaction = .collapsed
+                    if self.settings.idleActivity != .auto { self.manualActivity = nil }
+                }
             }
             collapseWork = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
@@ -233,7 +242,10 @@ final class NotchViewModel: ObservableObject {
 
     func collapse() {
         collapseWork?.cancel()
-        withAnimation(Self.morph) { interaction = .collapsed }
+        withAnimation(Self.morph) {
+            interaction = .collapsed
+            if settings.idleActivity != .auto { manualActivity = nil }
+        }
     }
 
     // MARK: - HUD
