@@ -22,7 +22,8 @@ enum GoalSelfTest {
         guard isEnabled else { return }
 
         modelChecks()
-        // Later tasks append: paceChecks(); formatChecks(); storeChecks()
+        paceChecks()
+        // Later tasks append: formatChecks(); storeChecks()
 
         print(failures == 0 ? "SELFTEST OK" : "SELFTEST FAILED (\(failures))")
         exit(failures == 0 ? 0 : 1)
@@ -46,5 +47,19 @@ enum GoalSelfTest {
         check("fraction clamps at 1", over.fraction == 1.0)
         let zero = Goal(name: "z", target: 0, startDate: t0, deadline: days(1))
         check("fraction is 0 for non-positive target", zero.fraction == 0)
+    }
+
+    private static func paceChecks() {
+        // target 100k over 100 days; halfway ⇒ expected 50k.
+        func goal(_ current: Decimal) -> Goal {
+            Goal(name: "g", target: 100_000, startDate: t0, deadline: days(100),
+                 contributions: current == 0 ? [] : [Contribution(amount: current, label: "a", date: t0)])
+        }
+        check("pace on-track at expected", goal(50_000).pace(now: days(50)) == .onTrack)
+        check("pace within dead-band is on-track", goal(51_000).pace(now: days(50)) == .onTrack)
+        check("pace ahead past dead-band", goal(53_000).pace(now: days(50)) == .ahead(3_000))
+        check("pace behind past dead-band", goal(40_000).pace(now: days(50)) == .behind(10_000))
+        check("pace overdue when past deadline unmet", goal(90_000).pace(now: days(101)) == .overdue)
+        check("pace not overdue when target met", goal(100_000).pace(now: days(101)) == .onTrack)
     }
 }

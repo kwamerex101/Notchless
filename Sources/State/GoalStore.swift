@@ -62,3 +62,31 @@ struct Goal: Identifiable, Codable, Equatable {
             .sorted { $0.total != $1.total ? $0.total > $1.total : $0.label < $1.label }
     }
 }
+
+/// Whether a goal is keeping up with the straight-line pace implied by its
+/// start→deadline window. `ahead`/`behind` carry the money gap vs. expected.
+enum PaceStatus: Equatable {
+    case onTrack
+    case ahead(Decimal)
+    case behind(Decimal)
+    case overdue
+}
+
+extension Goal {
+    /// Compares actual `current` against the linear expected amount for `now`.
+    /// A ±2%-of-target dead-band keeps the status from flickering at the line.
+    func pace(now: Date) -> PaceStatus {
+        if now > deadline && current < target { return .overdue }
+
+        let total = deadline.timeIntervalSince(startDate)
+        guard total > 0 else { return .onTrack }
+        let elapsed = min(max(now.timeIntervalSince(startDate), 0), total)
+        let ratio = elapsed / total
+        let expected = target * Decimal(ratio)         // clamped by ratio ∈ 0…1
+        let delta = current - expected
+        let band = target * Decimal(0.02)
+
+        if abs(delta) <= band { return .onTrack }
+        return delta > 0 ? .ahead(delta) : .behind(-delta)
+    }
+}
