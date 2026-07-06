@@ -9,6 +9,7 @@ struct GoalExpandedView: View {
     @State private var amountText = ""
     @State private var labelText = ""
     @FocusState private var amountFocused: Bool
+    @Environment(\.notchKeyFocus) private var keyFocus
 
     private var symbol: String { SettingsStore.shared.currencySymbol }
 
@@ -18,7 +19,7 @@ struct GoalExpandedView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Goals").font(.system(size: 12, weight: .semibold)).foregroundStyle(.white.opacity(0.7))
+                Text("Goals").notchSectionHeader()
                 Spacer()
                 Text("\(store.goals.count) active").font(.system(size: 11)).foregroundStyle(.white.opacity(0.5))
             }
@@ -40,6 +41,8 @@ struct GoalExpandedView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onAppear { keyFocus(true) }
+        .onDisappear { keyFocus(false) }
     }
 
     private func row(_ goal: Goal) -> some View {
@@ -58,7 +61,7 @@ struct GoalExpandedView: View {
             }
             ProgressView(value: goal.fraction)
                 .tint(.green)
-                .animation(.easeInOut(duration: 0.5), value: goal.fraction)
+                .animation(NotchMotion.fill, value: goal.fraction)
             HStack(spacing: 6) {
                 Text("\(goalFormatAmount(goal.current, symbol: symbol)) / \(goalFormatAmount(goal.target, symbol: symbol))")
                     .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
@@ -112,7 +115,7 @@ struct GoalExpandedView: View {
         guard let goal = focused,
               let amount = Decimal(string: amountText.trimmingCharacters(in: .whitespaces)),
               !labelText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        withAnimation { _ = store.logContribution(goalID: goal.id, amount: amount, label: labelText) }
+        withAnimation(NotchMotion.fill) { _ = store.logContribution(goalID: goal.id, amount: amount, label: labelText) }
         amountText = ""; labelText = ""
     }
 

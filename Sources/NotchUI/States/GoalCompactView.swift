@@ -19,7 +19,7 @@ struct GoalCompactView: View {
                     .rotationEffect(.degrees(-90))
             }
             .frame(width: 16, height: 16)
-            .animation(.easeInOut(duration: 0.5), value: fraction)
+            .animation(NotchMotion.fill, value: fraction)
         }
     }
 
@@ -33,7 +33,7 @@ struct GoalCompactView: View {
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .foregroundStyle(Self.lightGreen)
                     .contentTransition(.numericText())
-                    .animation(.easeInOut(duration: 0.4), value: g.percent)
+                    .animation(NotchMotion.quick, value: g.percent)
             }
         } else {
             Image(systemName: "target").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)

@@ -8,7 +8,7 @@ struct IdleCompactView: View {
     let calendar: CalendarSnapshot?
     var battery: BatteryInfo? = nil
     var stats: SystemStats? = nil
-    var musicSpectrum: [CGFloat] = []
+    @ObservedObject var audio: AudioLevelsModel
     var timer: NotchTimerInfo? = nil
     var privacy: PrivacyStatus? = nil
     var claudeStats: ClaudeUsageStats? = nil
@@ -16,6 +16,8 @@ struct IdleCompactView: View {
     /// All concurrently-live activities (for the pager dots) and the order used.
     var liveActivities: [NotchActivity] = []
     let metrics: NotchMetrics
+    /// Shared namespace so the artwork sliver morphs into the expanded tile.
+    var artworkNamespace: Namespace.ID? = nil
     @ObservedObject private var todos = TodoStore.shared
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -83,13 +85,14 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
         case .todos:
             Button {
-                if let id = todos.next?.id { todos.complete(id) }
+                if let id = todos.next?.id { withAnimation(NotchMotion.micro) { todos.complete(id) } }
             } label: {
                 Image(systemName: "circle")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel("Complete task")
         case .privacy:
             HStack(spacing: 4) {
                 if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
@@ -104,7 +107,7 @@ struct IdleCompactView: View {
         switch activity {
         case .playing, .duo, .none, .auto:
             VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false,
-                           color: glow ?? .white, height: 15, spectrum: musicSpectrum)
+                           color: glow ?? .white, height: 15, spectrum: audio.musicSpectrum)
                 .frame(width: 38)
         case .calendar:
             Image(systemName: "calendar")
@@ -117,21 +120,29 @@ struct IdleCompactView: View {
         case .battery:
             if SettingsStore.shared.batteryShowPercentage {
                 Text("\(battery?.level ?? 0)%")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: battery?.level)
             }
         case .stats:
             Text("\(Int((stats?.cpu ?? 0) * 100))%")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: stats?.cpu)
         case .claudeUsage:
             Text(claudeCompactTrailing)
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: claudeCompactTrailing)
         case .timer:
             Text(timer?.label ?? "0:00")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: timer?.label)
         case .clipboard:
             ClipboardBadge()
         case .todos:
@@ -158,17 +169,20 @@ struct IdleCompactView: View {
     }
 
     @ViewBuilder private var artwork: some View {
-        if let art = nowPlaying?.artwork {
-            Image(nsImage: art)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 20, height: 20)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-        } else {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color.white.opacity(0.15))
-                .frame(width: 20, height: 20)
-                .overlay(Image(systemName: "music.note").font(.system(size: 10)).foregroundStyle(.white.opacity(0.7)))
+        Group {
+            if let art = nowPlaying?.artwork {
+                Image(nsImage: art)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 20, height: 20)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.white.opacity(0.15))
+                    .frame(width: 20, height: 20)
+                    .overlay(Image(systemName: "music.note").font(.system(size: 10)).foregroundStyle(.white.opacity(0.7)))
+            }
         }
+        .matchedArtwork(artworkNamespace)
     }
 }

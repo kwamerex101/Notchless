@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// that keeps the panel on whichever screen the user is using.
     private var currentScreenFrame: NSRect?
     private var followTimer: Timer?
+    private var settingsObservers: Set<AnyCancellable> = []
 
     private lazy var media = MediaController(model: model)
     private lazy var hud = HUDController(model: model)
@@ -29,7 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
         GoalSelfTest.run()   // no-op unless DI_GOAL_SELFTEST is set
+        #endif
         NSApp.setActivationPolicy(.accessory)
         buildPanel()
 
@@ -42,15 +45,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         claudeStats.start()
         ClipboardStore.shared.start()
 
-        // Only capture system audio while something is actually playing.
-        playbackObserver = model.$nowPlaying
-            .map { $0?.isPlaying == true }
-            .removeDuplicates()
-            .sink { [weak self] isPlaying in
-                guard let self else { return }
-                if isPlaying, self.model.settings.liveAudioVisualizer { self.audioTap.start() }
-                else { self.audioTap.stop() }
-            }
+        // Keep the feature-gated pollers in sync with their toggles at runtime,
+        // so turning a feature off actually stops its timer (and turning it back
+        // on resumes live — no relaunch).
+        model.settings.$statsEnabled.removeDuplicates()
+            .sink { [weak self] on in self?.stats.setEnabled(on) }
+            .store(in: &settingsObservers)
+        model.settings.$privacyIndicatorEnabled.removeDuplicates()
+            .sink { [weak self] on in self?.privacy.setEnabled(on) }
+            .store(in: &settingsObservers)
+        model.settings.$clipboardEnabled.removeDuplicates()
+            .sink { on in ClipboardStore.shared.setEnabled(on) }
+            .store(in: &settingsObservers)
+
+        // Capture system audio only while music is playing AND its visualizer is
+        // actually on screen — swiping to another page stops the tap, swiping
+        // back restarts it. `objectWillChange` (debounced so it reads the
+        // settled state) covers content changes; the settings toggle covers the
+        // preference. start()/stop() are idempotent.
+        playbackObserver = model.objectWillChange
+            .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.updateAudioTap() }
+        model.settings.$liveAudioVisualizer.removeDuplicates()
+            .sink { [weak self] _ in self?.updateAudioTap() }
+            .store(in: &settingsObservers)
+        updateAudioTap()
         effects = EffectsController(settings: model.settings, panel: panel)
         effects?.start()
 
@@ -65,11 +84,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
 
-        // Follow the screen the user is using (Active-display mode) — reposition
-        // only when the target screen actually changes, so it's cheap when idle.
+        // Follow the screen the user is using — but only in Active-display mode,
+        // where the target screen depends on the live cursor position. The other
+        // modes reposition via didChangeScreenParametersNotification, so their
+        // 0.35s timer would just burn wakeups. Track the mode live.
+        model.settings.$simulatedDisplay.removeDuplicates()
+            .sink { [weak self] mode in self?.updateFollowTimer(for: mode) }
+            .store(in: &settingsObservers)
+    }
+
+    private func updateFollowTimer(for mode: SimulatedDisplay) {
+        followTimer?.invalidate()
+        followTimer = nil
+        guard mode == .active else { return }
+        repositionIfNeeded()   // snap to the current screen on entering Active mode
         followTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.repositionIfNeeded() }
         }
+    }
+
+    /// Starts the system-audio tap when music is playing, its visualizer is on
+    /// screen, and the setting is on; stops it otherwise. Idempotent.
+    private func updateAudioTap() {
+        let wanted = model.nowPlaying?.isPlaying == true
+            && model.settings.liveAudioVisualizer
+            && model.visualizerOnScreen
+        if wanted { audioTap.start() } else { audioTap.stop() }
     }
 
     private func startPermissionedServices() {
@@ -93,7 +133,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let metrics = NotchGeometry.metrics(for: screen)
         let frame = panelFrame(for: metrics)
 
+        #if DEBUG
         DebugRender.run(metrics: metrics)  // no-op unless DI_DEBUG_RENDER is set
+        #endif
         let panel = NotchPanel(contentRect: frame)
         let host = NotchHostingView(rootView: makeRootView(metrics), model: model, metrics: metrics)
         host.onMediaCommand = { [weak self] in self?.media.send($0) }
@@ -105,6 +147,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         self.panel = panel
         self.currentScreenFrame = screen.frame
+
+        // Let in-notch text fields borrow keyboard focus while editing. The app
+        // is an accessory (no Dock icon); activating it briefly is the reliable
+        // way for a non-activating panel to receive typing, and we hand focus
+        // back when editing ends.
+        model.requestKeyFocus = { [weak panel] want in
+            guard let panel else { return }
+            panel.wantsKey = want
+            if want {
+                NSApp.activate(ignoringOtherApps: true)
+                panel.makeKeyAndOrderFront(nil)
+            } else {
+                NSApp.deactivate()
+            }
+        }
 
         let tracker = NotchMouseTracker(panel: panel, model: model, metrics: metrics)
         tracker.start()

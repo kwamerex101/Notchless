@@ -1,5 +1,18 @@
 import SwiftUI
 
+/// Passes a "request/release keyboard focus for the notch panel" callback down
+/// to in-notch text fields. Defaults to a no-op so previews/DebugRender work.
+private struct NotchKeyFocusKey: EnvironmentKey {
+    static let defaultValue: (Bool) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    var notchKeyFocus: (Bool) -> Void {
+        get { self[NotchKeyFocusKey.self] }
+        set { self[NotchKeyFocusKey.self] = newValue }
+    }
+}
+
 /// Root content hosted in the notch panel. Renders the resolved `NotchContent`
 /// inside the morphing black shape, and routes hover / tap / right-click.
 struct NotchRootView: View {
@@ -7,6 +20,11 @@ struct NotchRootView: View {
     let metrics: NotchMetrics
     var onCommand: (MediaCommand) -> Void = { _ in }
     var onOpenSettings: () -> Void = {}
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Shared namespace so album art morphs between the compact sliver and the
+    /// expanded tile instead of cross-fading.
+    @Namespace private var artworkNamespace
 
     var body: some View {
         let content = model.content
@@ -25,9 +43,11 @@ struct NotchRootView: View {
                     if expanded, model.settings.progressiveBlur {
                         ProgressiveBlur()
                             .frame(width: sizing.width + 24, height: panelHeight + 20)
-                            .clipShape(RoundedRectangle(cornerRadius: sizing.bottomRadius + 6, style: .continuous))
+                            .clipShape(NotchShape(topCornerRadius: sizing.topRadius + 2,
+                                                  bottomCornerRadius: sizing.bottomRadius + 6))
                             .opacity(0.5)
                             .allowsHitTesting(false)
+                            .transition(.opacity)
                     }
                 }
                 // Panel-level tint, drawn behind BOTH the tab strip and the
@@ -43,6 +63,7 @@ struct NotchRootView: View {
                             .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                                   bottomCornerRadius: sizing.bottomRadius))
                             .allowsHitTesting(false)
+                            .transition(.opacity)
                     }
                 }
                 .overlay {
@@ -50,8 +71,14 @@ struct NotchRootView: View {
                         .frame(width: sizing.width, height: panelHeight)
                         .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                               bottomCornerRadius: sizing.bottomRadius))
-                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+                        // Key on the content's identity so a state change actually
+                        // inserts/removes the view — otherwise the transition below
+                        // never fires and swaps fall back to a plain crossfade.
+                        .id(contentKey(content))
+                        .transition(contentTransition)
                 }
+                // Slight magnetic growth while the hover dwell is pending.
+                .scaleEffect(model.interaction == .hovering && !reduceMotion ? 1.03 : 1, anchor: .top)
                 .contentShape(NotchShape(topCornerRadius: sizing.topRadius,
                                          bottomCornerRadius: sizing.bottomRadius))
                 .onTapGesture { model.tapped() }
@@ -62,8 +89,49 @@ struct NotchRootView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(NotchViewModel.morph, value: sizing.width)
-        .animation(NotchViewModel.morph, value: panelHeight)
+        // One spring drives width, height, AND the corner radii together
+        // (NotchShape interpolates its radii), so the shape stretches as one
+        // continuous object instead of the radii snapping.
+        .animation(NotchMotion.morph, value: sizing)
+        .environment(\.notchKeyFocus, { [weak model] want in model?.requestKeyFocus?(want) })
+    }
+
+    /// A carousel page move slides horizontally toward the new page; every other
+    /// change (expand/collapse, transients) scales out of the notch. Reduce
+    /// Motion collapses both to a plain fade.
+    private var contentTransition: AnyTransition {
+        if reduceMotion { return .opacity }
+        // HUD and notifications bloom out of the notch and retract back into it.
+        switch model.content {
+        case .hud, .notification:
+            return .move(edge: .top).combined(with: .opacity)
+        default:
+            break
+        }
+        switch model.lastMoveKind {
+        case .page:
+            let inEdge: Edge = model.lastMoveDirection > 0 ? .trailing : .leading
+            let outEdge: Edge = model.lastMoveDirection > 0 ? .leading : .trailing
+            return .asymmetric(insertion: .move(edge: inEdge).combined(with: .opacity),
+                               removal: .move(edge: outEdge).combined(with: .opacity))
+        case .state:
+            return .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+        }
+    }
+
+    /// Stable identity per content state so SwiftUI runs insert/remove
+    /// transitions on a change (a plain view swap wouldn't animate).
+    private func contentKey(_ content: NotchContent) -> String {
+        switch content {
+        case .bare: return "bare"
+        case let .idle(a): return "idle.\(a.rawValue)"
+        case .hud: return "hud"
+        case let .notification(n): return "notif.\(n.id)"
+        case let .expanded(a): return "expanded.\(a.rawValue)"
+        case let .fileTray(expanded): return "tray.\(expanded)"
+        case .mirror: return "mirror"
+        case .dictation: return "dictation"
+        }
     }
 
     @ViewBuilder
@@ -74,14 +142,18 @@ struct NotchRootView: View {
         case let .idle(activity):
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
                             calendar: model.calendar, battery: model.battery,
-                            stats: model.stats, musicSpectrum: model.musicSpectrum,
+                            stats: model.stats, audio: model.audio,
                             timer: model.notchTimer, privacy: model.privacy,
                             claudeStats: model.claudeStats, glow: glowColor,
-                            liveActivities: model.carouselActivities, metrics: metrics)
+                            liveActivities: model.carouselActivities, metrics: metrics,
+                            artworkNamespace: artworkNamespace)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
+            // Key on the note id so a replacement note re-runs the entrance
+            // animation instead of reusing the previous view's `appeared` state.
             NotificationView(note: note, metrics: metrics)
+                .id(note.id)
         case let .expanded(activity):
             // Tab strip lives in the wings beside the physical notch — 3 glyphs to
             // the left of the camera, battery to the right, the notch in the empty
@@ -105,7 +177,7 @@ struct NotchRootView: View {
         case .mirror:
             MirrorView(metrics: metrics, onClose: { model.showMirror = false })
         case let .dictation(phase):
-            DictationView(phase: phase, metrics: metrics, level: model.dictationLevel, spectrum: model.dictationSpectrum)
+            DictationView(phase: phase, metrics: metrics, audio: model.audio)
         }
     }
 
@@ -113,9 +185,10 @@ struct NotchRootView: View {
     private func expandedBody(_ activity: NotchActivity) -> some View {
         switch activity {
         case .playing, .none, .auto:
-            NowPlayingExpandedView(info: model.nowPlaying, musicSpectrum: model.musicSpectrum,
+            NowPlayingExpandedView(info: model.nowPlaying, audio: model.audio,
                                    metrics: metrics, glow: glowColor, onCommand: onCommand,
-                                   onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
+                                   onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) },
+                                   artworkNamespace: artworkNamespace)
         case .calendar:
             CalendarExpandedView(snapshot: model.calendar, metrics: metrics)
         case .duo:

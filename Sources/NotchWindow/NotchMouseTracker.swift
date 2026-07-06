@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 /// Makes the notch panel genuinely click-through everywhere except over the
 /// notch itself. Returning nil from `hitTest` does NOT pass clicks to the app
@@ -11,11 +12,18 @@ import AppKit
 final class NotchMouseTracker {
     private weak var panel: NotchPanel?
     private let model: NotchViewModel
-    var metrics: NotchMetrics
+    var metrics: NotchMetrics { didSet { rectDirty = true } }
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var isOverNotch = false
+
+    /// Cached interactive rect + a dirty flag, so we don't recompute `NotchSizing`
+    /// (a big switch) on every system-wide mouse move — only after the notch's
+    /// content actually changes shape.
+    private var cachedRect: CGRect = .zero
+    private var rectDirty = true
+    private var contentObserver: AnyCancellable?
 
     init(panel: NotchPanel, model: NotchViewModel, metrics: NotchMetrics) {
         self.panel = panel
@@ -25,6 +33,12 @@ final class NotchMouseTracker {
 
     func start() {
         panel?.ignoresMouseEvents = true  // pass-through by default
+
+        // Any model change may resize the notch; mark the rect stale so the next
+        // evaluate() recomputes it once. Cheap bool flip vs. per-move sizing.
+        contentObserver = model.objectWillChange.sink { [weak self] _ in
+            self?.rectDirty = true
+        }
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]
@@ -45,23 +59,22 @@ final class NotchMouseTracker {
         if let localMonitor { NSEvent.removeMonitor(localMonitor) }
         globalMonitor = nil
         localMonitor = nil
+        contentObserver = nil
     }
 
-    /// Screen-space rect (bottom-left origin, matching `NSEvent.mouseLocation`)
-    /// of the current notch shape, with a little slack for easy targeting.
-    private func notchRect() -> CGRect {
-        let sizing = NotchSizing.size(for: model.content, metrics: metrics)
-        let pad: CGFloat = 6
-        return CGRect(
-            x: metrics.notchCenterX - sizing.width / 2 - pad,
-            y: metrics.screenTopY - sizing.height - pad,
-            width: sizing.width + pad * 2,
-            height: sizing.height + pad * 2
-        )
+    /// The current interactive rect, recomputed only when marked dirty by a
+    /// model change (or when `metrics` changed). Screen-space, bottom-left
+    /// origin to match `NSEvent.mouseLocation`, with slack for easy targeting.
+    private func currentRect() -> CGRect {
+        if rectDirty {
+            cachedRect = NotchSizing.screenBand(for: model.content, metrics: metrics, pad: 6)
+            rectDirty = false
+        }
+        return cachedRect
     }
 
     private func evaluate() {
-        let over = notchRect().contains(NSEvent.mouseLocation)
+        let over = currentRect().contains(NSEvent.mouseLocation)
         guard over != isOverNotch else { return }
         isOverNotch = over
         panel?.ignoresMouseEvents = !over

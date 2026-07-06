@@ -16,18 +16,36 @@ final class StatsController {
         self.model = model
     }
 
-    func start() {
+    func start() { setEnabled(model.settings.statsEnabled) }
+
+    /// Starts or stops sampling. Idempotent — driven from the `statsEnabled`
+    /// toggle so the mach/BSD sampling loop never runs while stats are off.
+    func setEnabled(_ on: Bool) {
+        guard on else {
+            timer?.invalidate(); timer = nil
+            if model.stats != nil { model.stats = nil }
+            return
+        }
+        guard timer == nil else { return }
         sample()
-        // Tick every second but only sample once the user's refresh interval
-        // has elapsed, so the slider applies live without rescheduling.
+        // Tick every second but only sample once the effective interval has
+        // elapsed, so the slider applies live without rescheduling. When the
+        // readout isn't on screen we fall back to a slow keep-warm cadence so a
+        // freshly-opened page isn't stale, without paying the mach/BSD cost
+        // every second while idle.
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                let interval = max(1, self.model.settings.statsRefreshSeconds)
+                let interval = self.model.statsVisible
+                    ? max(1, self.model.settings.statsRefreshSeconds)
+                    : Self.idleInterval
                 if Date().timeIntervalSince(self.lastSample) >= interval { self.sample() }
             }
         }
     }
+
+    /// Keep-warm cadence used when no stats readout is visible.
+    private static let idleInterval: TimeInterval = 30
 
     private func sample() {
         lastSample = Date()

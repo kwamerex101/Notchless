@@ -4,14 +4,16 @@ import SwiftUI
 /// draggable scrubber, and the transport row (see PLAN.md §1.1).
 struct NowPlayingExpandedView: View {
     let info: NowPlayingInfo?
-    var musicSpectrum: [CGFloat] = []
+    @ObservedObject var audio: AudioLevelsModel
     let metrics: NotchMetrics
     var glow: Color? = nil
     var onCommand: (MediaCommand) -> Void = { _ in }
     var onActivateSource: () -> Void = {}
+    var artworkNamespace: Namespace.ID? = nil
 
     @State private var scrubbing = false
     @State private var scrubValue: Double = 0
+    @State private var scrubHovering = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -41,7 +43,7 @@ struct NowPlayingExpandedView: View {
             }
             Spacer(minLength: 6)
             VisualizerBars(isPlaying: info?.isPlaying ?? false, color: glow ?? .white,
-                           barCount: 7, height: 18, spectrum: musicSpectrum)
+                           barCount: 7, height: 18, spectrum: audio.musicSpectrum)
                 .frame(width: 44)
         }
     }
@@ -57,6 +59,7 @@ struct NowPlayingExpandedView: View {
         }
         .frame(width: 44, height: 44)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .matchedArtwork(artworkNamespace)
         .overlay(alignment: .bottomTrailing) {
             if info?.bundleIdentifier != nil {
                 Image(systemName: "arrow.up.forward.app.fill")
@@ -71,17 +74,42 @@ struct NowPlayingExpandedView: View {
     }
 
     private var scrubber: some View {
-        let progress = scrubbing ? scrubValue : (info?.progress ?? 0)
+        // Drive the position from a local 2 Hz clock while playing, so the
+        // fill and time labels advance smoothly without the model republishing.
+        Group {
+            if info?.isPlaying == true {
+                TimelineView(.periodic(from: .now, by: 0.5)) { ctx in scrubberRow(now: ctx.date) }
+            } else {
+                scrubberRow(now: Date())
+            }
+        }
+    }
+
+    private func scrubberRow(now: Date) -> some View {
+        let progress = scrubbing ? scrubValue : (info?.progress(at: now) ?? 0)
+        let trackHeight: CGFloat = (scrubHovering || scrubbing) ? 9 : 6
         return HStack(spacing: 8) {
-            Text(info?.elapsedText ?? "0:00")
-                .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+            Text(info?.elapsedText(at: now) ?? "0:00")
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 34, alignment: .leading)
+                .contentTransition(.numericText())
             GeometryReader { geo in
+                let fillWidth = geo.size.width * CGFloat(progress)
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.white.opacity(0.2))
-                    Capsule().fill(Color.white).frame(width: geo.size.width * CGFloat(progress))
+                    Capsule().fill(Color.white).frame(width: fillWidth)
+                        // Non-scrubbing progress glides between the 2 Hz updates.
+                        .animation(scrubbing ? nil : .linear(duration: 0.5), value: fillWidth)
+                    // A grab knob at the fill edge while hovering/scrubbing.
+                    if scrubHovering || scrubbing {
+                        Circle().fill(.white).frame(width: 11, height: 11)
+                            .shadow(color: .black.opacity(0.3), radius: 2)
+                            .offset(x: min(max(fillWidth - 5.5, 0), geo.size.width - 11))
+                    }
                 }
-                .contentShape(Rectangle())
+                // Tall invisible hit area centred on the thin track.
+                .frame(height: geo.size.height, alignment: .center)
+                .contentShape(Rectangle().inset(by: -8))
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { v in
@@ -91,28 +119,35 @@ struct NowPlayingExpandedView: View {
                         .onEnded { _ in
                             if let d = info?.duration, d > 0 { onCommand(.seek(scrubValue * d)) }
                             scrubbing = false
+                            if SettingsStore.shared.hapticFeedback { HapticService.tap() }
                         }
                 )
             }
-            .frame(height: 6)
-            Text(info?.remainingText ?? "-0:00")
-                .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+            .frame(height: trackHeight)
+            .animation(NotchMotion.micro, value: trackHeight)
+            .onHover { scrubHovering = $0 }
+            Text(info?.remainingText(at: now) ?? "-0:00")
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 40, alignment: .trailing)
+                .contentTransition(.numericText())
         }
     }
 
     private var transport: some View {
         HStack(spacing: 26) {
-            transportButton("shuffle", size: 13) { onCommand(.toggleShuffle) }
-            transportButton("backward.fill", size: 15) { onCommand(.previous) }
+            transportButton("shuffle", size: 13, label: "Shuffle") { onCommand(.toggleShuffle) }
+            transportButton("backward.fill", size: 15, label: "Previous") { onCommand(.previous) }
             Button { onCommand(.playPause) } label: {
                 Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 34, height: 34)
                     .background(Circle().fill(Color.white.opacity(0.14)))
-            }.buttonStyle(.plain)
-            transportButton("forward.fill", size: 15) { onCommand(.next) }
+            }
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel((info?.isPlaying ?? false) ? "Pause" : "Play")
+            transportButton("forward.fill", size: 15, label: "Next") { onCommand(.next) }
             outputPicker
         }
     }
@@ -142,11 +177,14 @@ struct NowPlayingExpandedView: View {
         .fixedSize()
     }
 
-    private func transportButton(_ name: String, size: CGFloat, action: @escaping () -> Void) -> some View {
+    private func transportButton(_ name: String, size: CGFloat, label: String,
+                                 action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: name)
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.85))
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(NotchButtonStyle())
+        .accessibilityLabel(label)
     }
 }

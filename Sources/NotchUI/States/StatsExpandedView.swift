@@ -42,7 +42,7 @@ struct StatsExpandedView: View {
                     Capsule().fill(Color.white.opacity(0.12))
                     Capsule().fill(tint)
                         .frame(width: geo.size.width * min(1, max(0, fraction)))
-                        .animation(.easeOut(duration: 0.3), value: fraction)
+                        .animation(NotchMotion.fill, value: fraction)
                 }
             }
             .frame(height: 6)

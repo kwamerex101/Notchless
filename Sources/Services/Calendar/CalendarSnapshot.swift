@@ -17,6 +17,9 @@ struct CalendarSnapshot: Equatable {
     var weatherText: String?
     var weatherSymbol: String?
     var temperature: String?
+    /// True when calendar access is denied/restricted — the panel shows a
+    /// "grant access" prompt instead of pretending the day is clear.
+    var authDenied: Bool = false
 
     var hasEvents: Bool { !events.isEmpty }
 

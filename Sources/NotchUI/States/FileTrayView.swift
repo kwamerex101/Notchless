@@ -24,10 +24,12 @@ struct FileTrayView: View {
                     .foregroundStyle(.white.opacity(0.8))
                 Spacer()
                 if !store.isEmpty {
-                    Button { store.clear() } label: {
+                    Button { withAnimation(NotchMotion.quick) { store.clear() } } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.white.opacity(0.5))
-                    }.buttonStyle(.plain)
+                    }
+                    .buttonStyle(NotchButtonStyle())
+                    .accessibilityLabel("Clear file tray")
                 }
             }
             if store.isEmpty {
@@ -40,8 +42,10 @@ struct FileTrayView: View {
                     HStack(spacing: 10) {
                         ForEach(store.items, id: \.self) { url in
                             chip(url)
+                                .transition(.scale.combined(with: .opacity))
                         }
                     }
+                    .animation(NotchMotion.quick, value: store.items)
                 }
             }
         }

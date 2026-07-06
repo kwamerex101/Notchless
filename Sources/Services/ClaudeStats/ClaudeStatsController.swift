@@ -4,13 +4,27 @@ import Foundation
 /// per-message token usage and publishes aggregated stats to
 /// `model.claudeStats`. Parsing runs off the main thread and refreshes on a
 /// slow timer since it walks the transcript files.
+///
+/// Parsing is incremental: each file's per-file aggregate is cached by
+/// (path, mtime, size), so a refresh only re-reads transcripts that actually
+/// changed — the second refresh of an unchanged tree touches no file contents.
 @MainActor
 final class ClaudeStatsController {
     private let model: NotchViewModel
     private var timer: Timer?
 
-    init(model: NotchViewModel) {
+    /// Per-file aggregate cache, keyed by absolute path. Carried across refreshes.
+    private var cache: [String: CachedFile] = [:]
+    /// Number of files whose contents were read on the last refresh — test hook.
+    private(set) var parsedFileCount = 0
+
+    /// Directory walked for transcripts. Overridable for tests.
+    private let base: URL
+
+    init(model: NotchViewModel, base: URL? = nil) {
         self.model = model
+        self.base = base
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/projects")
     }
 
     func start() {
@@ -21,22 +35,60 @@ final class ClaudeStatsController {
     }
 
     private func refresh() {
+        let base = self.base
+        let snapshot = cache
         Task.detached(priority: .utility) {
-            let stats = Self.parse()
-            await MainActor.run { self.model.claudeStats = stats }
+            let result = Self.parse(base: base, cache: snapshot)
+            await MainActor.run {
+                self.cache = result.cache
+                self.parsedFileCount = result.parsedCount
+                self.model.claudeStats = result.stats
+            }
         }
     }
 
-    /// One message's usage for windowed cost aggregation.
-    private struct Entry { let date: Date; let cost: Double; let tokens: Int }
+    // MARK: - Types
 
-    /// Walks recent transcript files, summing tokens (for the pie/line) and
-    /// estimated cost across time windows (5-hour block, week, day, 30 days).
-    nonisolated static func parse() -> ClaudeUsageStats? {
+    /// One message's usage for windowed cost aggregation.
+    struct Entry: Sendable { let date: Date; let cost: Double; let tokens: Int }
+
+    /// The additive contribution of a single transcript file — everything the
+    /// final stats need can be summed across files, so this is what we cache.
+    struct FileAggregate: Sendable {
+        var input = 0
+        var output = 0
+        var cache = 0
+        var byDay: [Date: Int] = [:]
+        var byDayCost: [Date: Double] = [:]
+        var entries: [Entry] = []
+    }
+
+    /// A cached file aggregate plus the (mtime, size) it was computed from.
+    struct CachedFile: Sendable {
+        let mtime: Date
+        let size: Int
+        let aggregate: FileAggregate
+    }
+
+    /// Result of a parse pass: the stats, the refreshed cache, and how many
+    /// files were actually read (0 on an unchanged tree).
+    struct ParseResult: Sendable {
+        let stats: ClaudeUsageStats?
+        let cache: [String: CachedFile]
+        let parsedCount: Int
+    }
+
+    // MARK: - Parsing
+
+    /// Walks recent transcript files under `base`, reusing `cache` for any file
+    /// whose (mtime, size) is unchanged and re-reading only the rest, then sums
+    /// tokens (for the pie/line) and estimated cost across time windows.
+    nonisolated static func parse(base: URL, cache: [String: CachedFile]) -> ParseResult {
         let fm = FileManager.default
-        let base = fm.homeDirectoryForCurrentUser.appendingPathComponent(".claude/projects")
-        guard let walker = fm.enumerator(at: base, includingPropertiesForKeys: [.contentModificationDateKey]) else {
-            return nil
+        guard let walker = fm.enumerator(at: base, includingPropertiesForKeys: [
+            .contentModificationDateKey, .fileSizeKey,
+        ]) else {
+            return ParseResult(stats: nil, cache: [:], parsedCount: 0)
         }
 
         let cutoff = Date().addingTimeInterval(-30 * 86_400)
@@ -47,40 +99,84 @@ final class ClaudeStatsController {
         let isoPlain = ISO8601DateFormatter()
         let calendar = Calendar.current
 
+        var newCache: [String: CachedFile] = [:]
+        var parsedCount = 0
+        var aggregates: [FileAggregate] = []
+
+        for case let url as URL in walker where url.pathExtension == "jsonl" {
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+            let modified = values?.contentModificationDate
+            if let modified, modified < cutoff { continue }   // drops old files + evicts their cache
+            let size = values?.fileSize ?? -1
+            let path = url.path
+
+            // Reuse the cached aggregate when the file is byte-for-byte the same.
+            if let cached = cache[path], cached.mtime == modified, cached.size == size {
+                newCache[path] = cached
+                aggregates.append(cached.aggregate)
+                continue
+            }
+
+            guard let contents = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            let aggregate = parseFile(contents, iso: iso, isoPlain: isoPlain, calendar: calendar)
+            parsedCount += 1
+            aggregates.append(aggregate)
+            if let modified {
+                newCache[path] = CachedFile(mtime: modified, size: size, aggregate: aggregate)
+            }
+        }
+
+        let stats = combine(aggregates, calendar: calendar)
+        return ParseResult(stats: stats, cache: newCache, parsedCount: parsedCount)
+    }
+
+    /// Parses one transcript file's contents into its additive aggregate.
+    private nonisolated static func parseFile(_ contents: String, iso: ISO8601DateFormatter,
+                                              isoPlain: ISO8601DateFormatter,
+                                              calendar: Calendar) -> FileAggregate {
+        var agg = FileAggregate()
+        contents.enumerateLines { line, _ in
+            guard line.contains("\"usage\"") else { return }
+            let inTok = intField(line, "input_tokens")
+            let outTok = intField(line, "output_tokens")
+            let cacheWrite = intField(line, "cache_creation_input_tokens")
+            let cacheRead = intField(line, "cache_read_input_tokens")
+            let tokens = inTok + outTok + cacheWrite + cacheRead
+            guard tokens > 0 else { return }
+
+            agg.input += inTok
+            agg.output += outTok
+            agg.cache += cacheWrite + cacheRead
+
+            let pricing = ModelPricing.forModel(stringField(line, "model") ?? "")
+            let cost = pricing.cost(input: inTok, output: outTok, cacheWrite: cacheWrite, cacheRead: cacheRead)
+
+            if let stamp = stringField(line, "timestamp"),
+               let date = iso.date(from: stamp) ?? isoPlain.date(from: stamp) {
+                let day = calendar.startOfDay(for: date)
+                agg.byDay[day, default: 0] += tokens
+                agg.byDayCost[day, default: 0] += cost
+                agg.entries.append(Entry(date: date, cost: cost, tokens: tokens))
+            }
+        }
+        return agg
+    }
+
+    /// Merges per-file aggregates into the published stats (30-day series, cost
+    /// windows, session block). Identical output to the old whole-tree parse.
+    private nonisolated static func combine(_ aggregates: [FileAggregate],
+                                            calendar: Calendar) -> ClaudeUsageStats? {
         var input = 0, output = 0, cache = 0
         var byDay: [Date: Int] = [:]
         var byDayCost: [Date: Double] = [:]
         var entries: [Entry] = []
-
-        for case let url as URL in walker where url.pathExtension == "jsonl" {
-            if let modified = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
-               modified < cutoff { continue }
-            guard let contents = try? String(contentsOf: url, encoding: .utf8) else { continue }
-
-            contents.enumerateLines { line, _ in
-                guard line.contains("\"usage\"") else { return }
-                let inTok = intField(line, "input_tokens")
-                let outTok = intField(line, "output_tokens")
-                let cacheWrite = intField(line, "cache_creation_input_tokens")
-                let cacheRead = intField(line, "cache_read_input_tokens")
-                let tokens = inTok + outTok + cacheWrite + cacheRead
-                guard tokens > 0 else { return }
-
-                input += inTok
-                output += outTok
-                cache += cacheWrite + cacheRead
-
-                let pricing = ModelPricing.forModel(stringField(line, "model") ?? "")
-                let cost = pricing.cost(input: inTok, output: outTok, cacheWrite: cacheWrite, cacheRead: cacheRead)
-
-                if let stamp = stringField(line, "timestamp"),
-                   let date = iso.date(from: stamp) ?? isoPlain.date(from: stamp) {
-                    let day = calendar.startOfDay(for: date)
-                    byDay[day, default: 0] += tokens
-                    byDayCost[day, default: 0] += cost
-                    entries.append(Entry(date: date, cost: cost, tokens: tokens))
-                }
-            }
+        for agg in aggregates {
+            input += agg.input
+            output += agg.output
+            cache += agg.cache
+            for (day, tokens) in agg.byDay { byDay[day, default: 0] += tokens }
+            for (day, cost) in agg.byDayCost { byDayCost[day, default: 0] += cost }
+            entries.append(contentsOf: agg.entries)
         }
 
         guard input + output + cache > 0 else { return nil }

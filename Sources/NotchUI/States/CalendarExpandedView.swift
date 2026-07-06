@@ -46,7 +46,20 @@ struct CalendarExpandedView: View {
                 .padding(.top, 8)
             }
 
-            if let next = snap.events.first {
+            if snap.authDenied {
+                Text("Calendar access off").font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white).padding(.top, 2)
+                Button {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Text("Enable in Settings")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color(nsColor: .systemPink))
+                }
+                .buttonStyle(.plain)
+            } else if let next = snap.events.first {
                 Text(next.title).font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white).lineLimit(1)
                     .padding(.top, 2)
