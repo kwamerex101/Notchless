@@ -32,6 +32,8 @@ enum DebugRender {
         render(.expanded(.duo), np: np, cal: cal, name: "state_expanded_duo", metrics: metrics)
         render(.fileTray(expanded: true), np: nil, cal: nil, name: "state_filetray_empty", metrics: metrics)
 
+        render(.idle(.dictation), np: nil, cal: nil, name: "state_dictation_idle", metrics: metrics)
+        render(.expanded(.dictation), np: nil, cal: nil, name: "state_dictation_hint", metrics: metrics)
         render(.dictation(.recording), np: nil, cal: nil, name: "state_dictation_recording", metrics: metrics)
         render(.dictation(.transcribing), np: nil, cal: nil, name: "state_dictation_transcribing", metrics: metrics)
         render(.dictation(.success("Hey, can you send me the notes from today")), np: nil, cal: nil, name: "state_dictation_success", metrics: metrics)
@@ -83,6 +85,7 @@ enum DebugRender {
                     case .playing, .none: NowPlayingExpandedView(info: np, metrics: metrics, glow: .pink)
                     case .calendar: CalendarExpandedView(snapshot: cal, metrics: metrics)
                     case .duo: DuoExpandedView(info: np, snapshot: cal, metrics: metrics)
+                    case .dictation: DictationHintView(metrics: metrics)
                     }
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)

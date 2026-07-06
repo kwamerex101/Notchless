@@ -33,6 +33,12 @@ struct IdleCompactView: View {
             Text(calendar?.dayNumber ?? "")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.white)
+        case .dictation:
+            Image(systemName: "mic.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(Color.white.opacity(0.14)))
         }
     }
 
@@ -45,6 +51,10 @@ struct IdleCompactView: View {
             Image(systemName: "calendar")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color(nsColor: .systemPink))
+        case .dictation:
+            // A calm, muted idle waveform — springs to life (red) when recording.
+            VisualizerBars(isPlaying: false, color: .white.opacity(0.55), height: 12)
+                .frame(width: 20)
         }
     }
 
