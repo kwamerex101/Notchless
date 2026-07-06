@@ -46,8 +46,9 @@ struct NowPlayingExpandedView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 6)
-            VisualizerBars(isPlaying: info?.isPlaying ?? false, height: 16, spectrum: musicSpectrum)
-                .frame(width: 22)
+            VisualizerBars(isPlaying: info?.isPlaying ?? false, color: glow ?? .white,
+                           barCount: 7, height: 18, spectrum: musicSpectrum)
+                .frame(width: 44)
         }
     }
 

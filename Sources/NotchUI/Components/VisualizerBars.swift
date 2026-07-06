@@ -32,8 +32,9 @@ struct VisualizerBars: View {
         HStack(alignment: .center, spacing: 2.5) {
             ForEach(0..<barCount, id: \.self) { i in
                 Capsule()
-                    .fill(color.opacity(isPlaying ? 1 : 0.5))
-                    .frame(width: 2.5, height: max(2.5, height * level(i)))
+                    .fill(color.opacity(isPlaying ? 1 : 0.55))
+                    .frame(width: 3.5, height: max(3, height * level(i)))
+                    .shadow(color: color.opacity(isPlaying ? 0.6 : 0), radius: 3)
             }
         }
         .frame(height: height)
@@ -50,7 +51,8 @@ struct VisualizerBars: View {
     private func level(_ i: Int) -> CGFloat {
         let distance = abs(i - center)
         if useSpectrum {
-            return max(0.14, spectrum[min(distance, spectrum.count - 1)])
+            // Bolder swing: amplify the band level and clamp.
+            return max(0.16, min(1, spectrum[min(distance, spectrum.count - 1)] * 1.35))
         }
         if isPlaying {
             // Taller toward the centre for a lively equalizer shape.
