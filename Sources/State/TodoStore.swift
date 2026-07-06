@@ -1,17 +1,68 @@
 import SwiftUI
 
-/// A single task in the notch checklist. Pure data — title + done state.
+/// A checkable sub-item of a `Todo`. Pure data.
+struct Subtask: Identifiable, Codable, Equatable {
+    let id: UUID
+    var title: String
+    var isDone: Bool
+
+    init(id: UUID = UUID(), title: String, isDone: Bool = false) {
+        self.id = id
+        self.title = title
+        self.isDone = isDone
+    }
+}
+
+/// A single task in the notch checklist: title + done state, plus an optional
+/// ordered list of subtasks and a free-text notes field.
 struct Todo: Identifiable, Codable, Equatable {
     let id: UUID
     var title: String
     var isDone: Bool
     var createdAt: Date
+    var subtasks: [Subtask]
+    var notes: String
 
-    init(id: UUID = UUID(), title: String, isDone: Bool = false, createdAt: Date = Date()) {
+    init(id: UUID = UUID(), title: String, isDone: Bool = false,
+         createdAt: Date = Date(), subtasks: [Subtask] = [], notes: String = "") {
         self.id = id
         self.title = title
         self.isDone = isDone
         self.createdAt = createdAt
+        self.subtasks = subtasks
+        self.notes = notes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, isDone, createdAt, subtasks, notes
+    }
+
+    // Custom decode so v1 JSON (no `subtasks`/`notes`) still loads — existing
+    // saved tasks must not be lost. Encoding stays synthesized.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        isDone = try c.decode(Bool.self, forKey: .isDone)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        subtasks = try c.decodeIfPresent([Subtask].self, forKey: .subtasks) ?? []
+        notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
+    }
+
+    /// (completed, total) subtasks — drives the "2/5" progress badge.
+    var subtaskProgress: (done: Int, total: Int) {
+        (subtasks.filter(\.isDone).count, subtasks.count)
+    }
+
+    /// True when there's non-whitespace note text (drives the note/link glyph).
+    var hasNotes: Bool {
+        !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// True only when there is at least one subtask and all are done — the
+    /// trigger for hybrid auto-complete.
+    var allSubtasksDone: Bool {
+        !subtasks.isEmpty && subtasks.allSatisfy(\.isDone)
     }
 }
 

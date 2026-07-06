@@ -139,4 +139,47 @@ final class TodoStoreTests: XCTestCase {
         cancellable.cancel()
         XCTAssertEqual(store.items.map(\.title), ["Remote add"])
     }
+
+    // MARK: - Model: subtasks, notes, migration
+
+    func test_todo_derivedProgressAndFlags() {
+        var todo = Todo(title: "Parent")
+        XCTAssertEqual(todo.subtaskProgress.total, 0)
+        XCTAssertFalse(todo.allSubtasksDone)   // empty is NOT "all done"
+        XCTAssertFalse(todo.hasNotes)
+        todo.subtasks = [Subtask(title: "a", isDone: true), Subtask(title: "b", isDone: false)]
+        todo.notes = "  hello  "
+        XCTAssertEqual(todo.subtaskProgress.done, 1)
+        XCTAssertEqual(todo.subtaskProgress.total, 2)
+        XCTAssertFalse(todo.allSubtasksDone)
+        XCTAssertTrue(todo.hasNotes)
+        todo.subtasks[1].isDone = true
+        XCTAssertTrue(todo.allSubtasksDone)
+    }
+
+    func test_todo_hasNotes_isFalseForWhitespaceOnly() {
+        var todo = Todo(title: "P")
+        todo.notes = "   \n "
+        XCTAssertFalse(todo.hasNotes)
+    }
+
+    func test_todo_decodesOldJSONWithoutSubtasksOrNotes() throws {
+        // v1 JSON: no `subtasks` / `notes` keys; createdAt is the default
+        // JSONEncoder Date form (timeIntervalSinceReferenceDate, a number).
+        let id = UUID()
+        let json = "{\"id\":\"\(id.uuidString)\",\"title\":\"Legacy\",\"isDone\":false,\"createdAt\":0}"
+        let todo = try JSONDecoder().decode(Todo.self, from: Data(json.utf8))
+        XCTAssertEqual(todo.id, id)
+        XCTAssertEqual(todo.title, "Legacy")
+        XCTAssertTrue(todo.subtasks.isEmpty)
+        XCTAssertEqual(todo.notes, "")
+    }
+
+    func test_todo_roundTripsSubtasksAndNotes() throws {
+        var todo = Todo(title: "P", notes: "see https://x.com")
+        todo.subtasks = [Subtask(title: "s1", isDone: true)]
+        let data = try JSONEncoder().encode(todo)
+        let back = try JSONDecoder().decode(Todo.self, from: data)
+        XCTAssertEqual(back, todo)
+    }
 }
