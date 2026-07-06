@@ -97,7 +97,7 @@ final class SettingsStore: ObservableObject {
         defaults.register(defaults: [
             Keys.launchAtLogin: true,
             Keys.syncViaICloud: true,
-            Keys.hideInFullscreen: true,
+            Keys.hideInFullscreen: false,   // stay visible over fullscreen by default
             Keys.hideInMissionControl: true,
             Keys.hideFromScreenCapture: false,
             Keys.forceSimulatedNotch: false,
