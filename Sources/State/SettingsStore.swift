@@ -72,7 +72,7 @@ final class SettingsStore: ObservableObject {
             Keys.hideFromScreenCapture: false,
             Keys.forceSimulatedNotch: false,
             Keys.simulatedDisplay: SimulatedDisplay.main.rawValue,
-            Keys.idleActivity: NotchActivity.playing.rawValue,
+            Keys.idleActivity: NotchActivity.auto.rawValue,
             Keys.idleMostRecent: false,
             Keys.forceEnableActivity: true,
             Keys.progressiveBlur: true,

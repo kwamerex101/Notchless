@@ -18,7 +18,7 @@ struct NotchSizing {
 
         case let .idle(activity):
             switch activity {
-            case .none, .playing:
+            case .none, .playing, .auto:
                 return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .calendar:
                 return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
@@ -49,7 +49,7 @@ struct NotchSizing {
 
         case let .expanded(activity):
             switch activity {
-            case .playing, .none:
+            case .playing, .none, .auto:
                 return NotchSizing(width: max(w + 40, 480), height: 178, topRadius: 10, bottomRadius: 24)
             case .calendar:
                 return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)

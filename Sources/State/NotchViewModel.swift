@@ -61,28 +61,49 @@ final class NotchViewModel: ObservableObject {
             return .fileTray(expanded: interaction == .hovering)
         }
 
-        let idle = idleActivity
-        if interaction == .hovering, idle != .none { return .idle(idle) }
-        if idle != .none, hasIdleContent(idle) { return .idle(idle) }
+        if let activity = resolvedIdleActivity(hovering: interaction == .hovering) {
+            return .idle(activity)
+        }
         return .bare
+    }
+
+    /// The concrete activity to rest in the notch at idle, or nil for a bare
+    /// notch. In Auto mode this is whatever Live Activity is currently live.
+    private func resolvedIdleActivity(hovering: Bool) -> NotchActivity? {
+        switch settings.idleActivity {
+        case .none:
+            return nil
+        case .auto:
+            // Show only what's actually happening — nothing otherwise.
+            return autoIdleActivity()
+        default:
+            let idle = settings.idleActivity
+            if hovering { return idle }
+            return hasIdleContent(idle) ? idle : nil
+        }
+    }
+
+    /// Ordered Live-Activity providers for Auto mode; the first live one wins.
+    /// New activities (timers, screen recording, AirDrop…) slot in here.
+    private func autoIdleActivity() -> NotchActivity? {
+        if nowPlaying != nil { return .playing }
+        return nil
     }
 
     /// Which activity a click/hover expands into.
     var activeExpandedActivity: NotchActivity {
-        let idle = settings.idleActivity
-        if idle == .none {
+        switch settings.idleActivity {
+        case .none, .auto:
             return nowPlaying != nil ? .playing : .calendar
+        default:
+            return settings.idleActivity
         }
-        return idle
-    }
-
-    private var idleActivity: NotchActivity {
-        settings.idleActivity
     }
 
     private func hasIdleContent(_ activity: NotchActivity) -> Bool {
         switch activity {
         case .none: return false
+        case .auto: return autoIdleActivity() != nil
         case .playing: return nowPlaying != nil
         case .calendar: return true
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
