@@ -64,7 +64,7 @@ struct DictationView: View {
         switch phase {
         case .recording:
             RecordingWaveform(level: level)
-                .frame(width: 46, height: 22)
+                .frame(width: 96, height: 26)
         case .transcribing, .cleaning:
             ProgressView()
                 .controlSize(.small)
@@ -114,18 +114,22 @@ struct DictationHintView: View {
     }
 }
 
-/// A live, symmetric recording waveform that reacts to the audio level.
+/// A live, symmetric recording waveform that reacts to the audio level with
+/// energetic up-and-down motion.
 struct RecordingWaveform: View {
     var level: CGFloat
-    var barCount: Int = 5
+    var barCount: Int = 11
+
+    private let maxHeight: CGFloat = 26
+    private let minHeight: CGFloat = 3
 
     @State private var seeds: [CGFloat]
-    private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 0.07, on: .main, in: .common).autoconnect()
 
-    init(level: CGFloat, barCount: Int = 5) {
+    init(level: CGFloat, barCount: Int = 11) {
         self.level = level
         self.barCount = barCount
-        _seeds = State(initialValue: (0..<barCount).map { _ in CGFloat.random(in: 0.3...1) })
+        _seeds = State(initialValue: (0..<barCount).map { _ in CGFloat.random(in: 0.1...1) })
     }
 
     var body: some View {
@@ -133,12 +137,19 @@ struct RecordingWaveform: View {
             ForEach(0..<barCount, id: \.self) { i in
                 Capsule()
                     .fill(Color(nsColor: .systemRed))
-                    .frame(width: 3, height: max(4, 22 * seeds[i] * max(0.25, level)))
+                    .frame(width: 3, height: height(at: i))
             }
         }
-        .animation(.easeInOut(duration: 0.1), value: seeds)
+        // Springy so bars visibly snap up and down each tick.
+        .animation(.spring(response: 0.18, dampingFraction: 0.55), value: seeds)
         .onReceive(timer) { _ in
-            seeds = seeds.map { _ in CGFloat.random(in: 0.3...1) }
+            seeds = seeds.map { _ in CGFloat.random(in: 0.1...1) }
         }
+    }
+
+    private func height(at index: Int) -> CGFloat {
+        // Keep it lively even in quiet moments, and swing wide when loud.
+        let energy = max(0.45, min(1, level * 1.4))
+        return minHeight + (maxHeight - minHeight) * seeds[index] * energy
     }
 }
