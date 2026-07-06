@@ -1,3 +1,4 @@
+#if DEBUG
 import Foundation
 
 /// Dev-only deterministic assertions for Goal math and GoalStore behavior.
@@ -115,3 +116,4 @@ enum GoalSelfTest {
         check("corrupt data falls back to empty", corrupt.goals.isEmpty && corrupt.completed.isEmpty)
     }
 }
+#endif

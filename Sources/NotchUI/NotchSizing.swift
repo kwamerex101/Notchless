@@ -2,11 +2,24 @@ import SwiftUI
 
 /// Target geometry for a given content state, derived from the physical notch
 /// metrics. Tunable against `references/` — see PLAN.md §3.
-struct NotchSizing {
+struct NotchSizing: Equatable {
     var width: CGFloat
     var height: CGFloat
     var topRadius: CGFloat
     var bottomRadius: CGFloat
+
+    /// The interactive band for `content` in screen space (bottom-left origin,
+    /// matching `NSEvent.mouseLocation`), padded by `pad` for easy targeting.
+    /// Single source of truth for the hover region.
+    static func screenBand(for content: NotchContent, metrics: NotchMetrics, pad: CGFloat) -> CGRect {
+        let sizing = size(for: content, metrics: metrics)
+        return CGRect(
+            x: metrics.notchCenterX - sizing.width / 2 - pad,
+            y: metrics.screenTopY - sizing.height - pad,
+            width: sizing.width + pad * 2,
+            height: sizing.height + pad * 2
+        )
+    }
 
     static func size(for content: NotchContent, metrics: NotchMetrics) -> NotchSizing {
         let w = metrics.notchWidth

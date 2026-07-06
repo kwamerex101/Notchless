@@ -8,13 +8,12 @@ struct TodoExpandedView: View {
 
     @State private var newTitle = ""
     @FocusState private var addFocused: Bool
+    @Environment(\.notchKeyFocus) private var keyFocus
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Tasks")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                Text("Tasks").notchSectionHeader()
                 Spacer()
                 if store.openCount > 0 {
                     Text("\(store.openCount) left")
@@ -39,7 +38,7 @@ struct TodoExpandedView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .animation(.easeInOut(duration: 0.25), value: store.items)
+                .animation(NotchMotion.quick, value: store.items)
             }
 
             quickAdd
@@ -48,17 +47,20 @@ struct TodoExpandedView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear { addFocused = true }
+        .onAppear { keyFocus(true); addFocused = true }
+        .onDisappear { keyFocus(false) }
     }
 
     private func row(_ todo: Todo) -> some View {
         HStack(spacing: 10) {
-            Button { store.complete(todo.id) } label: {
+            Button { withAnimation(NotchMotion.micro) { store.complete(todo.id) } } label: {
                 Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))
+                    .contentTransition(.symbolEffect(.replace))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel(todo.isDone ? "Mark incomplete" : "Complete task")
 
             Text(todo.title)
                 .font(.system(size: 13))

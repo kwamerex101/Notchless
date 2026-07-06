@@ -14,7 +14,18 @@ final class PrivacyController {
         self.model = model
     }
 
-    func start() {
+    func start() { setEnabled(model.settings.privacyIndicatorEnabled) }
+
+    /// Starts or stops the camera/mic scan. Idempotent. When disabled the timer
+    /// is torn down and any published status is cleared, so the CMIO device
+    /// enumeration never runs while the indicator is off.
+    func setEnabled(_ on: Bool) {
+        guard on else {
+            timer?.invalidate(); timer = nil
+            if model.privacy != nil { model.privacy = nil }
+            return
+        }
+        guard timer == nil else { return }
         poll()
         timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }

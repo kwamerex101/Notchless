@@ -70,7 +70,7 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
     @MainActor
     private func seek(forward: Bool) {
         guard SettingsStore.shared.swipeToSeek, let info = model?.nowPlaying else { return }
-        let target = max(0, min(info.duration, info.elapsed + (forward ? 10 : -10)))
+        let target = max(0, min(info.duration, info.elapsed(at: Date()) + (forward ? 10 : -10)))
         onMediaCommand?(.seek(target))
     }
 

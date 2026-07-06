@@ -1,3 +1,4 @@
+#if DEBUG
 import SwiftUI
 import AppKit
 
@@ -94,6 +95,7 @@ enum DebugRender {
                                name: String, metrics: NotchMetrics) {
         let sizing = NotchSizing.size(for: content, metrics: metrics)
         let store = FileTrayStore()
+        let audio = AudioLevelsModel()
 
         let view = ZStack {
             NotchShape(topCornerRadius: sizing.topRadius, bottomCornerRadius: sizing.bottomRadius)
@@ -101,7 +103,7 @@ enum DebugRender {
             Group {
                 switch content {
                 case .idle(let a):
-                    IdleCompactView(activity: a, nowPlaying: np, calendar: cal, battery: battery, metrics: metrics)
+                    IdleCompactView(activity: a, nowPlaying: np, calendar: cal, battery: battery, audio: audio, metrics: metrics)
                         .id(a)
                 case .hud(let k):
                     HUDView(kind: k, metrics: metrics)
@@ -109,7 +111,7 @@ enum DebugRender {
                     NotificationView(note: n, metrics: metrics)
                 case .expanded(let a):
                     switch a {
-                    case .playing, .none, .auto: NowPlayingExpandedView(info: np, metrics: metrics, glow: .pink)
+                    case .playing, .none, .auto: NowPlayingExpandedView(info: np, audio: audio, metrics: metrics, glow: .pink)
                     case .calendar: CalendarExpandedView(snapshot: cal, metrics: metrics)
                     case .duo: DuoExpandedView(info: np, snapshot: cal, metrics: metrics)
                     case .dictation: DictationHintView(metrics: metrics)
@@ -125,7 +127,7 @@ enum DebugRender {
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)
                 case let .dictation(phase):
-                    DictationView(phase: phase, metrics: metrics, level: 0.7)
+                    DictationView(phase: phase, metrics: metrics, audio: audio)
                 case .mirror, .bare:
                     EmptyView()
                 }
@@ -144,3 +146,5 @@ enum DebugRender {
         }
     }
 }
+
+#endif

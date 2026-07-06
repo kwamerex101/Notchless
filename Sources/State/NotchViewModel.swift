@@ -22,9 +22,9 @@ final class NotchViewModel: ObservableObject {
     @Published var claudeStats: ClaudeUsageStats?
     /// The activity the user cycled to in the Auto carousel (nil = default top).
     @Published private var manualActivity: NotchActivity?
-    /// Live audio-band levels (low→high) from the system-audio tap, driving the
-    /// now-playing visualizer. Empty when not capturing.
-    @Published var musicSpectrum: [CGFloat] = []
+    /// High-frequency audio levels live here, off the god model, so the ~30 Hz
+    /// visualizer stream only invalidates the visualizer subtree.
+    let audio = AudioLevelsModel()
     /// Vibrant color sampled from the current artwork (album-art glow).
     @Published var artworkColor: Color?
 
@@ -42,10 +42,13 @@ final class NotchViewModel: ObservableObject {
     // Camera mirror
     @Published var showMirror = false
 
+    /// Set by AppDelegate to let in-notch text fields (Tasks quick-add, Goals
+    /// quick-log) request/release keyboard focus for the panel. `true` when a
+    /// field starts editing, `false` when it ends.
+    var requestKeyFocus: ((Bool) -> Void)?
+
     // Dictation (ListenToMe)
     @Published var dictation: DictationPhase?
-    @Published var dictationLevel: CGFloat = 0.5
-    @Published var dictationSpectrum: [CGFloat] = []
     let dictationSettings = DictationSettings.shared
     let dictationDictionary = DictationDictionary.shared
     let dictationHistory = DictationHistory.shared
@@ -56,10 +59,12 @@ final class NotchViewModel: ObservableObject {
     private var hudDismiss: DispatchWorkItem?
     private var notifDismiss: DispatchWorkItem?
     private var collapseWork: DispatchWorkItem?
+    private var hoverIntentWork: DispatchWorkItem?
     private var goalObserver: AnyCancellable?
 
-    static let morph = Animation.spring(response: 0.42, dampingFraction: 0.78)
-    static let quickMorph = Animation.spring(response: 0.3, dampingFraction: 0.82)
+    // Thin aliases onto the shared motion vocabulary (NotchMotion).
+    static let morph = NotchMotion.morph
+    static let quickMorph = NotchMotion.quick
 
     init(settings: SettingsStore? = nil) {
         self.settings = settings ?? .shared
@@ -89,6 +94,30 @@ final class NotchViewModel: ObservableObject {
             return .idle(activity)
         }
         return .bare
+    }
+
+    /// True when a system-stats readout is actually on screen (the idle cue or
+    /// the expanded page). Lets `StatsController` sample at the user's interval
+    /// only when it matters and idle-sample slowly otherwise.
+    var statsVisible: Bool {
+        switch content {
+        case .idle(.stats), .expanded(.stats): return true
+        default: return false
+        }
+    }
+
+    /// True when the now-playing music visualizer is actually on screen, so the
+    /// system-audio tap only needs to run then (it still also requires playback
+    /// and the setting). The dictation waveform is fed separately and isn't
+    /// gated by this.
+    var visualizerOnScreen: Bool {
+        switch content {
+        case .idle(.playing), .idle(.auto), .idle(.none), .idle(.duo),
+             .expanded(.playing), .expanded(.auto), .expanded(.none), .expanded(.duo):
+            return true
+        default:
+            return false
+        }
     }
 
     /// Every Live Activity that's currently live, in priority order. In Auto
@@ -154,8 +183,22 @@ final class NotchViewModel: ObservableObject {
         let current = (manualActivity.flatMap { carousel.contains($0) ? $0 : nil })
             ?? liveActivities.first ?? carousel[0]
         let index = carousel.firstIndex(of: current) ?? 0
-        manualActivity = carousel[(index + 1) % carousel.count]
+        // Same motion + haptic as a tab tap, so a swipe animates identically
+        // instead of jump-cutting.
+        lastMoveDirection = 1
+        lastMoveKind = .page
+        withAnimation(Self.morph) { manualActivity = carousel[(index + 1) % carousel.count] }
+        if settings.hapticFeedback { HapticService.tap() }
     }
+
+    /// Direction of the most recent carousel move (+1 forward, -1 back), so the
+    /// view can slide page content the right way. Read by NotchRootView.
+    private(set) var lastMoveDirection = 1
+
+    /// Whether the last content change was a carousel page move (slide) or a
+    /// state change like expand/collapse (scale from the notch).
+    enum MoveKind { case state, page }
+    private(set) var lastMoveKind: MoveKind = .state
 
     /// Jumps the carousel straight to `activity` (a tab tap). Mirrors what a
     /// swipe does for one step: sets the manual pick and gives haptic feedback.
@@ -165,6 +208,13 @@ final class NotchViewModel: ObservableObject {
     /// tappable even when nothing is live.
     func select(_ activity: NotchActivity) {
         guard carouselActivities.contains(activity) else { return }
+        // Slide toward the tapped page: derive direction from the index delta.
+        let carousel = carouselActivities
+        if let from = (manualActivity ?? liveActivities.first).flatMap({ carousel.firstIndex(of: $0) }),
+           let to = carousel.firstIndex(of: activity) {
+            lastMoveDirection = to >= from ? 1 : -1
+        }
+        lastMoveKind = .page
         withAnimation(Self.morph) { manualActivity = activity }
         if settings.hapticFeedback { HapticService.tap() }
     }
@@ -209,27 +259,38 @@ final class NotchViewModel: ObservableObject {
 
     func hoverChanged(_ hovering: Bool) {
         collapseWork?.cancel()
+        hoverIntentWork?.cancel()
+        lastMoveKind = .state
         if hovering {
-            // Expand directly on hover — no click required.
-            if interaction != .expanded {
-                if settings.hapticFeedback { HapticService.tap() }
-                withAnimation(Self.morph) { interaction = .expanded }
+            guard interaction != .expanded else { return }
+            // Acknowledge the hover instantly with a slight magnetic growth, but
+            // wait out a short dwell before fully expanding, so a mouse-past
+            // across the notch doesn't detonate the whole panel.
+            withAnimation(NotchMotion.micro) { interaction = .hovering }
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                if self.settings.hapticFeedback { HapticService.tap() }
+                withAnimation(Self.morph) { self.interaction = .expanded }
             }
+            hoverIntentWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.hoverDwell, execute: work)
         } else {
             // Grace delay before collapsing so brief exits don't flicker.
             let work = DispatchWorkItem { [weak self] in
                 guard let self else { return }
+                self.lastMoveKind = .state
                 withAnimation(Self.morph) {
                     self.interaction = .collapsed
                     if self.settings.idleActivity != .auto { self.manualActivity = nil }
                 }
             }
             collapseWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.collapseGrace, execute: work)
         }
     }
 
     func toggleMirror() {
+        lastMoveKind = .state
         withAnimation(Self.morph) { showMirror.toggle() }
     }
 
@@ -237,24 +298,27 @@ final class NotchViewModel: ObservableObject {
     /// auto-dismiss after a beat; pass nil to clear immediately.
     func setDictation(_ phase: DictationPhase?) {
         dictationDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { dictation = phase }
         if let phase, !phase.isActive {
             let work = DispatchWorkItem { [weak self] in
                 withAnimation(Self.morph) { self?.dictation = nil }
             }
             dictationDismiss = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.dictationDismiss, execute: work)
         }
     }
 
     /// A click keeps the notch open (buttons handle their own taps); it never
     /// collapses, so clicking inside the expanded panel is safe.
     func tapped() {
+        lastMoveKind = .state
         withAnimation(Self.morph) { interaction = .expanded }
     }
 
     func collapse() {
         collapseWork?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.morph) {
             interaction = .collapsed
             if settings.idleActivity != .auto { manualActivity = nil }
@@ -265,18 +329,20 @@ final class NotchViewModel: ObservableObject {
 
     func showHUD(_ kind: HUDKind) {
         hudDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { hud = kind }
         let work = DispatchWorkItem { [weak self] in
             withAnimation(Self.morph) { self?.hud = nil }
         }
         hudDismiss = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.hudDismiss, execute: work)
     }
 
     // MARK: - Notifications
 
     func show(_ note: TransientNotification) {
         notifDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { notification = note }
         let work = DispatchWorkItem { [weak self] in
             withAnimation(Self.morph) { self?.notification = nil }

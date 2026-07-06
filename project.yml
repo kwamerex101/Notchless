@@ -20,8 +20,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"          # Phase 1 uses Swift 5 language mode; flip to 6 during hardening
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    MARKETING_VERSION: "1.1.3"
-    CURRENT_PROJECT_VERSION: "5"
+    MARKETING_VERSION: "1.2.0"
+    CURRENT_PROJECT_VERSION: "6"
 
 targets:
   Notchless:
@@ -45,7 +45,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Resources/Notchless.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.rexdanquah.Notchless
         GENERATE_INFOPLIST_FILE: NO
-        ENABLE_HARDENED_RUNTIME: NO   # off during dev; enable + entitlements before release
         # Stable Developer ID signature (HOMEKARE) so macOS keeps TCC grants
         # (Accessibility, Camera, …) across rebuilds instead of re-prompting.
         CODE_SIGN_STYLE: Manual
@@ -53,6 +52,14 @@ targets:
         DEVELOPMENT_TEAM: "${DEVELOPMENT_TEAM}"
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        Debug:
+          # Dev tooling (GoalSelfTest/DebugRender) compiles only under DEBUG.
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+          ENABLE_HARDENED_RUNTIME: NO
+        Release:
+          # Required for Apple notarization; the distributed DMG must have it on.
+          ENABLE_HARDENED_RUNTIME: YES
 
   NotchlessTests:
     type: bundle.unit-test
