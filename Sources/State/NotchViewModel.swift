@@ -105,9 +105,9 @@ final class NotchViewModel: ObservableObject {
         return result
     }
 
-    /// Everything the user can swipe through: the live activities plus the
-    /// always-available info pages (calendar, stats). Only browsable while at
-    /// least one activity is live — the notch stays bare when nothing is.
+    /// Everything the user can swipe through: the live activities (incl. Goals
+    /// when enabled) plus the info pages — Calendar always, System Stats and
+    /// Claude Usage only when their toggles are on.
     var carouselActivities: [NotchActivity] {
         var result = liveActivities
         var pages: [NotchActivity] = [.calendar]
