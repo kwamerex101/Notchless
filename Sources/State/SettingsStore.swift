@@ -65,6 +65,11 @@ final class SettingsStore: ObservableObject {
     @Published var fileTrayEnabled: Bool { didSet { persist(oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(oldValue != todosEnabled) } }
 
+    // Goals
+    @Published var goalsEnabled: Bool { didSet { persist(oldValue != goalsEnabled) } }
+    @Published var currencyCode: String { didSet { persist(oldValue != currencyCode) } }
+    @Published var currencySymbol: String { didSet { persist(oldValue != currencySymbol) } }
+
     // Battery
     @Published var batteryShowPercentage: Bool { didSet { persist(oldValue != batteryShowPercentage) } }
     @Published var batteryLowThreshold: Int { didSet { persist(oldValue != batteryLowThreshold) } }
@@ -152,6 +157,9 @@ final class SettingsStore: ObservableObject {
             Keys.claudeShowLegend: true,
             Keys.claudeChartDays: 14,
             Keys.claudeChartCost: false,
+            Keys.goalsEnabled: true,
+            Keys.currencyCode: "GHS",
+            Keys.currencySymbol: "₵",
         ])
 
         fileTrayEnabled = defaults.bool(forKey: Keys.fileTrayEnabled)
@@ -200,6 +208,9 @@ final class SettingsStore: ObservableObject {
         claudeShowLegend = defaults.bool(forKey: Keys.claudeShowLegend)
         claudeChartDays = defaults.integer(forKey: Keys.claudeChartDays)
         claudeChartCost = defaults.bool(forKey: Keys.claudeChartCost)
+        goalsEnabled = defaults.bool(forKey: Keys.goalsEnabled)
+        currencyCode = defaults.string(forKey: Keys.currencyCode) ?? "GHS"
+        currencySymbol = defaults.string(forKey: Keys.currencySymbol) ?? "₵"
 
         NotificationCenter.default.addObserver(
             self, selector: #selector(cloudChanged(_:)),
@@ -257,6 +268,9 @@ final class SettingsStore: ObservableObject {
             (Keys.claudeShowLegend, claudeShowLegend),
             (Keys.claudeChartDays, claudeChartDays),
             (Keys.claudeChartCost, claudeChartCost),
+            (Keys.goalsEnabled, goalsEnabled),
+            (Keys.currencyCode, currencyCode),
+            (Keys.currencySymbol, currencySymbol),
         ]
         for (k, v) in pairs {
             defaults.set(v, forKey: k)
@@ -372,5 +386,8 @@ final class SettingsStore: ObservableObject {
         static let claudeShowLegend = "claudeShowLegend"
         static let claudeChartDays = "claudeChartDays"
         static let claudeChartCost = "claudeChartCost"
+        static let goalsEnabled = "goalsEnabled"
+        static let currencyCode = "currencyCode"
+        static let currencySymbol = "currencySymbol"
     }
 }

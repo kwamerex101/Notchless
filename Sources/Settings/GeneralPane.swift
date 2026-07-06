@@ -94,6 +94,7 @@ extension NotchActivity {
         case .todos: return "Tasks"
         case .privacy: return "Privacy"
         case .claudeUsage: return "Claude"
+        case .goals: return "Goals"
         }
     }
     var pickerImage: String {
@@ -111,6 +112,7 @@ extension NotchActivity {
         case .todos: return "checklist"
         case .privacy: return "checkmark.shield"
         case .claudeUsage: return "chart.pie.fill"
+        case .goals: return "target"
         }
     }
 }
