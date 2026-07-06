@@ -97,6 +97,7 @@ enum DebugRender {
                     case .calendar: CalendarExpandedView(snapshot: cal, metrics: metrics)
                     case .duo: DuoExpandedView(info: np, snapshot: cal, metrics: metrics)
                     case .dictation: DictationHintView(metrics: metrics)
+                    case .battery: BatteryExpandedView(battery: nil, metrics: metrics)
                     }
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)

@@ -87,6 +87,7 @@ extension NotchActivity {
         case .calendar: return "Calendar"
         case .duo: return "Duo"
         case .dictation: return "Dictation"
+        case .battery: return "Battery"
         }
     }
     var pickerImage: String {
@@ -97,6 +98,7 @@ extension NotchActivity {
         case .calendar: return "calendar"
         case .duo: return "rectangle.2.swap"
         case .dictation: return "mic.fill"
+        case .battery: return "battery.100"
         }
     }
 }

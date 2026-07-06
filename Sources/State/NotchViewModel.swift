@@ -15,6 +15,7 @@ final class NotchViewModel: ObservableObject {
     // Content providers
     @Published var nowPlaying: NowPlayingInfo?
     @Published var calendar: CalendarSnapshot?
+    @Published var battery: BatteryInfo?
     /// Vibrant color sampled from the current artwork (album-art glow).
     @Published var artworkColor: Color?
 
@@ -87,6 +88,8 @@ final class NotchViewModel: ObservableObject {
     /// New activities (timers, screen recording, AirDrop…) slot in here.
     private func autoIdleActivity() -> NotchActivity? {
         if nowPlaying != nil { return .playing }
+        // Surface the battery when plugged in / charging — a meaningful moment.
+        if let battery, battery.isPluggedIn || battery.isCharging { return .battery }
         return nil
     }
 
@@ -108,6 +111,7 @@ final class NotchViewModel: ObservableObject {
         case .calendar: return true
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
         case .dictation: return true  // the mic-ready cue always rests in the notch
+        case .battery: return battery != nil
         }
     }
 

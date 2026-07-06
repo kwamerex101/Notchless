@@ -6,6 +6,7 @@ struct IdleCompactView: View {
     let activity: NotchActivity
     let nowPlaying: NowPlayingInfo?
     let calendar: CalendarSnapshot?
+    var battery: BatteryInfo? = nil
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -39,6 +40,10 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
                 .frame(width: 22, height: 22)
                 .background(Circle().fill(Color.white.opacity(0.14)))
+        case .battery:
+            Image(systemName: battery?.systemImage ?? "battery.100")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(battery?.tint ?? .white)
         }
     }
 
@@ -55,6 +60,10 @@ struct IdleCompactView: View {
             // A calm, muted idle waveform — springs to life (red) when recording.
             VisualizerBars(isPlaying: false, color: .white.opacity(0.55), height: 12)
                 .frame(width: 20)
+        case .battery:
+            Text("\(battery?.level ?? 0)%")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
         }
     }
 
