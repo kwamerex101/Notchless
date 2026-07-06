@@ -28,3 +28,4 @@ dmg_staging/
 *.dmg
 dist/
 scripts/release.sh
+CLAUDE.md
