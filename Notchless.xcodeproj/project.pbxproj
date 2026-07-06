@@ -67,6 +67,7 @@
 		872C4394EB12D2F3DD16D8BB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 169D3F0F0EAD0DC89BBF9787 /* OnboardingView.swift */; };
 		8C8D761713B34CA8A4E29E0F /* NotchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286F0633A7BE13DC7A7E3B8C /* NotchViewModel.swift */; };
 		920804F844DDE74B24333D9E /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C538E54FF02A2F6DE45489A /* AudioService.swift */; };
+		9388BB6320669BD44E86888E /* FeaturePanes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15991201618DE05B624E6649 /* FeaturePanes.swift */; };
 		95802ABDB68ED906D04B7047 /* DictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0748A812F9F42C421EF0CA /* DictationView.swift */; };
 		975FEFDDA78899DFEC47CE02 /* DictationOutputRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6BBAD773824BF21BB4ADD6 /* DictationOutputRouter.swift */; };
 		98CA2F12A40662BCDB8F616B /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D91036C934CFFB57C55D5E /* SettingsWindowController.swift */; };
@@ -136,6 +137,7 @@
 		1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMModelStore.swift; sourceTree = "<group>"; };
 		14464252ABBBB88578C82163 /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorView.swift; sourceTree = "<group>"; };
 		151C8E7AD60BAECB8D6E7140 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
+		15991201618DE05B624E6649 /* FeaturePanes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturePanes.swift; sourceTree = "<group>"; };
 		15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundCue.swift; sourceTree = "<group>"; };
 		169D3F0F0EAD0DC89BBF9787 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		17D48F00CAEB14383F7588BF /* NotchPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchPanel.swift; sourceTree = "<group>"; };
@@ -260,6 +262,7 @@
 				6E83C2F46A0365544CCEB62D /* AboutPane.swift */,
 				7409DA42DF89959B7CA49EF4 /* AppTheme.swift */,
 				CE525E793DDE3B7457DDD256 /* DictationPane.swift */,
+				15991201618DE05B624E6649 /* FeaturePanes.swift */,
 				EE7C371A4406389B266AA7E2 /* GeneralPane.swift */,
 				9C4C2AD2CB14ABD4BAA3B3CB /* PermissionsModel.swift */,
 				57BDE62C222102C328F32CB4 /* PermissionsPane.swift */,
@@ -724,6 +727,7 @@
 				CBF1053AB04D719A33C9D0DD /* DisplayService.swift in Sources */,
 				09238B763606DC8B03079D11 /* DuoExpandedView.swift in Sources */,
 				C501A3E1C28009667BFBBB8B /* EffectsController.swift in Sources */,
+				9388BB6320669BD44E86888E /* FeaturePanes.swift in Sources */,
 				C185C3B31042D20293529F25 /* FileTrayStore.swift in Sources */,
 				70A88A0FFD040CA1FB786E34 /* FileTrayView.swift in Sources */,
 				FBA068FD6CD736D9363A94A6 /* FocusService.swift in Sources */,

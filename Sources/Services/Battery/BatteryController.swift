@@ -26,8 +26,36 @@ final class BatteryController {
         }
     }
 
+    private var previous: BatteryInfo?
+    private var notifiedLow = false
+
     private func refresh() {
-        model.battery = Self.read()
+        let info = Self.read()
+        notifyIfNeeded(previous: previous, current: info)
+        previous = info
+        model.battery = model.settings.batteryEnabled ? info : nil
+    }
+
+    /// Fires a notch banner when the battery becomes fully charged or drops
+    /// below the user's low threshold.
+    private func notifyIfNeeded(previous: BatteryInfo?, current: BatteryInfo?) {
+        guard let current else { return }
+        let settings = model.settings
+
+        if settings.batteryNotifyCharged, current.isCharged, current.isPluggedIn,
+           previous?.isCharged != true {
+            model.show(TransientNotification(systemImage: "battery.100.bolt", tint: .green,
+                                             title: "Fully charged", subtitle: nil, trailingText: "100%"))
+        }
+
+        if current.isPluggedIn || current.isCharging {
+            notifiedLow = false
+        } else if !notifiedLow, current.level <= settings.batteryLowThreshold {
+            notifiedLow = true
+            model.show(TransientNotification(systemImage: "battery.25", tint: .red,
+                                             title: "Low battery", subtitle: nil,
+                                             trailingText: "\(current.level)%"))
+        }
     }
 
     /// Returns nil on Macs without a battery (desktops).

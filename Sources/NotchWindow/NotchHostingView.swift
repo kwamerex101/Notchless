@@ -29,7 +29,8 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
     /// closes (up); horizontal seeks the media pane by ±10s. One action per
     /// gesture, then it waits for the next.
     override func scrollWheel(with event: NSEvent) {
-        guard event.hasPreciseScrollingDeltas else { super.scrollWheel(with: event); return }
+        guard event.hasPreciseScrollingDeltas,
+              SettingsStore.shared.swipeGesturesEnabled else { super.scrollWheel(with: event); return }
 
         if event.phase.contains(.began) {
             swipeX = 0; swipeY = 0; swipeFired = false
@@ -55,7 +56,7 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
 
     @MainActor
     private func seek(forward: Bool) {
-        guard let info = model?.nowPlaying else { return }
+        guard SettingsStore.shared.swipeToSeek, let info = model?.nowPlaying else { return }
         let target = max(0, min(info.duration, info.elapsed + (forward ? 10 : -10)))
         onMediaCommand?(.seek(target))
     }

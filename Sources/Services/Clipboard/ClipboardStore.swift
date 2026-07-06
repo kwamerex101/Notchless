@@ -18,7 +18,7 @@ final class ClipboardStore: ObservableObject {
 
     private var timer: Timer?
     private var lastChangeCount = NSPasteboard.general.changeCount
-    private let cap = 20
+    private var cap: Int { max(1, SettingsStore.shared.clipboardHistorySize) }
 
     func start() {
         lastChangeCount = NSPasteboard.general.changeCount
@@ -31,6 +31,7 @@ final class ClipboardStore: ObservableObject {
         let pb = NSPasteboard.general
         guard pb.changeCount != lastChangeCount else { return }
         lastChangeCount = pb.changeCount
+        guard SettingsStore.shared.clipboardEnabled else { return }
         guard let text = pb.string(forType: .string),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         items.removeAll { $0.text == text }

@@ -44,7 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .map { $0?.isPlaying == true }
             .removeDuplicates()
             .sink { [weak self] isPlaying in
-                if isPlaying { self?.audioTap.start() } else { self?.audioTap.stop() }
+                guard let self else { return }
+                if isPlaying, self.model.settings.liveAudioVisualizer { self.audioTap.start() }
+                else { self.audioTap.stop() }
             }
         effects = EffectsController(settings: model.settings, panel: panel)
         effects?.start()

@@ -22,6 +22,10 @@ final class PrivacyController {
     }
 
     private func poll() {
+        guard model.settings.privacyIndicatorEnabled else {
+            if model.privacy != nil { model.privacy = nil }
+            return
+        }
         let status = PrivacyStatus(cameraActive: Self.cameraInUse(), micActive: Self.micInUse())
         model.privacy = status.isActive ? status : nil
     }

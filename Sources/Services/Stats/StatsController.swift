@@ -10,6 +10,7 @@ final class StatsController {
 
     private var prevCPU: (busy: UInt64, total: UInt64)?
     private var prevNet: (rx: UInt64, tx: UInt64, time: Date)?
+    private var lastSample = Date.distantPast
 
     init(model: NotchViewModel) {
         self.model = model
@@ -17,12 +18,19 @@ final class StatsController {
 
     func start() {
         sample()
-        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.sample() }
+        // Tick every second but only sample once the user's refresh interval
+        // has elapsed, so the slider applies live without rescheduling.
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let interval = max(1, self.model.settings.statsRefreshSeconds)
+                if Date().timeIntervalSince(self.lastSample) >= interval { self.sample() }
+            }
         }
     }
 
     private func sample() {
+        lastSample = Date()
         let net = networkRate()
         model.stats = SystemStats(
             cpu: cpuUsage(),

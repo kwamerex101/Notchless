@@ -5,13 +5,21 @@ struct StatsExpandedView: View {
     let stats: SystemStats?
     let metrics: NotchMetrics
 
+    private var settings: SettingsStore { .shared }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            row(icon: "cpu", label: "CPU", fraction: stats?.cpu ?? 0,
-                value: "\(Int((stats?.cpu ?? 0) * 100))%", tint: .green)
-            row(icon: "memorychip", label: "Memory", fraction: stats?.memoryFraction ?? 0,
-                value: SystemStats.formatBytes(stats?.memoryUsed ?? 0), tint: .blue)
-            network
+            if settings.statsShowCPU {
+                row(icon: "cpu", label: "CPU", fraction: stats?.cpu ?? 0,
+                    value: "\(Int((stats?.cpu ?? 0) * 100))%", tint: .green)
+            }
+            if settings.statsShowMemory {
+                row(icon: "memorychip", label: "Memory", fraction: stats?.memoryFraction ?? 0,
+                    value: SystemStats.formatBytes(stats?.memoryUsed ?? 0), tint: .blue)
+            }
+            if settings.statsShowNetwork {
+                network
+            }
         }
         .padding(.top, metrics.notchHeight + 10)
         .padding(.horizontal, 28)
