@@ -23,14 +23,8 @@ struct NowPlayingExpandedView: View {
         .padding(.horizontal, 28)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(alignment: .topLeading) {
-            if let glow {
-                RadialGradient(colors: [glow.opacity(0.38), .clear],
-                               center: .topLeading, startRadius: 0, endRadius: 320)
-                    .blendMode(.screen)
-                    .allowsHitTesting(false)
-            }
-        }
+        // Album-art glow is painted at the panel level (NotchRootView) so it sits
+        // behind the tab strip too and both share one background.
     }
 
     private var header: some View {
