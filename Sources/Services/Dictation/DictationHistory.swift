@@ -39,6 +39,17 @@ final class DictationHistory: ObservableObject {
         save()
     }
 
+    /// Edits a record's text and feeds the before/after diff to the correction
+    /// miner, so words the user repeatedly fixes can be auto-promoted.
+    func update(_ record: DictationRecord, newText: String) {
+        let clean = newText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let index = records.firstIndex(where: { $0.id == record.id }), !clean.isEmpty else { return }
+        let old = records[index].text
+        records[index].text = clean
+        save()
+        CorrectionMiner.shared.record(heard: old, corrected: clean)
+    }
+
     func clear() {
         records.removeAll()
         save()
