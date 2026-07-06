@@ -148,6 +148,9 @@ struct StatsPane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PaneHeader(section: .stats)
+            CardGroup {
+                ToggleRow(title: "Show System Stats in the notch", isOn: $settings.statsEnabled)
+            }
             SectionLabel("Metrics")
             CardGroup {
                 ToggleRow(title: "CPU", isOn: $settings.statsShowCPU)

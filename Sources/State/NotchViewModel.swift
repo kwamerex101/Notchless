@@ -109,7 +109,8 @@ final class NotchViewModel: ObservableObject {
     /// least one activity is live — the notch stays bare when nothing is.
     var carouselActivities: [NotchActivity] {
         var result = liveActivities
-        var pages: [NotchActivity] = [.calendar, .stats]
+        var pages: [NotchActivity] = [.calendar]
+        if settings.statsEnabled { pages.append(.stats) }
         if settings.claudeUsageEnabled { pages.append(.claudeUsage) }
         for page in pages where !result.contains(page) {
             result.append(page)
@@ -193,7 +194,7 @@ final class NotchViewModel: ObservableObject {
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
         case .dictation: return true  // the mic-ready cue always rests in the notch
         case .battery: return battery != nil
-        case .stats: return stats != nil
+        case .stats: return settings.statsEnabled && stats != nil
         case .timer: return true  // always rests so it can be started from the notch
         case .clipboard: return true
         case .todos: return settings.todosEnabled && !todos.isEmpty

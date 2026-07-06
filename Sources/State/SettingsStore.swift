@@ -68,6 +68,7 @@ final class SettingsStore: ObservableObject {
     // Goals
     @Published var goalsEnabled: Bool { didSet { persist(oldValue != goalsEnabled) } }
     @Published var claudeUsageEnabled: Bool { didSet { persist(oldValue != claudeUsageEnabled) } }
+    @Published var statsEnabled: Bool { didSet { persist(oldValue != statsEnabled) } }
     @Published var currencyCode: String { didSet { persist(oldValue != currencyCode) } }
     @Published var currencySymbol: String { didSet { persist(oldValue != currencySymbol) } }
 
@@ -162,6 +163,7 @@ final class SettingsStore: ObservableObject {
             Keys.claudeChartCost: false,
             Keys.goalsEnabled: true,
             Keys.claudeUsageEnabled: true,
+            Keys.statsEnabled: true,
             Keys.currencyCode: "GHS",
             Keys.currencySymbol: "₵",
         ])
@@ -215,6 +217,7 @@ final class SettingsStore: ObservableObject {
         claudeChartCost = defaults.bool(forKey: Keys.claudeChartCost)
         goalsEnabled = defaults.bool(forKey: Keys.goalsEnabled)
         claudeUsageEnabled = defaults.bool(forKey: Keys.claudeUsageEnabled)
+        statsEnabled = defaults.bool(forKey: Keys.statsEnabled)
         currencyCode = defaults.string(forKey: Keys.currencyCode) ?? "GHS"
         currencySymbol = defaults.string(forKey: Keys.currencySymbol) ?? "₵"
 
@@ -277,6 +280,7 @@ final class SettingsStore: ObservableObject {
             (Keys.claudeChartCost, claudeChartCost),
             (Keys.goalsEnabled, goalsEnabled),
             (Keys.claudeUsageEnabled, claudeUsageEnabled),
+            (Keys.statsEnabled, statsEnabled),
             (Keys.currencyCode, currencyCode),
             (Keys.currencySymbol, currencySymbol),
         ]
@@ -398,6 +402,7 @@ final class SettingsStore: ObservableObject {
         static let claudeChartCost = "claudeChartCost"
         static let goalsEnabled = "goalsEnabled"
         static let claudeUsageEnabled = "claudeUsageEnabled"
+        static let statsEnabled = "statsEnabled"
         static let currencyCode = "currencyCode"
         static let currencySymbol = "currencySymbol"
     }
