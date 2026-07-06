@@ -91,6 +91,16 @@ final class NotchViewModel: ObservableObject {
         return .bare
     }
 
+    /// True when a system-stats readout is actually on screen (the idle cue or
+    /// the expanded page). Lets `StatsController` sample at the user's interval
+    /// only when it matters and idle-sample slowly otherwise.
+    var statsVisible: Bool {
+        switch content {
+        case .idle(.stats), .expanded(.stats): return true
+        default: return false
+        }
+    }
+
     /// Every Live Activity that's currently live, in priority order. In Auto
     /// mode the user can cycle through these (e.g. media vs. the mic dot on a
     /// call); the first is the default shown.
