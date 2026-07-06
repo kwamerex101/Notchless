@@ -2,6 +2,27 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.1.2] — 2026-07-06
+
+### Added
+- **Master show/hide toggles** for System Stats and Claude Usage in the notch
+  (matching Tasks, Goals, File Tray).
+- **Goals quick-log in Settings** — add a contribution (amount + label) to a goal
+  without leaving Settings; progress and the breakdown update live.
+- **Task initials in the compact cue** — a tight monogram (e.g. "MXN Wallet KYC
+  Integration" → "MWKI") instead of a title truncated to nothing.
+
+### Changed
+- **Tab strip moved into the wings beside the notch** — a 3-glyph window
+  (prev · active · next) to the left of the camera, battery to the right, with
+  the strip sharing the active view's background so it reads as one surface.
+- **Swipe-to-cycle works in every idle mode** (not just Auto); scrub a track by
+  dragging the scrubber. Goals now appears in the swipe carousel when enabled.
+- **Goal progress polish** — green progress ring/bar, light-green percentage,
+  animated fill + rolling number, and a wider compact cue so the percentage
+  (up to 100%) clears the notch.
+- Trimmed expanded-panel horizontal padding by ~⅓ for more content width.
+
 ## [1.1.1] — 2026-07-06
 
 ### Fixed
