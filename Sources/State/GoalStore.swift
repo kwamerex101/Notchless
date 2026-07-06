@@ -99,6 +99,7 @@ func goalFormatAmount(_ amount: Decimal, symbol: String) -> String {
     f.maximumFractionDigits = 0
     f.groupingSeparator = ","
     f.usesGroupingSeparator = true
+    f.locale = Locale(identifier: "en_US_POSIX")
     let n = f.string(from: amount as NSDecimalNumber) ?? "0"
     return "\(n) \(symbol)"
 }
