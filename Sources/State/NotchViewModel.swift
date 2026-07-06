@@ -42,6 +42,11 @@ final class NotchViewModel: ObservableObject {
     // Camera mirror
     @Published var showMirror = false
 
+    /// Set by AppDelegate to let in-notch text fields (Tasks quick-add, Goals
+    /// quick-log) request/release keyboard focus for the panel. `true` when a
+    /// field starts editing, `false` when it ends.
+    var requestKeyFocus: ((Bool) -> Void)?
+
     // Dictation (ListenToMe)
     @Published var dictation: DictationPhase?
     let dictationSettings = DictationSettings.shared

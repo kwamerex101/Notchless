@@ -144,6 +144,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.panel = panel
         self.currentScreenFrame = screen.frame
 
+        // Let in-notch text fields borrow keyboard focus while editing. The app
+        // is an accessory (no Dock icon); activating it briefly is the reliable
+        // way for a non-activating panel to receive typing, and we hand focus
+        // back when editing ends.
+        model.requestKeyFocus = { [weak panel] want in
+            guard let panel else { return }
+            panel.wantsKey = want
+            if want {
+                NSApp.activate(ignoringOtherApps: true)
+                panel.makeKeyAndOrderFront(nil)
+            } else {
+                NSApp.deactivate()
+            }
+        }
+
         let tracker = NotchMouseTracker(panel: panel, model: model, metrics: metrics)
         tracker.start()
         self.mouseTracker = tracker

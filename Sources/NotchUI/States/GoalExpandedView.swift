@@ -9,6 +9,7 @@ struct GoalExpandedView: View {
     @State private var amountText = ""
     @State private var labelText = ""
     @FocusState private var amountFocused: Bool
+    @Environment(\.notchKeyFocus) private var keyFocus
 
     private var symbol: String { SettingsStore.shared.currencySymbol }
 
@@ -40,6 +41,8 @@ struct GoalExpandedView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onAppear { keyFocus(true) }
+        .onDisappear { keyFocus(false) }
     }
 
     private func row(_ goal: Goal) -> some View {
