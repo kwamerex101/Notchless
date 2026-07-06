@@ -13,6 +13,7 @@
 		02390C26BAD19225C8D883F6 /* ClipboardExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */; };
 		0250D3AC1DF27F1CDA1EB52A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8612F3D7D4F7BD6C51E6033C /* SettingsStore.swift */; };
 		09238B763606DC8B03079D11 /* DuoExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF82551C4728C8BB952619D /* DuoExpandedView.swift */; };
+		0E3C15B2B033685CAC9F54C5 /* MiniCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7ABA65A3EACDE1C223E02 /* MiniCharts.swift */; };
 		0F3843A5336852BB88FE143D /* ColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5520E1FE9DC33332F0C2 /* ColorExtractor.swift */; };
 		11FF76F5A8103AFAA7892430 /* DictationLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130984CBABB46A8EA33C8934 /* DictationLog.swift */; };
 		13A14B5DC2D7B723AB88D9C2 /* CalendarExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F033CA4C5E864BE6FB31026 /* CalendarExpandedView.swift */; };
@@ -69,6 +70,7 @@
 		920804F844DDE74B24333D9E /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C538E54FF02A2F6DE45489A /* AudioService.swift */; };
 		9388BB6320669BD44E86888E /* FeaturePanes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15991201618DE05B624E6649 /* FeaturePanes.swift */; };
 		95802ABDB68ED906D04B7047 /* DictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0748A812F9F42C421EF0CA /* DictationView.swift */; };
+		968AC04B211F86022FCAC973 /* ClaudeUsageStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D78C6E46842C7CC82323663 /* ClaudeUsageStats.swift */; };
 		975FEFDDA78899DFEC47CE02 /* DictationOutputRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6BBAD773824BF21BB4ADD6 /* DictationOutputRouter.swift */; };
 		98CA2F12A40662BCDB8F616B /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D91036C934CFFB57C55D5E /* SettingsWindowController.swift */; };
 		A18F956E8D227E52D0BCC84D /* IdleCompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5189F71C629EB83F575D98C6 /* IdleCompactView.swift */; };
@@ -88,6 +90,7 @@
 		B9A29D1A34231911A8564038 /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA2ED9B29203616F7768230 /* SpectrumAnalyzer.swift */; };
 		BA340133076C4E8CDDCA18A5 /* DictationSnippets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86378CA9D2E1F2ACF1CF6E26 /* DictationSnippets.swift */; };
 		BA8A28CB1698DE3063B9BA0F /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49143FC7028CA29D3CDFEF8B /* LoginItem.swift */; };
+		BCB617B9F0CC64A103C036EE /* ClaudeStatsExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0A6AD44398F22A0C612814 /* ClaudeStatsExpandedView.swift */; };
 		BDBAE5608769B6C96CFF5749 /* DebugRender.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7D0ED643A7581A1B38DDAF /* DebugRender.swift */; };
 		BE32DA154376F5CA427AADB2 /* SystemAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CF41BD0F0A551BFA2E6FE3 /* SystemAudioTap.swift */; };
 		BEE1B804D7875AF94FD95D60 /* AppContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E131F1640F333CA31A1B9B4 /* AppContext.swift */; };
@@ -97,6 +100,7 @@
 		C21A8BA5FF3F3B4A81A917B2 /* DictationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBBDD6E214B7C5F9781A96 /* DictationController.swift */; };
 		C2D9E68847BC28D2100AE955 /* PermissionsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C4C2AD2CB14ABD4BAA3B3CB /* PermissionsModel.swift */; };
 		C501A3E1C28009667BFBBB8B /* EffectsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABDED6A25067429A472C9E6 /* EffectsController.swift */; };
+		C9809206A89BF21DF485046B /* ClaudeStatsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1710BD8AE040E8A8F6E02A4D /* ClaudeStatsController.swift */; };
 		CAD71856E5EF512924B56451 /* MediaRemoteBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23798CAD00021C31D06C419 /* MediaRemoteBridge.swift */; };
 		CBF1053AB04D719A33C9D0DD /* DisplayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32471DD16AC835C67E00A57B /* DisplayService.swift */; };
 		CCCF4DEB2080E98195343ADD /* NotchState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D9C44D2BCBC2D409E025B9 /* NotchState.swift */; };
@@ -140,8 +144,10 @@
 		15991201618DE05B624E6649 /* FeaturePanes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturePanes.swift; sourceTree = "<group>"; };
 		15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundCue.swift; sourceTree = "<group>"; };
 		169D3F0F0EAD0DC89BBF9787 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		1710BD8AE040E8A8F6E02A4D /* ClaudeStatsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeStatsController.swift; sourceTree = "<group>"; };
 		17D48F00CAEB14383F7588BF /* NotchPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchPanel.swift; sourceTree = "<group>"; };
 		18B63A9BE0757848CDAE7E12 /* NotchSizing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchSizing.swift; sourceTree = "<group>"; };
+		1D0A6AD44398F22A0C612814 /* ClaudeStatsExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeStatsExpandedView.swift; sourceTree = "<group>"; };
 		1E131F1640F333CA31A1B9B4 /* AppContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContext.swift; sourceTree = "<group>"; };
 		1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetTranscriber.swift; sourceTree = "<group>"; };
 		23F807BFE4141F4EEC2E04A1 /* CalendarSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSnapshot.swift; sourceTree = "<group>"; };
@@ -173,6 +179,7 @@
 		69FDFDF0B69DFBD7FACAF09B /* NotchMouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMouseTracker.swift; sourceTree = "<group>"; };
 		6E83C2F46A0365544CCEB62D /* AboutPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPane.swift; sourceTree = "<group>"; };
 		6F2C0E36633C2C8884414928 /* DictationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistory.swift; sourceTree = "<group>"; };
+		71B7ABA65A3EACDE1C223E02 /* MiniCharts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniCharts.swift; sourceTree = "<group>"; };
 		7409DA42DF89959B7CA49EF4 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		7436C1E71C7C818FEBB90CF8 /* CalendarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarController.swift; sourceTree = "<group>"; };
 		7663CB0A5DF96B76824EF525 /* PulsingDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulsingDot.swift; sourceTree = "<group>"; };
@@ -185,6 +192,7 @@
 		8890A325BFB95C7D5EBB013A /* DictationDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDictionary.swift; sourceTree = "<group>"; };
 		88A003741FACD62A63A8BADB /* DictationTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationTranscriber.swift; sourceTree = "<group>"; };
 		8A97033A82195EFA72F28A1F /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
+		8D78C6E46842C7CC82323663 /* ClaudeUsageStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageStats.swift; sourceTree = "<group>"; };
 		8E0748A812F9F42C421EF0CA /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
 		8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardExpandedView.swift; sourceTree = "<group>"; };
 		8FFB73DAD95884D3AF747F72 /* DictationHotkey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHotkey.swift; sourceTree = "<group>"; };
@@ -277,12 +285,22 @@
 			children = (
 				BF84E32EAF33037E27A1924A /* LiquidGlass.swift */,
 				151C8E7AD60BAECB8D6E7140 /* MarqueeText.swift */,
+				71B7ABA65A3EACDE1C223E02 /* MiniCharts.swift */,
 				E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */,
 				88577E13DD2CD2DAE7AD8F30 /* ProgressiveBlur.swift */,
 				7663CB0A5DF96B76824EF525 /* PulsingDot.swift */,
 				917DCFC4978B80FC1CFE4028 /* VisualizerBars.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		15DFD74154962770B00324DC /* ClaudeStats */ = {
+			isa = PBXGroup;
+			children = (
+				1710BD8AE040E8A8F6E02A4D /* ClaudeStatsController.swift */,
+				8D78C6E46842C7CC82323663 /* ClaudeUsageStats.swift */,
+			);
+			path = ClaudeStats;
 			sourceTree = "<group>";
 		};
 		1D38AACD20D2280A46AC7BA0 /* App */ = {
@@ -375,6 +393,7 @@
 				5CDDFE936712696CF23BA205 /* Brightness */,
 				CBAABD5BB7FECE92A731638E /* Calendar */,
 				EF1F1DB89E808C8888725AFB /* Camera */,
+				15DFD74154962770B00324DC /* ClaudeStats */,
 				298627692F8BE2FB064606A5 /* Clipboard */,
 				D6D56621ABB4867F8B1E7B79 /* Dictation */,
 				966EE50E9A92880E74C4A510 /* Focus */,
@@ -406,6 +425,7 @@
 			children = (
 				E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */,
 				2F033CA4C5E864BE6FB31026 /* CalendarExpandedView.swift */,
+				1D0A6AD44398F22A0C612814 /* ClaudeStatsExpandedView.swift */,
 				8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */,
 				8E0748A812F9F42C421EF0CA /* DictationView.swift */,
 				9BF82551C4728C8BB952619D /* DuoExpandedView.swift */,
@@ -706,6 +726,9 @@
 				363DEC8533B71DB483C37AE2 /* CalendarSnapshot.swift in Sources */,
 				A255E19EC1757AA78FAC8CE0 /* CameraSession.swift in Sources */,
 				F38318C30E19B3B195254FC3 /* ClaudeAPIClient.swift in Sources */,
+				C9809206A89BF21DF485046B /* ClaudeStatsController.swift in Sources */,
+				BCB617B9F0CC64A103C036EE /* ClaudeStatsExpandedView.swift in Sources */,
+				968AC04B211F86022FCAC973 /* ClaudeUsageStats.swift in Sources */,
 				F5BD047F0397AC7FA41653B6 /* CleanupGate.swift in Sources */,
 				02390C26BAD19225C8D883F6 /* ClipboardExpandedView.swift in Sources */,
 				74FA0B8FCD9CC770D53365C0 /* ClipboardStore.swift in Sources */,
@@ -747,6 +770,7 @@
 				57C451CB77724BFC8C0A47F3 /* MediaKeyTap.swift in Sources */,
 				CAD71856E5EF512924B56451 /* MediaRemoteBridge.swift in Sources */,
 				344F79ACA38A91C56DF3AB38 /* MediaRemoteProvider.swift in Sources */,
+				0E3C15B2B033685CAC9F54C5 /* MiniCharts.swift in Sources */,
 				5814005032654FD0891558A7 /* MirrorView.swift in Sources */,
 				29591514593BEC3CA130C411 /* MonthGrid.swift in Sources */,
 				5EFBF404F651C37E94C68F53 /* NotchGeometry.swift in Sources */,

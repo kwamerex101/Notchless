@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var stats = StatsController(model: model)
     private lazy var timerController = TimerController(model: model)
     private lazy var privacy = PrivacyController(model: model)
+    private lazy var claudeStats = ClaudeStatsController(model: model)
     private lazy var audioTap = SystemAudioTap(model: model)
     private var playbackObserver: AnyCancellable?
     private lazy var calendar = CalendarController(model: model)
@@ -37,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         stats.start()
         timerController.start()
         privacy.start()
+        claudeStats.start()
         ClipboardStore.shared.start()
 
         // Only capture system audio while something is actually playing.

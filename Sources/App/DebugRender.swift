@@ -92,6 +92,7 @@ enum DebugRender {
                 switch content {
                 case .idle(let a):
                     IdleCompactView(activity: a, nowPlaying: np, calendar: cal, battery: battery, metrics: metrics)
+                        .id(a)
                 case .hud(let k):
                     HUDView(kind: k, metrics: metrics)
                 case .notification(let n):
@@ -107,6 +108,7 @@ enum DebugRender {
                     case .timer: TimerExpandedView(timer: nil, metrics: metrics)
                     case .clipboard: ClipboardExpandedView(metrics: metrics)
                     case .privacy: PrivacyExpandedView(privacy: nil, metrics: metrics)
+                    case .claudeUsage: ClaudeStatsExpandedView(stats: nil, metrics: metrics)
                     }
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)

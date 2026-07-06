@@ -19,6 +19,7 @@ final class NotchViewModel: ObservableObject {
     @Published var stats: SystemStats?
     @Published var notchTimer: NotchTimerInfo?
     @Published var privacy: PrivacyStatus?
+    @Published var claudeStats: ClaudeUsageStats?
     /// The activity the user cycled to in the Auto carousel (nil = default top).
     @Published private var manualActivity: NotchActivity?
     /// Live audio-band levels (low→high) from the system-audio tap, driving the
@@ -93,7 +94,7 @@ final class NotchViewModel: ObservableObject {
     /// least one activity is live — the notch stays bare when nothing is.
     var carouselActivities: [NotchActivity] {
         var result = liveActivities
-        for page in [NotchActivity.calendar, .stats] where !result.contains(page) {
+        for page in [NotchActivity.calendar, .stats, .claudeUsage] where !result.contains(page) {
             result.append(page)
         }
         return result
@@ -163,6 +164,7 @@ final class NotchViewModel: ObservableObject {
         case .timer: return true  // always rests so it can be started from the notch
         case .clipboard: return true
         case .privacy: return privacy?.isActive ?? false
+        case .claudeUsage: return claudeStats != nil
         }
     }
 

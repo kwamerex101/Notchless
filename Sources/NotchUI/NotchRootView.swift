@@ -58,7 +58,8 @@ struct NotchRootView: View {
                             calendar: model.calendar, battery: model.battery,
                             stats: model.stats, musicSpectrum: model.musicSpectrum,
                             timer: model.notchTimer, privacy: model.privacy,
-                            glow: glowColor, liveActivities: model.carouselActivities, metrics: metrics)
+                            claudeStats: model.claudeStats, glow: glowColor,
+                            liveActivities: model.carouselActivities, metrics: metrics)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
@@ -86,6 +87,8 @@ struct NotchRootView: View {
                 ClipboardExpandedView(metrics: metrics)
             case .privacy:
                 PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
+            case .claudeUsage:
+                ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)
