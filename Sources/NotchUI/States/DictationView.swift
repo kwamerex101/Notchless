@@ -83,6 +83,12 @@ struct DictationView: View {
 /// telling the user how to start.
 struct DictationHintView: View {
     let metrics: NotchMetrics
+    @ObservedObject private var settings = DictationSettings.shared
+
+    private var title: String {
+        let name = settings.userName.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? "Dictate anywhere" : "Hi \(name) — dictate anywhere"
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -92,10 +98,10 @@ struct DictationHintView: View {
                 .frame(width: 40, height: 40)
                 .background(Circle().fill(Color.teal.gradient))
             VStack(alignment: .leading, spacing: 2) {
-                Text("Dictate anywhere")
+                Text(title)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Hold Right ⌥ Option, then speak")
+                Text("Hold \(settings.hotkey.title), then speak")
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.6))
             }

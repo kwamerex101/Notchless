@@ -14,6 +14,10 @@ final class DictationController {
     private var transcriber: DictationTranscriber
     private var isRecording = false
     private var maxDurationTimer: Timer?
+    /// The app that was frontmost when recording began — the delivery target,
+    /// captured up front because it won't change (the notch panel never
+    /// activates), and used to tailor cleanup tone.
+    private var capturedContext: AppContext?
 
     private var settings: DictationSettings { model.dictationSettings }
 
@@ -42,6 +46,7 @@ final class DictationController {
         }
         DictationLog.log("beginRecording engine=\(settings.engine.rawValue)")
         isRecording = true
+        capturedContext = AppContext.current()
         // Pick up any hotkey change since launch.
         hotkey.requiredFlags = settings.hotkey.requiredFlags
         transcriber = makeTranscriber()
@@ -79,6 +84,15 @@ final class DictationController {
             parakeet.configure(microphoneUID: settings.microphoneUID)
             return parakeet
         }
+    }
+
+    /// Combines the frontmost-app category hint with any learned per-app tone,
+    /// used to tailor the cleanup prompt. Empty when context-aware cleanup is off.
+    private func contextHint() -> String? {
+        guard settings.contextAwareCleanup, let context = capturedContext else { return nil }
+        let parts = [context.category.promptHint, StyleStore.shared.promptHint(for: context.bundleID)]
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     private func startMaxDurationTimer() {
@@ -120,11 +134,15 @@ final class DictationController {
                     backend: settings.cleanupBackend,
                     intensity: settings.cleanupIntensity,
                     timeoutSeconds: settings.cleanupTimeoutSeconds,
-                    apiKey: settings.anthropicAPIKey
+                    apiKey: settings.anthropicAPIKey,
+                    extraPromptHint: contextHint()
                 )
             }
             model.dictationHistory.add(text, retentionDays: settings.historyRetentionDays)
             DictationOutputRouter.deliver(text, to: settings.output)
+            if let bundleID = capturedContext?.bundleID {
+                StyleStore.shared.observe(text: text, bundleID: bundleID)
+            }
             DictationLog.log("delivered via \(settings.output.rawValue): \"\(text.prefix(120))\"")
             if settings.soundCues { SoundCue.delivered() }
             model.setDictation(.success(text))
