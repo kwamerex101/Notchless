@@ -79,7 +79,7 @@ struct NotchRootView: View {
         case .mirror:
             MirrorView(metrics: metrics, onClose: { model.showMirror = false })
         case let .dictation(phase):
-            DictationView(phase: phase, metrics: metrics, level: model.dictationLevel)
+            DictationView(phase: phase, metrics: metrics, level: model.dictationLevel, spectrum: model.dictationSpectrum)
         }
     }
 

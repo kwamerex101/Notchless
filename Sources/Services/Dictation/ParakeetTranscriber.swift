@@ -12,6 +12,7 @@ import AudioToolbox
 final class ParakeetTranscriber: DictationTranscriber {
     var onPartial: ((String) -> Void)?
     var onLevel: ((CGFloat) -> Void)?
+    var onSpectrum: (([CGFloat]) -> Void)?
 
     private let engine = AVAudioEngine()
     private var sink: AudioSink?
@@ -40,11 +41,16 @@ final class ParakeetTranscriber: DictationTranscriber {
         // realtime tap can touch them safely.
         let sink = AudioSink(inputFormat: format)
         self.sink = sink
+        let analyzer = SpectrumAnalyzer()
 
         input.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
             sink.accept(buffer)
             let level = Self.level(from: buffer)
-            DispatchQueue.main.async { self?.onLevel?(level) }
+            let spectrum = buffer.floatChannelData.map { analyzer.bands(from: $0[0], count: Int(buffer.frameLength)) } ?? []
+            DispatchQueue.main.async {
+                self?.onLevel?(level)
+                self?.onSpectrum?(spectrum)
+            }
         }
 
         engine.prepare()

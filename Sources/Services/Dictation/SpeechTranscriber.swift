@@ -10,6 +10,7 @@ import AudioToolbox
 final class SpeechTranscriber: DictationTranscriber {
     var onPartial: ((String) -> Void)?
     var onLevel: ((CGFloat) -> Void)?
+    var onSpectrum: (([CGFloat]) -> Void)?
 
     private let engine = AVAudioEngine()
     private var recognizer = SFSpeechRecognizer(locale: Locale.current)
@@ -57,12 +58,17 @@ final class SpeechTranscriber: DictationTranscriber {
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
+        let analyzer = SpectrumAnalyzer()
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             // Runs on the realtime audio thread; only touch the request here and
-            // hand the level to the main actor.
+            // hand the level + spectrum to the main actor.
             self?.request?.append(buffer)
             let level = Self.level(from: buffer)
-            DispatchQueue.main.async { self?.onLevel?(level) }
+            let spectrum = Self.spectrum(from: buffer, analyzer: analyzer)
+            DispatchQueue.main.async {
+                self?.onLevel?(level)
+                self?.onSpectrum?(spectrum)
+            }
         }
 
         engine.prepare()
@@ -131,6 +137,11 @@ final class SpeechTranscriber: DictationTranscriber {
         let status = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject),
                                                 &address, 0, nil, &size, &translation)
         return status == noErr && deviceID != 0 ? deviceID : nil
+    }
+
+    private static func spectrum(from buffer: AVAudioPCMBuffer, analyzer: SpectrumAnalyzer) -> [CGFloat] {
+        guard let data = buffer.floatChannelData?[0] else { return [] }
+        return analyzer.bands(from: data, count: Int(buffer.frameLength))
     }
 
     private static func level(from buffer: AVAudioPCMBuffer) -> CGFloat {

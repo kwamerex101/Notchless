@@ -28,6 +28,7 @@ final class NotchViewModel: ObservableObject {
     // Dictation (ListenToMe)
     @Published var dictation: DictationPhase?
     @Published var dictationLevel: CGFloat = 0.5
+    @Published var dictationSpectrum: [CGFloat] = []
     let dictationSettings = DictationSettings.shared
     let dictationDictionary = DictationDictionary.shared
     let dictationHistory = DictationHistory.shared

@@ -53,6 +53,9 @@ final class DictationController {
         transcriber.onLevel = { [weak self] level in
             self?.model.dictationLevel = level
         }
+        transcriber.onSpectrum = { [weak self] spectrum in
+            self?.model.dictationSpectrum = spectrum
+        }
         model.setDictation(.recording)
         if settings.soundCues { SoundCue.recordingStarted() }
         startMaxDurationTimer()

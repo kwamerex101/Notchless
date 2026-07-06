@@ -70,6 +70,7 @@
 		B463327ABD84563142C4CCA2 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1CF8B6D5BC5B91583D9D2E /* SpeechTranscriber.swift */; };
 		B4C89090D50D4A1428FB749E /* NotchPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D48F00CAEB14383F7588BF /* NotchPanel.swift */; };
 		B50430E3059C902649C2B6DB /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54CFEB740F3CC1FE3E5BF30 /* OnboardingWindowController.swift */; };
+		B9A29D1A34231911A8564038 /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA2ED9B29203616F7768230 /* SpectrumAnalyzer.swift */; };
 		BA340133076C4E8CDDCA18A5 /* DictationSnippets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86378CA9D2E1F2ACF1CF6E26 /* DictationSnippets.swift */; };
 		BA8A28CB1698DE3063B9BA0F /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49143FC7028CA29D3CDFEF8B /* LoginItem.swift */; };
 		BDBAE5608769B6C96CFF5749 /* DebugRender.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7D0ED643A7581A1B38DDAF /* DebugRender.swift */; };
@@ -175,6 +176,7 @@
 		A7D9737225F607B50F06D595 /* CleanupGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupGate.swift; sourceTree = "<group>"; };
 		A9376414265497D8D44092C2 /* SpokenCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpokenCommands.swift; sourceTree = "<group>"; };
 		AA3E4C17DE831C5A052EAC0C /* Uninstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Uninstaller.swift; sourceTree = "<group>"; };
+		ABA2ED9B29203616F7768230 /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
 		AC5DC4308AB30C81490BB451 /* NowPlayingExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingExpandedView.swift; sourceTree = "<group>"; };
 		B0A39DBA12D85AB052A38D94 /* MediaController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaController.swift; sourceTree = "<group>"; };
 		B5AE8532315C968275964F0D /* HistoryCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCipher.swift; sourceTree = "<group>"; };
@@ -468,6 +470,7 @@
 				1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */,
 				0D64FA4B151E20A53E5F8214 /* Paster.swift */,
 				15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */,
+				ABA2ED9B29203616F7768230 /* SpectrumAnalyzer.swift */,
 				FF1CF8B6D5BC5B91583D9D2E /* SpeechTranscriber.swift */,
 				A9376414265497D8D44092C2 /* SpokenCommands.swift */,
 				53F0B09F7F6F4EFA30345E2B /* StyleStore.swift */,
@@ -674,6 +677,7 @@
 				720374509F92779850C194E8 /* SettingsView.swift in Sources */,
 				98CA2F12A40662BCDB8F616B /* SettingsWindowController.swift in Sources */,
 				D6D4037D1E230FEDE2352BB9 /* SoundCue.swift in Sources */,
+				B9A29D1A34231911A8564038 /* SpectrumAnalyzer.swift in Sources */,
 				B463327ABD84563142C4CCA2 /* SpeechTranscriber.swift in Sources */,
 				367DBD6FF12C1BF17D017692 /* SpokenCommands.swift in Sources */,
 				322CBA757B63BDB9EB347C90 /* StyleStore.swift in Sources */,
