@@ -30,7 +30,7 @@ struct GoalsPane: View {
                 TextField("Name (e.g. End-of-year savings)", text: $newName)
                 HStack {
                     TextField("Target amount", text: $newTarget).frame(width: 140)
-                    DatePicker("Deadline", selection: $newDeadline, displayedComponents: .date).labelsHidden()
+                    DatePicker("Deadline", selection: $newDeadline, in: Date()..., displayedComponents: .date).labelsHidden()
                     Spacer()
                     Button("Add") { addGoal() }.disabled(!canAdd)
                 }
