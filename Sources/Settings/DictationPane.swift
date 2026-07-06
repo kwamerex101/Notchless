@@ -8,6 +8,7 @@ struct DictationPane: View {
     @ObservedObject var history = DictationHistory.shared
     @ObservedObject var snippets = DictationSnippets.shared
     @ObservedObject var parakeet = ParakeetModelStore.shared
+    @ObservedObject var styles = StyleStore.shared
 
     @State private var newTerm = ""
     @State private var newTrigger = ""
@@ -147,6 +148,35 @@ struct DictationPane: View {
                 Text("Turns spoken operators into symbols (“C plus plus” → C++), joins version numbers, and collapses accidental repeats.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            SectionLabel("Personalization")
+            CardGroup {
+                HStack {
+                    Text("Your name")
+                    Spacer()
+                    TextField("Optional", text: $settings.userName)
+                        .textFieldStyle(.roundedBorder).frame(width: 220)
+                }
+                Text("Used for a friendly greeting on the dictation cue.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Divider()
+                ToggleRow(title: "Context-aware cleanup", isOn: $settings.contextAwareCleanup)
+                Text("Tailors cleanup to the app you're dictating into — preserves code in editors, stays casual in chat — and learns each app's tone over time.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if settings.contextAwareCleanup && !styles.styles.isEmpty {
+                SectionLabel("Per-app style")
+                CardGroup {
+                    ForEach(Array(styles.styles.values.sorted { $0.sampleCount > $1.sampleCount })) { style in
+                        StyleRow(style: style)
+                        if style.id != styles.styles.values.sorted(by: { $0.sampleCount > $1.sampleCount }).last?.id {
+                            Divider()
+                        }
+                    }
+                }
             }
 
             SectionLabel("Snippets")
@@ -297,6 +327,41 @@ struct DictationPane: View {
             deviceTypes: [.microphone, .external],
             mediaType: .audio, position: .unspecified
         ).devices.map { ($0.uniqueID, $0.localizedName) }
+    }
+}
+
+/// One learned per-app tone: shows a suggestion to accept/dismiss, or the
+/// applied tone with a menu to change/revert it.
+struct StyleRow: View {
+    let style: StyleStore.AppStyle
+    @ObservedObject private var store = StyleStore.shared
+
+    private var appName: String {
+        guard !style.bundleID.isEmpty else { return "Unknown app" }
+        return style.bundleID.split(separator: ".").last.map(String.init)?.capitalized ?? style.bundleID
+    }
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(appName).font(.callout.weight(.medium))
+                Text("\(style.sampleCount) dictations").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let suggested = style.suggestedTone {
+                Text("Use \(suggested.title)?").font(.caption).foregroundStyle(.secondary)
+                Button("Yes") { store.accept(style.bundleID, tone: suggested) }
+                Button("No") { store.dismissSuggestion(style.bundleID) }.buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+            } else {
+                Picker("", selection: Binding(
+                    get: { style.acceptedTone ?? .none },
+                    set: { store.accept(style.bundleID, tone: $0) }
+                )) {
+                    ForEach(StyleTone.allCases) { Text($0.title).tag($0) }
+                }.labelsHidden().frame(width: 130)
+            }
+        }
     }
 }
 
