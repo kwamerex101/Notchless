@@ -11,6 +11,10 @@ packages:
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio
     exactVersion: 0.15.2
+  # llama.cpp wrapper for on-device Gemma transcript cleanup. MIT.
+  LLM:
+    url: https://github.com/eastriverlee/LLM.swift
+    branch: main
 
 settings:
   base:
@@ -26,6 +30,8 @@ targets:
     dependencies:
       - package: FluidAudio
         product: FluidAudio
+      - package: LLM
+        product: LLM
     sources:
       - Sources
       - path: Resources/Adapter
