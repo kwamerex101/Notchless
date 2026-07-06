@@ -139,4 +139,148 @@ final class TodoStoreTests: XCTestCase {
         cancellable.cancel()
         XCTAssertEqual(store.items.map(\.title), ["Remote add"])
     }
+
+    // MARK: - Model: subtasks, notes, migration
+
+    func test_todo_derivedProgressAndFlags() {
+        var todo = Todo(title: "Parent")
+        XCTAssertEqual(todo.subtaskProgress.total, 0)
+        XCTAssertFalse(todo.allSubtasksDone)   // empty is NOT "all done"
+        XCTAssertFalse(todo.hasNotes)
+        todo.subtasks = [Subtask(title: "a", isDone: true), Subtask(title: "b", isDone: false)]
+        todo.notes = "  hello  "
+        XCTAssertEqual(todo.subtaskProgress.done, 1)
+        XCTAssertEqual(todo.subtaskProgress.total, 2)
+        XCTAssertFalse(todo.allSubtasksDone)
+        XCTAssertTrue(todo.hasNotes)
+        todo.subtasks[1].isDone = true
+        XCTAssertTrue(todo.allSubtasksDone)
+    }
+
+    func test_todo_hasNotes_isFalseForWhitespaceOnly() {
+        var todo = Todo(title: "P")
+        todo.notes = "   \n "
+        XCTAssertFalse(todo.hasNotes)
+    }
+
+    func test_todo_decodesOldJSONWithoutSubtasksOrNotes() throws {
+        // v1 JSON: no `subtasks` / `notes` keys; createdAt is the default
+        // JSONEncoder Date form (timeIntervalSinceReferenceDate, a number).
+        let id = UUID()
+        let json = "{\"id\":\"\(id.uuidString)\",\"title\":\"Legacy\",\"isDone\":false,\"createdAt\":0}"
+        let todo = try JSONDecoder().decode(Todo.self, from: Data(json.utf8))
+        XCTAssertEqual(todo.id, id)
+        XCTAssertEqual(todo.title, "Legacy")
+        XCTAssertTrue(todo.subtasks.isEmpty)
+        XCTAssertEqual(todo.notes, "")
+    }
+
+    func test_todo_roundTripsSubtasksAndNotes() throws {
+        var todo = Todo(title: "P", notes: "see https://x.com")
+        todo.subtasks = [Subtask(title: "s1", isDone: true)]
+        let data = try JSONEncoder().encode(todo)
+        let back = try JSONDecoder().decode(Todo.self, from: data)
+        XCTAssertEqual(back, todo)
+    }
+
+    // MARK: - Store: subtasks & notes
+
+    func test_addSubtask_appendsTrimmedAndRejectsEmpty() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "  step 1  ")
+        store.addSubtask(to: pid, title: "   ")
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["step 1"])
+    }
+
+    func test_toggleSubtask_flipsAndStays() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        let sid = store.items[0].subtasks[0].id
+        store.toggleSubtask(sid, in: pid)
+        XCTAssertTrue(store.items[0].subtasks[0].isDone)   // stays in the list
+        XCTAssertEqual(store.items[0].subtasks.count, 2)
+    }
+
+    func test_toggleLastSubtask_autoCompletesParent() {
+        let store = makeStore() // immediate scheduler + delay 0 → removal is synchronous
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
+        XCTAssertEqual(store.items.count, 1)               // not yet: one subtask open
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
+        XCTAssertTrue(store.items.isEmpty)                 // all done → parent vanished
+    }
+
+    func test_manualComplete_withOpenSubtasks_removesParent() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.complete(pid)                                // manual override
+        XCTAssertTrue(store.items.isEmpty)
+    }
+
+    func test_updateSubtaskTitle_removeSubtask_moveSubtask() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        ["a", "b", "c"].forEach { store.addSubtask(to: pid, title: $0) }
+        let a = store.items[0].subtasks[0].id
+        store.updateSubtaskTitle(a, in: pid, to: "A")
+        XCTAssertEqual(store.items[0].subtasks[0].title, "A")
+        store.moveSubtask(in: pid, from: IndexSet(integer: 2), to: 0)   // "c" → front
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["c", "A", "b"])
+        store.removeSubtask(store.items[0].subtasks[0].id, from: pid)   // removes "c"
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["A", "b"])
+    }
+
+    func test_updateNotes_setsNotes() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.updateNotes(of: pid, to: "ping https://x.com")
+        XCTAssertEqual(store.items[0].notes, "ping https://x.com")
+    }
+
+    func test_uncheckDuringCompletionWindow_cancelsRemoval() {
+        // A scheduler that CAPTURES the work instead of running it, so we control
+        // when the deferred removal fires — simulating the ~0.9s window.
+        var pending: [() -> Void] = []
+        let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
+        let store = TodoStore(defaults: suite, cloud: nil, removalDelay: 0,
+                              schedule: { _, work in pending.append(work) })
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid) // all done → completion scheduled
+        XCTAssertEqual(store.items.count, 1)      // not removed yet (scheduler captured)
+        XCTAssertTrue(store.items[0].isDone)      // struck through
+
+        // Un-check within the window:
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
+        XCTAssertFalse(store.items[0].isDone)     // completion cancelled
+
+        // The deferred removal now fires — and must be a no-op:
+        pending.forEach { $0() }
+        XCTAssertEqual(store.items.count, 1)      // survived
+    }
+
+    func test_autoComplete_stillRemovesWhenNotCancelled() {
+        // Regression: normal auto-complete still removes (immediate scheduler).
+        let store = makeStore()
+        store.add("P")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid) // all done
+        XCTAssertTrue(store.items.isEmpty)
+    }
 }
