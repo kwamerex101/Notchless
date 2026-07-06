@@ -6,6 +6,13 @@ import SwiftUI
 final class NotchHostingView: NSHostingView<NotchRootView> {
     weak var model: NotchViewModel?
     var metrics: NotchMetrics
+    /// Called for horizontal swipe-to-seek on the media pane.
+    var onMediaCommand: ((MediaCommand) -> Void)?
+
+    // Two-finger swipe accumulation (one action fires per gesture).
+    private var swipeX: CGFloat = 0
+    private var swipeY: CGFloat = 0
+    private var swipeFired = false
 
     init(rootView: NotchRootView, model: NotchViewModel, metrics: NotchMetrics) {
         self.model = model
@@ -17,6 +24,41 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
     required init(rootView: NotchRootView) { fatalError() }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
+
+    /// Two-finger trackpad swipes over the notch: vertical opens (down) /
+    /// closes (up); horizontal seeks the media pane by ±10s. One action per
+    /// gesture, then it waits for the next.
+    override func scrollWheel(with event: NSEvent) {
+        guard event.hasPreciseScrollingDeltas else { super.scrollWheel(with: event); return }
+
+        if event.phase.contains(.began) {
+            swipeX = 0; swipeY = 0; swipeFired = false
+        }
+        swipeX += event.scrollingDeltaX
+        swipeY += event.scrollingDeltaY
+
+        let threshold: CGFloat = 28
+        if !swipeFired {
+            if abs(swipeY) > abs(swipeX), abs(swipeY) > threshold {
+                swipeFired = true
+                let openIt = swipeY < 0   // fingers move down → open
+                MainActor.assumeIsolated { openIt ? model?.tapped() : model?.collapse() }
+            } else if abs(swipeX) > threshold {
+                swipeFired = true
+                MainActor.assumeIsolated { seek(forward: swipeX < 0) }
+            }
+        }
+        if event.phase.contains(.ended) || event.phase.contains(.cancelled) {
+            swipeFired = false
+        }
+    }
+
+    @MainActor
+    private func seek(forward: Bool) {
+        guard let info = model?.nowPlaying else { return }
+        let target = max(0, min(info.duration, info.elapsed + (forward ? 10 : -10)))
+        onMediaCommand?(.seek(target))
+    }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard let model else { return nil }
