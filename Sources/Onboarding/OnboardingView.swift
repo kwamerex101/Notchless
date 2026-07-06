@@ -74,7 +74,8 @@ struct OnboardingView: View {
             .padding(.bottom, 26)
         }
         .frame(width: 420, height: 620)
-        .background(.regularMaterial)
+        .background(ThemedBackground())
+        .tint(AppTheme.accent)
     }
 
     private func advance() {

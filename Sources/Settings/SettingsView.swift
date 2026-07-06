@@ -84,6 +84,7 @@ struct SettingsView: View {
                     ForEach([SettingsSection.permissions, .about]) { row($0) }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationSplitViewColumnWidth(220)
         } detail: {
             ScrollView {
@@ -91,7 +92,10 @@ struct SettingsView: View {
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollContentBackground(.hidden)
         }
+        .background(ThemedBackground())
+        .tint(AppTheme.accent)
     }
 
     private func row(_ section: SettingsSection) -> some View {

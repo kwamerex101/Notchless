@@ -84,6 +84,7 @@
 		CAD71856E5EF512924B56451 /* MediaRemoteBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23798CAD00021C31D06C419 /* MediaRemoteBridge.swift */; };
 		CBF1053AB04D719A33C9D0DD /* DisplayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32471DD16AC835C67E00A57B /* DisplayService.swift */; };
 		CCCF4DEB2080E98195343ADD /* NotchState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D9C44D2BCBC2D409E025B9 /* NotchState.swift */; };
+		CF1849A63606DC2CDD335AC6 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7409DA42DF89959B7CA49EF4 /* AppTheme.swift */; };
 		D0FFB21CF40997501AE4B337 /* AdapterNowPlayingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40AF2391776BBCC4E091A2E /* AdapterNowPlayingProvider.swift */; };
 		D25DBDC55FD00E127EA7E480 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A45D9D9BB21BF583940877 /* AppDelegate.swift */; };
 		D6D4037D1E230FEDE2352BB9 /* SoundCue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */; };
@@ -151,6 +152,7 @@
 		69FDFDF0B69DFBD7FACAF09B /* NotchMouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMouseTracker.swift; sourceTree = "<group>"; };
 		6E83C2F46A0365544CCEB62D /* AboutPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPane.swift; sourceTree = "<group>"; };
 		6F2C0E36633C2C8884414928 /* DictationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistory.swift; sourceTree = "<group>"; };
+		7409DA42DF89959B7CA49EF4 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		7436C1E71C7C818FEBB90CF8 /* CalendarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarController.swift; sourceTree = "<group>"; };
 		78BCEBB323CDAD6A811E8554 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7C538E54FF02A2F6DE45489A /* AudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioService.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 			isa = PBXGroup;
 			children = (
 				6E83C2F46A0365544CCEB62D /* AboutPane.swift */,
+				7409DA42DF89959B7CA49EF4 /* AppTheme.swift */,
 				CE525E793DDE3B7457DDD256 /* DictationPane.swift */,
 				EE7C371A4406389B266AA7E2 /* GeneralPane.swift */,
 				9C4C2AD2CB14ABD4BAA3B3CB /* PermissionsModel.swift */,
@@ -597,6 +600,7 @@
 				D0FFB21CF40997501AE4B337 /* AdapterNowPlayingProvider.swift in Sources */,
 				BEE1B804D7875AF94FD95D60 /* AppContext.swift in Sources */,
 				D25DBDC55FD00E127EA7E480 /* AppDelegate.swift in Sources */,
+				CF1849A63606DC2CDD335AC6 /* AppTheme.swift in Sources */,
 				D796BED27ED47C828BD3A16B /* AudioOutputService.swift in Sources */,
 				920804F844DDE74B24333D9E /* AudioService.swift in Sources */,
 				F14D81FF71DAC194762E6FF0 /* BluetoothService.swift in Sources */,
