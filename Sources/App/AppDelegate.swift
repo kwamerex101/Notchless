@@ -8,6 +8,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NotchPanel?
     private var mouseTracker: NotchMouseTracker?
     private let panelSize = NSSize(width: 760, height: 460)
+    /// The screen the panel currently sits on (compared by frame), and a timer
+    /// that keeps the panel on whichever screen the user is using.
+    private var currentScreenFrame: NSRect?
+    private var followTimer: Timer?
 
     private lazy var media = MediaController(model: model)
     private lazy var hud = HUDController(model: model)
@@ -35,6 +39,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
+
+        // Follow the screen the user is using (Active-display mode) — reposition
+        // only when the target screen actually changes, so it's cheap when idle.
+        followTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.repositionIfNeeded() }
+        }
     }
 
     private func startPermissionedServices() {
@@ -68,10 +78,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.orderFrontRegardless()
 
         self.panel = panel
+        self.currentScreenFrame = screen.frame
 
         let tracker = NotchMouseTracker(panel: panel, model: model, metrics: metrics)
         tracker.start()
         self.mouseTracker = tracker
+    }
+
+    /// Moves the panel to `screen` and refreshes its notch geometry.
+    private func applyScreen(_ screen: NSScreen) {
+        guard let panel else { return }
+        let metrics = NotchGeometry.metrics(for: screen)
+        panel.setFrame(panelFrame(for: metrics), display: true)
+        if let host = panel.contentView as? NotchHostingView {
+            host.metrics = metrics
+            host.rootView = makeRootView(metrics)
+        }
+        mouseTracker?.metrics = metrics
+        currentScreenFrame = screen.frame
+    }
+
+    /// Repositions only when the target screen changed — driven by the follow
+    /// timer, so Active-display mode tracks the screen you're on.
+    private func repositionIfNeeded() {
+        guard let screen = targetScreen(), screen.frame != currentScreenFrame else { return }
+        applyScreen(screen)
     }
 
     private func targetScreen() -> NSScreen? {
@@ -95,17 +126,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        followTimer?.invalidate()
         media.stop()
     }
 
     @objc private func screensChanged() {
-        guard let panel, let screen = targetScreen() else { return }
-        let metrics = NotchGeometry.metrics(for: screen)
-        panel.setFrame(panelFrame(for: metrics), display: true)
-        if let host = panel.contentView as? NotchHostingView {
-            host.metrics = metrics
-            host.rootView = makeRootView(metrics)
-        }
-        mouseTracker?.metrics = metrics
+        // A display was added/removed/rearranged — re-apply even if it's the
+        // same screen, since its frame or notch geometry may have changed.
+        guard let screen = targetScreen() else { return }
+        applyScreen(screen)
     }
 }
