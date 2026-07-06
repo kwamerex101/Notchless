@@ -47,9 +47,10 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
             } else if abs(swipeX) > threshold {
                 swipeFired = true
                 MainActor.assumeIsolated {
-                    // With multiple concurrent Live Activities, swipe switches
-                    // between them; otherwise it scrubs the current track.
-                    if SettingsStore.shared.idleActivity == .auto, (model?.liveActivities.count ?? 0) >= 2 {
+                    // In Auto with something live, swipe pages through the
+                    // activities (playing / calendar / stats / …); otherwise it
+                    // scrubs the current track.
+                    if SettingsStore.shared.idleActivity == .auto, !(model?.liveActivities.isEmpty ?? true) {
                         model?.cycleLiveActivity()
                     } else {
                         seek(forward: swipeX < 0)

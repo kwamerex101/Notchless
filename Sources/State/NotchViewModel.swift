@@ -88,6 +88,17 @@ final class NotchViewModel: ObservableObject {
         return result
     }
 
+    /// Everything the user can swipe through: the live activities plus the
+    /// always-available info pages (calendar, stats). Only browsable while at
+    /// least one activity is live — the notch stays bare when nothing is.
+    var carouselActivities: [NotchActivity] {
+        var result = liveActivities
+        for page in [NotchActivity.calendar, .stats] where !result.contains(page) {
+            result.append(page)
+        }
+        return result
+    }
+
     /// The concrete activity to rest in the notch at idle, or nil for a bare
     /// notch. In Auto mode this is whatever Live Activity is currently live —
     /// or the one the user cycled to.
@@ -109,19 +120,20 @@ final class NotchViewModel: ObservableObject {
     /// The current activity in the Auto carousel: the user's manual pick if it's
     /// still live, else the top-priority live one.
     private func autoCarouselActivity() -> NotchActivity? {
-        let live = liveActivities
-        guard !live.isEmpty else { return nil }
-        if let manual = manualActivity, live.contains(manual) { return manual }
-        return live.first
+        guard !liveActivities.isEmpty else { return nil }   // bare when nothing live
+        if let manual = manualActivity, carouselActivities.contains(manual) { return manual }
+        return liveActivities.first
     }
 
-    /// Advances the Auto carousel to the next live activity (horizontal swipe).
+    /// Advances the Auto carousel to the next page (horizontal swipe) — through
+    /// the live activities and the calendar/stats pages.
     func cycleLiveActivity() {
-        let live = liveActivities
-        guard live.count >= 2 else { return }
-        let current = manualActivity.flatMap { live.contains($0) ? $0 : nil } ?? live[0]
-        let index = live.firstIndex(of: current) ?? 0
-        manualActivity = live[(index + 1) % live.count]
+        guard !liveActivities.isEmpty else { return }
+        let carousel = carouselActivities
+        guard carousel.count >= 2 else { return }
+        let current = manualActivity.flatMap { carousel.contains($0) ? $0 : nil } ?? liveActivities[0]
+        let index = carousel.firstIndex(of: current) ?? 0
+        manualActivity = carousel[(index + 1) % carousel.count]
     }
 
     /// Which activity a click/hover expands into.
