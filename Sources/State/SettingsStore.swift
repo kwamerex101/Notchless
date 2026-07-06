@@ -64,6 +64,32 @@ final class SettingsStore: ObservableObject {
     @Published var soundHUDEnabled: Bool { didSet { persist(oldValue != soundHUDEnabled) } }
     @Published var fileTrayEnabled: Bool { didSet { persist(oldValue != fileTrayEnabled) } }
 
+    // Battery
+    @Published var batteryShowPercentage: Bool { didSet { persist(oldValue != batteryShowPercentage) } }
+    @Published var batteryLowThreshold: Int { didSet { persist(oldValue != batteryLowThreshold) } }
+    @Published var batteryNotifyCharged: Bool { didSet { persist(oldValue != batteryNotifyCharged) } }
+
+    // Now Playing / media
+    @Published var liveAudioVisualizer: Bool { didSet { persist(oldValue != liveAudioVisualizer) } }
+    @Published var swipeToSeek: Bool { didSet { persist(oldValue != swipeToSeek) } }
+    @Published var swipeGesturesEnabled: Bool { didSet { persist(oldValue != swipeGesturesEnabled) } }
+
+    // Calendar
+    @Published var calendarShowWeather: Bool { didSet { persist(oldValue != calendarShowWeather) } }
+    @Published var calendarShowEvents: Bool { didSet { persist(oldValue != calendarShowEvents) } }
+
+    // Stats
+    @Published var statsRefreshSeconds: Double { didSet { persist(oldValue != statsRefreshSeconds) } }
+    @Published var statsShowCPU: Bool { didSet { persist(oldValue != statsShowCPU) } }
+    @Published var statsShowMemory: Bool { didSet { persist(oldValue != statsShowMemory) } }
+    @Published var statsShowNetwork: Bool { didSet { persist(oldValue != statsShowNetwork) } }
+
+    // Timer / Clipboard / Privacy
+    @Published var timerSoundOnFinish: Bool { didSet { persist(oldValue != timerSoundOnFinish) } }
+    @Published var clipboardEnabled: Bool { didSet { persist(oldValue != clipboardEnabled) } }
+    @Published var clipboardHistorySize: Int { didSet { persist(oldValue != clipboardHistorySize) } }
+    @Published var privacyIndicatorEnabled: Bool { didSet { persist(oldValue != privacyIndicatorEnabled) } }
+
     private var loading = false
 
     private init() {
@@ -90,6 +116,22 @@ final class SettingsStore: ObservableObject {
             Keys.displayHUDEnabled: true,
             Keys.soundHUDEnabled: true,
             Keys.fileTrayEnabled: true,
+            Keys.batteryShowPercentage: true,
+            Keys.batteryLowThreshold: 20,
+            Keys.batteryNotifyCharged: true,
+            Keys.liveAudioVisualizer: true,
+            Keys.swipeToSeek: true,
+            Keys.swipeGesturesEnabled: true,
+            Keys.calendarShowWeather: true,
+            Keys.calendarShowEvents: true,
+            Keys.statsRefreshSeconds: 2.0,
+            Keys.statsShowCPU: true,
+            Keys.statsShowMemory: true,
+            Keys.statsShowNetwork: true,
+            Keys.timerSoundOnFinish: true,
+            Keys.clipboardEnabled: true,
+            Keys.clipboardHistorySize: 20,
+            Keys.privacyIndicatorEnabled: true,
         ])
 
         fileTrayEnabled = defaults.bool(forKey: Keys.fileTrayEnabled)
@@ -113,6 +155,22 @@ final class SettingsStore: ObservableObject {
         focusEnabled = defaults.bool(forKey: Keys.focusEnabled)
         displayHUDEnabled = defaults.bool(forKey: Keys.displayHUDEnabled)
         soundHUDEnabled = defaults.bool(forKey: Keys.soundHUDEnabled)
+        batteryShowPercentage = defaults.bool(forKey: Keys.batteryShowPercentage)
+        batteryLowThreshold = defaults.integer(forKey: Keys.batteryLowThreshold)
+        batteryNotifyCharged = defaults.bool(forKey: Keys.batteryNotifyCharged)
+        liveAudioVisualizer = defaults.bool(forKey: Keys.liveAudioVisualizer)
+        swipeToSeek = defaults.bool(forKey: Keys.swipeToSeek)
+        swipeGesturesEnabled = defaults.bool(forKey: Keys.swipeGesturesEnabled)
+        calendarShowWeather = defaults.bool(forKey: Keys.calendarShowWeather)
+        calendarShowEvents = defaults.bool(forKey: Keys.calendarShowEvents)
+        statsRefreshSeconds = defaults.double(forKey: Keys.statsRefreshSeconds)
+        statsShowCPU = defaults.bool(forKey: Keys.statsShowCPU)
+        statsShowMemory = defaults.bool(forKey: Keys.statsShowMemory)
+        statsShowNetwork = defaults.bool(forKey: Keys.statsShowNetwork)
+        timerSoundOnFinish = defaults.bool(forKey: Keys.timerSoundOnFinish)
+        clipboardEnabled = defaults.bool(forKey: Keys.clipboardEnabled)
+        clipboardHistorySize = defaults.integer(forKey: Keys.clipboardHistorySize)
+        privacyIndicatorEnabled = defaults.bool(forKey: Keys.privacyIndicatorEnabled)
 
         NotificationCenter.default.addObserver(
             self, selector: #selector(cloudChanged(_:)),
@@ -145,6 +203,22 @@ final class SettingsStore: ObservableObject {
             (Keys.displayHUDEnabled, displayHUDEnabled),
             (Keys.soundHUDEnabled, soundHUDEnabled),
             (Keys.fileTrayEnabled, fileTrayEnabled),
+            (Keys.batteryShowPercentage, batteryShowPercentage),
+            (Keys.batteryLowThreshold, batteryLowThreshold),
+            (Keys.batteryNotifyCharged, batteryNotifyCharged),
+            (Keys.liveAudioVisualizer, liveAudioVisualizer),
+            (Keys.swipeToSeek, swipeToSeek),
+            (Keys.swipeGesturesEnabled, swipeGesturesEnabled),
+            (Keys.calendarShowWeather, calendarShowWeather),
+            (Keys.calendarShowEvents, calendarShowEvents),
+            (Keys.statsRefreshSeconds, statsRefreshSeconds),
+            (Keys.statsShowCPU, statsShowCPU),
+            (Keys.statsShowMemory, statsShowMemory),
+            (Keys.statsShowNetwork, statsShowNetwork),
+            (Keys.timerSoundOnFinish, timerSoundOnFinish),
+            (Keys.clipboardEnabled, clipboardEnabled),
+            (Keys.clipboardHistorySize, clipboardHistorySize),
+            (Keys.privacyIndicatorEnabled, privacyIndicatorEnabled),
         ]
         for (k, v) in pairs {
             defaults.set(v, forKey: k)
@@ -190,5 +264,21 @@ final class SettingsStore: ObservableObject {
         static let displayHUDEnabled = "displayHUDEnabled"
         static let soundHUDEnabled = "soundHUDEnabled"
         static let fileTrayEnabled = "fileTrayEnabled"
+        static let batteryShowPercentage = "batteryShowPercentage"
+        static let batteryLowThreshold = "batteryLowThreshold"
+        static let batteryNotifyCharged = "batteryNotifyCharged"
+        static let liveAudioVisualizer = "liveAudioVisualizer"
+        static let swipeToSeek = "swipeToSeek"
+        static let swipeGesturesEnabled = "swipeGesturesEnabled"
+        static let calendarShowWeather = "calendarShowWeather"
+        static let calendarShowEvents = "calendarShowEvents"
+        static let statsRefreshSeconds = "statsRefreshSeconds"
+        static let statsShowCPU = "statsShowCPU"
+        static let statsShowMemory = "statsShowMemory"
+        static let statsShowNetwork = "statsShowNetwork"
+        static let timerSoundOnFinish = "timerSoundOnFinish"
+        static let clipboardEnabled = "clipboardEnabled"
+        static let clipboardHistorySize = "clipboardHistorySize"
+        static let privacyIndicatorEnabled = "privacyIndicatorEnabled"
     }
 }

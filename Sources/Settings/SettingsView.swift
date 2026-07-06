@@ -4,7 +4,7 @@ import SwiftUI
 enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
-    case nowPlaying, calendar, fileTray, dictation, lockScreen
+    case nowPlaying, calendar, fileTray, dictation, stats, timer, clipboard, privacyDot, lockScreen
     case permissions, about
 
     var id: String { rawValue }
@@ -21,6 +21,10 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .calendar: return "Calendar"
         case .fileTray: return "File Tray"
         case .dictation: return "Dictation"
+        case .stats: return "System Stats"
+        case .timer: return "Timer"
+        case .clipboard: return "Clipboard"
+        case .privacyDot: return "Privacy"
         case .lockScreen: return "Lock Screen"
         case .permissions: return "Permissions"
         case .about: return "About"
@@ -39,6 +43,10 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .calendar: return "calendar"
         case .fileTray: return "tray.fill"
         case .dictation: return "mic.fill"
+        case .stats: return "cpu"
+        case .timer: return "timer"
+        case .clipboard: return "doc.on.clipboard.fill"
+        case .privacyDot: return "checkmark.shield.fill"
         case .lockScreen: return "lock.fill"
         case .permissions: return "hand.raised.fill"
         case .about: return "info.circle.fill"
@@ -57,6 +65,10 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .calendar: return .red
         case .fileTray: return .gray
         case .dictation: return .teal
+        case .stats: return .green
+        case .timer: return .orange
+        case .clipboard: return .indigo
+        case .privacyDot: return .green
         case .lockScreen: return .black
         case .permissions: return .blue
         case .about: return .gray
@@ -78,7 +90,8 @@ struct SettingsView: View {
                     ForEach([SettingsSection.battery, .connectivity, .focus, .display, .sound]) { row($0) }
                 }
                 Section("Live Activities") {
-                    ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation, .lockScreen]) { row($0) }
+                    ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
+                             .stats, .timer, .clipboard, .privacyDot, .lockScreen]) { row($0) }
                 }
                 Section("Notchless") {
                     ForEach([SettingsSection.permissions, .about]) { row($0) }
@@ -134,6 +147,17 @@ struct SettingsView: View {
     @ViewBuilder private var content: some View {
         switch selection {
         case .general: GeneralPane(settings: settings)
+        case .battery: BatteryPane(settings: settings)
+        case .connectivity: ConnectivityPane(settings: settings)
+        case .focus: FocusPane(settings: settings)
+        case .display: DisplayPane(settings: settings)
+        case .sound: SoundPane(settings: settings)
+        case .nowPlaying: NowPlayingPane(settings: settings)
+        case .calendar: CalendarPane(settings: settings)
+        case .stats: StatsPane(settings: settings)
+        case .timer: TimerPane(settings: settings)
+        case .clipboard: ClipboardPane(settings: settings)
+        case .privacyDot: PrivacyPane(settings: settings)
         case .dictation: DictationPane()
         case .permissions: PermissionsPane()
         default: PlaceholderPane(section: selection, settings: settings)

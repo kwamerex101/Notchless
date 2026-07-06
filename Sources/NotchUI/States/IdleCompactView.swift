@@ -84,9 +84,11 @@ struct IdleCompactView: View {
             VisualizerBars(isPlaying: false, color: .white.opacity(0.55), height: 12)
                 .frame(width: 20)
         case .battery:
-            Text("\(battery?.level ?? 0)%")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
+            if SettingsStore.shared.batteryShowPercentage {
+                Text("\(battery?.level ?? 0)%")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
         case .stats:
             Text("\(Int((stats?.cpu ?? 0) * 100))%")
                 .font(.system(size: 13, weight: .semibold))
