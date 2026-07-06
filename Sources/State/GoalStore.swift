@@ -90,3 +90,30 @@ extension Goal {
         return delta > 0 ? .ahead(delta) : .behind(-delta)
     }
 }
+
+/// Full grouped amount with the currency symbol suffixed, no decimals.
+/// e.g. goalFormatAmount(42000, symbol: "₵") == "42,000 ₵"
+func goalFormatAmount(_ amount: Decimal, symbol: String) -> String {
+    let f = NumberFormatter()
+    f.numberStyle = .decimal
+    f.maximumFractionDigits = 0
+    f.groupingSeparator = ","
+    f.usesGroupingSeparator = true
+    let n = f.string(from: amount as NSDecimalNumber) ?? "0"
+    return "\(n) \(symbol)"
+}
+
+/// Compact amount for the notch cue. 1_000→"1k", 1_500→"1.5k", 1_200_000→"1.2m".
+func goalAbbreviate(_ amount: Decimal, symbol: String) -> String {
+    let value = (amount as NSDecimalNumber).doubleValue
+    func trim(_ d: Double) -> String {
+        // one decimal, drop a trailing ".0"
+        let s = String(format: "%.1f", d)
+        return s.hasSuffix(".0") ? String(s.dropLast(2)) : s
+    }
+    let body: String
+    if abs(value) >= 1_000_000 { body = "\(trim(value / 1_000_000))m" }
+    else if abs(value) >= 1_000 { body = "\(trim(value / 1_000))k" }
+    else { body = String(Int(value.rounded())) }
+    return "\(body) \(symbol)"
+}

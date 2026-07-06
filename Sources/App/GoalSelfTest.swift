@@ -23,7 +23,8 @@ enum GoalSelfTest {
 
         modelChecks()
         paceChecks()
-        // Later tasks append: formatChecks(); storeChecks()
+        formatChecks()
+        // Later tasks append: storeChecks()
 
         print(failures == 0 ? "SELFTEST OK" : "SELFTEST FAILED (\(failures))")
         exit(failures == 0 ? 0 : 1)
@@ -61,5 +62,14 @@ enum GoalSelfTest {
         check("pace behind past dead-band", goal(40_000).pace(now: days(50)) == .behind(10_000))
         check("pace overdue when past deadline unmet", goal(90_000).pace(now: days(101)) == .overdue)
         check("pace not overdue when target met", goal(100_000).pace(now: days(101)) == .onTrack)
+    }
+
+    private static func formatChecks() {
+        check("format groups thousands", goalFormatAmount(42_000, symbol: "₵") == "42,000 ₵")
+        check("format handles small", goalFormatAmount(250, symbol: "₵") == "250 ₵")
+        check("abbrev k whole", goalAbbreviate(100_000, symbol: "₵") == "100k ₵")
+        check("abbrev k decimal", goalAbbreviate(1_500, symbol: "₵") == "1.5k ₵")
+        check("abbrev under 1000", goalAbbreviate(250, symbol: "₵") == "250 ₵")
+        check("abbrev millions", goalAbbreviate(1_200_000, symbol: "₵") == "1.2m ₵")
     }
 }
