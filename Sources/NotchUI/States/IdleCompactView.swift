@@ -25,7 +25,7 @@ struct IdleCompactView: View {
 
     private var claudeCompactTrailing: String {
         switch SettingsStore.shared.claudeCompactStyle {
-        case .todayCost: return ClaudeUsageStats.money(claudeStats?.todayCost ?? 0)
+        case .todayCost: return ClaudeUsageStats.moneyCompact(claudeStats?.todayCost ?? 0)
         default: return ClaudeUsageStats.format(claudeStats?.total ?? 0)
         }
     }
