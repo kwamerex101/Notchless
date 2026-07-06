@@ -20,7 +20,14 @@ final class ClipboardStore: ObservableObject {
     private var lastChangeCount = NSPasteboard.general.changeCount
     private var cap: Int { max(1, SettingsStore.shared.clipboardHistorySize) }
 
-    func start() {
+    func start() { setEnabled(SettingsStore.shared.clipboardEnabled) }
+
+    /// Starts or stops pasteboard polling. Idempotent — safe to call on every
+    /// settings change. When disabled the timer is torn down entirely (zero idle
+    /// cost); the in-memory history is left intact so re-enabling keeps it.
+    func setEnabled(_ on: Bool) {
+        guard on else { timer?.invalidate(); timer = nil; return }
+        guard timer == nil else { return }
         lastChangeCount = NSPasteboard.general.changeCount
         timer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }

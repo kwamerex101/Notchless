@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// that keeps the panel on whichever screen the user is using.
     private var currentScreenFrame: NSRect?
     private var followTimer: Timer?
+    private var settingsObservers: Set<AnyCancellable> = []
 
     private lazy var media = MediaController(model: model)
     private lazy var hud = HUDController(model: model)
@@ -41,6 +42,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         privacy.start()
         claudeStats.start()
         ClipboardStore.shared.start()
+
+        // Keep the feature-gated pollers in sync with their toggles at runtime,
+        // so turning a feature off actually stops its timer (and turning it back
+        // on resumes live — no relaunch).
+        model.settings.$statsEnabled.removeDuplicates()
+            .sink { [weak self] on in self?.stats.setEnabled(on) }
+            .store(in: &settingsObservers)
+        model.settings.$privacyIndicatorEnabled.removeDuplicates()
+            .sink { [weak self] on in self?.privacy.setEnabled(on) }
+            .store(in: &settingsObservers)
+        model.settings.$clipboardEnabled.removeDuplicates()
+            .sink { on in ClipboardStore.shared.setEnabled(on) }
+            .store(in: &settingsObservers)
 
         // Only capture system audio while something is actually playing.
         playbackObserver = model.$nowPlaying
