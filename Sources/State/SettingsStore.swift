@@ -79,6 +79,7 @@ final class SettingsStore: ObservableObject {
     @Published var liveAudioVisualizer: Bool { didSet { persist(oldValue != liveAudioVisualizer) } }
     @Published var swipeToSeek: Bool { didSet { persist(oldValue != swipeToSeek) } }
     @Published var swipeGesturesEnabled: Bool { didSet { persist(oldValue != swipeGesturesEnabled) } }
+    @Published var showTabBar: Bool { didSet { persist(oldValue != showTabBar) } }
 
     // Calendar
     @Published var calendarShowWeather: Bool { didSet { persist(oldValue != calendarShowWeather) } }
@@ -139,6 +140,7 @@ final class SettingsStore: ObservableObject {
             Keys.liveAudioVisualizer: true,
             Keys.swipeToSeek: true,
             Keys.swipeGesturesEnabled: true,
+            Keys.showTabBar: true,
             Keys.calendarShowWeather: true,
             Keys.calendarShowEvents: true,
             Keys.statsRefreshSeconds: 2.0,
@@ -190,6 +192,7 @@ final class SettingsStore: ObservableObject {
         liveAudioVisualizer = defaults.bool(forKey: Keys.liveAudioVisualizer)
         swipeToSeek = defaults.bool(forKey: Keys.swipeToSeek)
         swipeGesturesEnabled = defaults.bool(forKey: Keys.swipeGesturesEnabled)
+        showTabBar = defaults.bool(forKey: Keys.showTabBar)
         calendarShowWeather = defaults.bool(forKey: Keys.calendarShowWeather)
         calendarShowEvents = defaults.bool(forKey: Keys.calendarShowEvents)
         statsRefreshSeconds = defaults.double(forKey: Keys.statsRefreshSeconds)
@@ -250,6 +253,7 @@ final class SettingsStore: ObservableObject {
             (Keys.liveAudioVisualizer, liveAudioVisualizer),
             (Keys.swipeToSeek, swipeToSeek),
             (Keys.swipeGesturesEnabled, swipeGesturesEnabled),
+            (Keys.showTabBar, showTabBar),
             (Keys.calendarShowWeather, calendarShowWeather),
             (Keys.calendarShowEvents, calendarShowEvents),
             (Keys.statsRefreshSeconds, statsRefreshSeconds),
@@ -318,6 +322,7 @@ final class SettingsStore: ObservableObject {
             liveAudioVisualizer = cloud.bool(forKey: Keys.liveAudioVisualizer)
             swipeToSeek = cloud.bool(forKey: Keys.swipeToSeek)
             swipeGesturesEnabled = cloud.bool(forKey: Keys.swipeGesturesEnabled)
+            showTabBar = cloud.bool(forKey: Keys.showTabBar)
             calendarShowWeather = cloud.bool(forKey: Keys.calendarShowWeather)
             calendarShowEvents = cloud.bool(forKey: Keys.calendarShowEvents)
             statsRefreshSeconds = cloud.double(forKey: Keys.statsRefreshSeconds)
@@ -368,6 +373,7 @@ final class SettingsStore: ObservableObject {
         static let liveAudioVisualizer = "liveAudioVisualizer"
         static let swipeToSeek = "swipeToSeek"
         static let swipeGesturesEnabled = "swipeGesturesEnabled"
+        static let showTabBar = "showTabBar"
         static let calendarShowWeather = "calendarShowWeather"
         static let calendarShowEvents = "calendarShowEvents"
         static let statsRefreshSeconds = "statsRefreshSeconds"
