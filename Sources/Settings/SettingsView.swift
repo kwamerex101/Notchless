@@ -4,7 +4,7 @@ import SwiftUI
 enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
-    case nowPlaying, calendar, fileTray, dictation, stats, claudeStats, timer, clipboard, privacyDot
+    case nowPlaying, calendar, fileTray, dictation, stats, claudeStats, timer, clipboard, privacyDot, goals
     case permissions, about
 
     var id: String { rawValue }
@@ -26,6 +26,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return "Timer"
         case .clipboard: return "Clipboard"
         case .privacyDot: return "Privacy"
+        case .goals: return "Goals"
         case .permissions: return "Permissions"
         case .about: return "About"
         }
@@ -48,6 +49,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return "timer"
         case .clipboard: return "doc.on.clipboard.fill"
         case .privacyDot: return "checkmark.shield.fill"
+        case .goals: return "target"
         case .permissions: return "hand.raised.fill"
         case .about: return "info.circle.fill"
         }
@@ -70,6 +72,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .timer: return .orange
         case .clipboard: return .indigo
         case .privacyDot: return .green
+        case .goals: return .pink
         case .permissions: return .blue
         case .about: return .gray
         }
@@ -91,7 +94,7 @@ struct SettingsView: View {
                 }
                 Section("Live Activities") {
                     ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
-                             .stats, .claudeStats, .timer, .clipboard, .privacyDot]) { row($0) }
+                             .stats, .claudeStats, .timer, .clipboard, .privacyDot, .goals]) { row($0) }
                 }
                 Section("Notchless") {
                     ForEach([SettingsSection.permissions, .about]) { row($0) }
@@ -159,6 +162,7 @@ struct SettingsView: View {
         case .timer: TimerPane(settings: settings)
         case .clipboard: ClipboardPane(settings: settings)
         case .privacyDot: PrivacyPane(settings: settings)
+        case .goals: GoalsPane(settings: settings)
         case .dictation: DictationPane()
         case .permissions: PermissionsPane()
         default: PlaceholderPane(section: selection, settings: settings)
