@@ -63,6 +63,7 @@ final class SettingsStore: ObservableObject {
     @Published var displayHUDEnabled: Bool { didSet { persist(oldValue != displayHUDEnabled) } }
     @Published var soundHUDEnabled: Bool { didSet { persist(oldValue != soundHUDEnabled) } }
     @Published var fileTrayEnabled: Bool { didSet { persist(oldValue != fileTrayEnabled) } }
+    @Published var todosEnabled: Bool { didSet { persist(oldValue != todosEnabled) } }
 
     // Battery
     @Published var batteryShowPercentage: Bool { didSet { persist(oldValue != batteryShowPercentage) } }
@@ -126,6 +127,7 @@ final class SettingsStore: ObservableObject {
             Keys.displayHUDEnabled: true,
             Keys.soundHUDEnabled: true,
             Keys.fileTrayEnabled: true,
+            Keys.todosEnabled: true,
             Keys.batteryShowPercentage: true,
             Keys.batteryLowThreshold: 20,
             Keys.batteryNotifyCharged: true,
@@ -153,6 +155,7 @@ final class SettingsStore: ObservableObject {
         ])
 
         fileTrayEnabled = defaults.bool(forKey: Keys.fileTrayEnabled)
+        todosEnabled = defaults.bool(forKey: Keys.todosEnabled)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         syncViaICloud = defaults.bool(forKey: Keys.syncViaICloud)
         hideInFullscreen = defaults.bool(forKey: Keys.hideInFullscreen)
@@ -229,6 +232,7 @@ final class SettingsStore: ObservableObject {
             (Keys.displayHUDEnabled, displayHUDEnabled),
             (Keys.soundHUDEnabled, soundHUDEnabled),
             (Keys.fileTrayEnabled, fileTrayEnabled),
+            (Keys.todosEnabled, todosEnabled),
             (Keys.batteryShowPercentage, batteryShowPercentage),
             (Keys.batteryLowThreshold, batteryLowThreshold),
             (Keys.batteryNotifyCharged, batteryNotifyCharged),
@@ -298,6 +302,7 @@ final class SettingsStore: ObservableObject {
         static let displayHUDEnabled = "displayHUDEnabled"
         static let soundHUDEnabled = "soundHUDEnabled"
         static let fileTrayEnabled = "fileTrayEnabled"
+        static let todosEnabled = "todosEnabled"
         static let batteryShowPercentage = "batteryShowPercentage"
         static let batteryLowThreshold = "batteryLowThreshold"
         static let batteryNotifyCharged = "batteryNotifyCharged"

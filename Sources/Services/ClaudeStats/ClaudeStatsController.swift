@@ -40,7 +40,11 @@ final class ClaudeStatsController {
         }
 
         let cutoff = Date().addingTimeInterval(-30 * 86_400)
+        // Transcript timestamps include fractional seconds (…16.376Z), which the
+        // default formatter rejects — so opt in, with a plain fallback.
         let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let isoPlain = ISO8601DateFormatter()
         let calendar = Calendar.current
 
         var input = 0, output = 0, cache = 0
@@ -69,7 +73,8 @@ final class ClaudeStatsController {
                 let pricing = ModelPricing.forModel(stringField(line, "model") ?? "")
                 let cost = pricing.cost(input: inTok, output: outTok, cacheWrite: cacheWrite, cacheRead: cacheRead)
 
-                if let stamp = stringField(line, "timestamp"), let date = iso.date(from: stamp) {
+                if let stamp = stringField(line, "timestamp"),
+                   let date = iso.date(from: stamp) ?? isoPlain.date(from: stamp) {
                     let day = calendar.startOfDay(for: date)
                     byDay[day, default: 0] += tokens
                     byDayCost[day, default: 0] += cost

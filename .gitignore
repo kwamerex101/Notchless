@@ -21,3 +21,8 @@ references/*.mp4
 # reference frames (large, not code)
 references/video-frames/
 references/bursts/
+
+# Release artifacts
+build-release/
+dmg_staging/
+*.dmg

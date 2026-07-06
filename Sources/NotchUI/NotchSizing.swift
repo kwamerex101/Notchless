@@ -38,6 +38,8 @@ struct NotchSizing {
                 return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .clipboard:
                 return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .todos:
+                return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .privacy:
                 return NotchSizing(width: w + 130, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .claudeUsage:
@@ -81,10 +83,12 @@ struct NotchSizing {
                 return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             case .clipboard:
                 return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+            case .todos:
+                return NotchSizing(width: max(w + 40, 420), height: 220, topRadius: 10, bottomRadius: 24)
             case .privacy:
                 return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:
-                return NotchSizing(width: max(w + 40, 300), height: 196, topRadius: 10, bottomRadius: 24)
+                return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             }
         }
     }
