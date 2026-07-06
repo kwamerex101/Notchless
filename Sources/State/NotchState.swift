@@ -17,6 +17,24 @@ enum NotchActivity: String, CaseIterable, Codable {
     case todos
     case privacy
     case claudeUsage
+
+    /// SF Symbol shown for this page in the expanded tab strip.
+    var tabGlyph: String {
+        switch self {
+        case .auto, .none: return "circle"        // never shown as a tab
+        case .playing:     return "music.note"
+        case .calendar:    return "calendar"
+        case .duo:         return "rectangle.split.2x1"
+        case .dictation:   return "mic"
+        case .battery:     return "battery.75"
+        case .stats:       return "speedometer"
+        case .timer:       return "timer"
+        case .clipboard:   return "doc.on.clipboard"
+        case .todos:       return "checklist"
+        case .privacy:     return "dot.radiowaves.left.and.right"
+        case .claudeUsage: return "sparkle"
+        }
+    }
 }
 
 /// The two hardware HUDs that replace the system OSD.
