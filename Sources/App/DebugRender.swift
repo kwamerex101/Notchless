@@ -41,9 +41,8 @@ enum DebugRender {
         renderPlain(DictationPane().padding(20).frame(width: 560, height: 980)
             .background(Color(nsColor: .windowBackgroundColor)), name: "settings_dictation")
 
-        renderOnboarding(startIndex: 0, name: "onboarding_welcome")
         renderOnboarding(startIndex: 1, name: "onboarding_calendar")
-        renderOnboarding(startIndex: 5, name: "onboarding_camera")
+        renderOnboarding(startIndex: 6, name: "onboarding_dictation")
     }
 
     private static func renderPlain<V: View>(_ view: V, name: String) {

@@ -10,6 +10,7 @@ final class DictationController {
     private let hotkey = DictationHotkey()
     private var transcriber: DictationTranscriber
     private var isRecording = false
+    private var maxDurationTimer: Timer?
 
     private var settings: DictationSettings { model.dictationSettings }
 
@@ -42,6 +43,8 @@ final class DictationController {
             speech.configure(languageID: settings.languageID, microphoneUID: settings.microphoneUID)
         }
         model.setDictation(.recording)
+        if settings.soundCues { SoundCue.recordingStarted() }
+        startMaxDurationTimer()
         Task {
             do {
                 try await transcriber.start()
@@ -52,24 +55,40 @@ final class DictationController {
         }
     }
 
+    private func startMaxDurationTimer() {
+        maxDurationTimer?.invalidate()
+        let seconds = max(5, settings.maxRecordingSeconds)
+        maxDurationTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(seconds), repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.endRecording() }
+        }
+    }
+
     private func endRecording() {
         guard isRecording else { return }
         isRecording = false
+        maxDurationTimer?.invalidate()
         model.setDictation(.transcribing)
         Task {
             let raw = await transcriber.finish()
             guard !raw.isEmpty else {
+                if settings.soundCues { SoundCue.failed() }
                 model.setDictation(.error("Couldn't hear that"))
                 return
             }
-            let polished = TextPolish.apply(
+            var text = TextPolish.apply(
                 raw,
                 dictionary: model.dictationDictionary.terms,
                 capitalize: settings.autoCapitalize
             )
-            model.dictationHistory.add(polished, retentionDays: settings.historyRetentionDays)
-            DictationOutputRouter.deliver(polished, to: settings.output)
-            model.setDictation(.success(polished))
+            // Optional AI polish (Claude CLI); falls back to `text` if unavailable.
+            if TranscriptCleaner.shouldClean(text, mode: settings.cleanup) {
+                model.setDictation(.cleaning)
+                text = await TranscriptCleaner.clean(text)
+            }
+            model.dictationHistory.add(text, retentionDays: settings.historyRetentionDays)
+            DictationOutputRouter.deliver(text, to: settings.output)
+            if settings.soundCues { SoundCue.delivered() }
+            model.setDictation(.success(text))
         }
     }
 }

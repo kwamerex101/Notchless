@@ -89,6 +89,8 @@ final class DictationSettings: ObservableObject {
     @Published var cleanup: DictationCleanup { didSet { persist(Keys.cleanup, cleanup.rawValue) } }
     @Published var autoCapitalize: Bool { didSet { persist(Keys.autoCap, autoCapitalize) } }
     @Published var historyRetentionDays: Int { didSet { persist(Keys.retention, historyRetentionDays) } }
+    @Published var maxRecordingSeconds: Int { didSet { persist(Keys.maxDuration, maxRecordingSeconds) } }
+    @Published var soundCues: Bool { didSet { persist(Keys.soundCues, soundCues) } }
 
     init() {
         defaults.register(defaults: [
@@ -100,6 +102,8 @@ final class DictationSettings: ObservableObject {
             Keys.cleanup: DictationCleanup.off.rawValue,
             Keys.autoCap: true,
             Keys.retention: 30,
+            Keys.maxDuration: 120,
+            Keys.soundCues: true,
         ])
         enabled = defaults.bool(forKey: Keys.enabled)
         hotkey = DictationHotkeyOption(rawValue: defaults.string(forKey: Keys.hotkey) ?? "") ?? .controlOption
@@ -109,6 +113,8 @@ final class DictationSettings: ObservableObject {
         cleanup = DictationCleanup(rawValue: defaults.string(forKey: Keys.cleanup) ?? "") ?? .off
         autoCapitalize = defaults.bool(forKey: Keys.autoCap)
         historyRetentionDays = defaults.integer(forKey: Keys.retention)
+        maxRecordingSeconds = defaults.integer(forKey: Keys.maxDuration)
+        soundCues = defaults.bool(forKey: Keys.soundCues)
     }
 
     private func persist(_ key: String, _ value: Any) {
@@ -124,5 +130,7 @@ final class DictationSettings: ObservableObject {
         static let cleanup = "dictation.cleanup"
         static let autoCap = "dictation.autoCapitalize"
         static let retention = "dictation.retentionDays"
+        static let maxDuration = "dictation.maxDurationSeconds"
+        static let soundCues = "dictation.soundCues"
     }
 }

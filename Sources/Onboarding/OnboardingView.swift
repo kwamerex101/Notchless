@@ -18,33 +18,41 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 22) {
-            PrimingIllustration(step: step)
-                .frame(width: 300, height: 210)
-                .padding(.top, 24)
+            VStack(spacing: 22) {
+                PrimingIllustration(step: step)
+                    .frame(width: 300, height: 210)
+                    .padding(.top, 24)
 
-            Text(step.title)
-                .font(.system(size: 17, weight: .semibold))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 30)
-
-            if !step.apps.isEmpty {
-                AppIconRow(step: step)
-                    .padding(.horizontal, 28)
-            }
-
-            if let subtitle = step.subtitle {
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                Text(step.title)
+                    .font(.system(size: 17, weight: .semibold))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 34)
+                    .padding(.horizontal, 30)
+
+                if !step.apps.isEmpty {
+                    AppIconRow(step: step)
+                        .padding(.horizontal, 28)
+                }
+
+                if let subtitle = step.subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 34)
+                }
             }
+            .id(index)
+            .transition(.asymmetric(
+                insertion: .push(from: .trailing).combined(with: .opacity),
+                removal: .opacity.combined(with: .scale(scale: 0.96))
+            ))
 
             Spacer(minLength: 0)
 
             PageDots(count: steps.count, index: index)
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: index)
 
             Button(action: advance) {
                 Text(isLast ? "Done" : "Continue")
@@ -107,10 +115,10 @@ struct PrimingIllustration: View {
             .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(Color.black.opacity(0.28)))
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous),
+                     fallback: .ultraThinMaterial)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .stroke(.white.opacity(0.08), lineWidth: 1))
+            .stroke(.white.opacity(0.10), lineWidth: 1))
     }
 }
 
@@ -134,8 +142,8 @@ struct AppIconRow: View {
             }
         }
         .padding(.vertical, 14)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .stroke(.secondary.opacity(0.25), lineWidth: 1))
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous),
+                     fallback: .thinMaterial)
     }
 
     private func label(_ i: Int, _ app: AppRef) -> String {
