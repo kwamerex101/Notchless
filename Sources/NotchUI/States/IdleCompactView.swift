@@ -23,6 +23,13 @@ struct IdleCompactView: View {
     /// rounding (reads as "overflowing" the edge). 21 gives a small margin.
     private let edgeInset: CGFloat = 28
 
+    private var claudeCompactTrailing: String {
+        switch SettingsStore.shared.claudeCompactStyle {
+        case .todayCost: return ClaudeUsageStats.money(claudeStats?.todayCost ?? 0)
+        default: return ClaudeUsageStats.format(claudeStats?.total ?? 0)
+        }
+    }
+
     var body: some View {
         HStack(spacing: 8) {
             leading
@@ -57,8 +64,14 @@ struct IdleCompactView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
         case .claudeUsage:
-            MiniPie(slices: (claudeStats?.slices ?? []).map { (Double($0.value), $0.color) })
-                .frame(width: 18, height: 18)
+            if SettingsStore.shared.claudeCompactStyle == .pie {
+                MiniPie(slices: (claudeStats?.slices ?? []).map { (Double($0.value), $0.color) })
+                    .frame(width: 18, height: 18)
+            } else {
+                Image(systemName: "chart.pie.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
         case .timer:
             Image(systemName: "timer")
                 .font(.system(size: 14, weight: .semibold))
@@ -100,7 +113,7 @@ struct IdleCompactView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
         case .claudeUsage:
-            Text(ClaudeUsageStats.format(claudeStats?.total ?? 0))
+            Text(claudeCompactTrailing)
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
         case .timer:

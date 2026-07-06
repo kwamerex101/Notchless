@@ -167,6 +167,55 @@ struct StatsPane: View {
     }
 }
 
+// MARK: - Claude usage
+
+struct ClaudeStatsPane: View {
+    @ObservedObject var settings: SettingsStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            PaneHeader(section: .claudeStats)
+
+            SectionLabel("Compact notch")
+            CardGroup {
+                LabeledRow("Show") {
+                    SettingsPicker(options: ClaudeCompactStyle.allCases, selection: $settings.claudeCompactStyle) { $0.title }
+                }
+            }
+
+            SectionLabel("Expanded view")
+            CardGroup {
+                ToggleRow(title: "Session (5-hour)", isOn: $settings.claudeShowSession)
+                Divider()
+                ToggleRow(title: "This week", isOn: $settings.claudeShowWeek)
+                Divider()
+                ToggleRow(title: "Daily spend", isOn: $settings.claudeShowSpend)
+                Divider()
+                ToggleRow(title: "Usage chart", isOn: $settings.claudeShowChart)
+                Divider()
+                ToggleRow(title: "Token breakdown", isOn: $settings.claudeShowLegend)
+            }
+
+            if settings.claudeShowChart {
+                SectionLabel("Chart")
+                CardGroup {
+                    LabeledRow("Window") {
+                        SettingsPicker(options: [7, 14, 30], selection: $settings.claudeChartDays) { "\($0) days" }
+                    }
+                    Divider()
+                    LabeledRow("Plot") {
+                        SettingsPicker(options: [false, true], selection: $settings.claudeChartCost) { $0 ? "Cost" : "Tokens" }
+                    }
+                }
+            }
+
+            Text("Estimated from local Claude Code transcripts (tokens × model pricing); refreshes every 10 minutes.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Spacer()
+        }
+    }
+}
+
 // MARK: - Timer
 
 struct TimerPane: View {

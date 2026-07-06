@@ -1,10 +1,27 @@
 import SwiftUI
 
-/// One day's token total for the usage line chart.
+/// One day's totals for the usage line chart.
 struct DayUsage: Identifiable, Equatable {
     let date: Date
     var tokens: Int
+    var cost: Double
     var id: Date { date }
+}
+
+/// What the compact Claude cue shows beside/instead of the pie.
+enum ClaudeCompactStyle: String, CaseIterable, Identifiable {
+    case pie          // pie + total tokens
+    case tokens       // total tokens
+    case todayCost    // today's estimated cost
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .pie: return "Pie + tokens"
+        case .tokens: return "Total tokens"
+        case .todayCost: return "Today's cost"
+        }
+    }
 }
 
 /// Aggregated Claude Code token usage parsed from local transcripts.

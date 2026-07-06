@@ -45,6 +45,7 @@ final class ClaudeStatsController {
 
         var input = 0, output = 0, cache = 0
         var byDay: [Date: Int] = [:]
+        var byDayCost: [Date: Double] = [:]
         var entries: [Entry] = []
 
         for case let url as URL in walker where url.pathExtension == "jsonl" {
@@ -69,7 +70,9 @@ final class ClaudeStatsController {
                 let cost = pricing.cost(input: inTok, output: outTok, cacheWrite: cacheWrite, cacheRead: cacheRead)
 
                 if let stamp = stringField(line, "timestamp"), let date = iso.date(from: stamp) {
-                    byDay[calendar.startOfDay(for: date), default: 0] += tokens
+                    let day = calendar.startOfDay(for: date)
+                    byDay[day, default: 0] += tokens
+                    byDayCost[day, default: 0] += cost
                     entries.append(Entry(date: date, cost: cost, tokens: tokens))
                 }
             }
@@ -81,11 +84,11 @@ final class ClaudeStatsController {
         let today = calendar.startOfDay(for: now)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
 
-        // 14-day token line.
+        // 30-day series (the view slices to the user's chart window).
         var daily: [DayUsage] = []
-        for offset in stride(from: 13, through: 0, by: -1) {
+        for offset in stride(from: 29, through: 0, by: -1) {
             if let day = calendar.date(byAdding: .day, value: -offset, to: today) {
-                daily.append(DayUsage(date: day, tokens: byDay[day] ?? 0))
+                daily.append(DayUsage(date: day, tokens: byDay[day] ?? 0, cost: byDayCost[day] ?? 0))
             }
         }
 
