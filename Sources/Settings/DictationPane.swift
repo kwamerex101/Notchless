@@ -9,6 +9,7 @@ struct DictationPane: View {
     @ObservedObject var snippets = DictationSnippets.shared
     @ObservedObject var parakeet = ParakeetModelStore.shared
     @ObservedObject var styles = StyleStore.shared
+    @ObservedObject var llm = LLMModelStore.shared
 
     @State private var newTerm = ""
     @State private var newTrigger = ""
@@ -148,6 +149,28 @@ struct DictationPane: View {
                 Text("Turns spoken operators into symbols (“C plus plus” → C++), joins version numbers, and collapses accidental repeats.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if settings.cleanup != .off && settings.cleanupBackend == .onDevice {
+                SectionLabel("On-device model")
+                CardGroup {
+                    HStack {
+                        Text("Model")
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { llm.selected },
+                            set: { llm.selected = $0 }
+                        )) {
+                            ForEach(LocalLLMModel.allCases) { Text($0.title).tag($0) }
+                        }.labelsHidden().frame(width: 200)
+                    }
+                    Divider()
+                    GemmaStatusRow(status: llm.status, sizeText: llm.selected.sizeText,
+                                   download: { llm.download() }, delete: { llm.delete() })
+                    Text("Runs fully on-device with no network. Cleanup falls back to the raw transcript until the model is downloaded.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             SectionLabel("Personalization")
@@ -327,6 +350,41 @@ struct DictationPane: View {
             deviceTypes: [.microphone, .external],
             mediaType: .audio, position: .unspecified
         ).devices.map { ($0.uniqueID, $0.localizedName) }
+    }
+}
+
+/// Shows the on-device Gemma model's download state with download/delete.
+struct GemmaStatusRow: View {
+    let status: LLMModelStore.Status
+    let sizeText: String
+    let download: () -> Void
+    let delete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            switch status {
+            case .notDownloaded:
+                Image(systemName: "arrow.down.circle").foregroundStyle(.secondary)
+                Text("Model not downloaded (\(sizeText))").foregroundStyle(.secondary)
+                Spacer()
+                Button("Download", action: download)
+            case .downloading(let fraction):
+                ProgressView(value: fraction).frame(width: 120)
+                Text("Downloading… \(Int(fraction * 100))%").foregroundStyle(.secondary)
+                Spacer()
+            case .ready:
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Text("Model ready").foregroundStyle(.secondary)
+                Spacer()
+                Button("Delete", role: .destructive, action: delete)
+            case .failed(let message):
+                Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
+                Text(message).foregroundStyle(.secondary).lineLimit(1)
+                Spacer()
+                Button("Retry", action: download)
+            }
+        }
+        .font(.callout)
     }
 }
 

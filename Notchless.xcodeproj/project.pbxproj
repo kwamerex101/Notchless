@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01F34F9436297606B950030C /* NotchlessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CFE1E4F2676C86CECCB7EE /* NotchlessApp.swift */; };
+		02136F25211397AFCB03D436 /* LLMModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */; };
 		0250D3AC1DF27F1CDA1EB52A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8612F3D7D4F7BD6C51E6033C /* SettingsStore.swift */; };
 		09238B763606DC8B03079D11 /* DuoExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF82551C4728C8BB952619D /* DuoExpandedView.swift */; };
 		0F3843A5336852BB88FE143D /* ColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5520E1FE9DC33332F0C2 /* ColorExtractor.swift */; };
@@ -110,6 +111,7 @@
 		0D64FA4B151E20A53E5F8214 /* Paster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paster.swift; sourceTree = "<group>"; };
 		10D91036C934CFFB57C55D5E /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		130984CBABB46A8EA33C8934 /* DictationLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationLog.swift; sourceTree = "<group>"; };
+		1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMModelStore.swift; sourceTree = "<group>"; };
 		14464252ABBBB88578C82163 /* MirrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorView.swift; sourceTree = "<group>"; };
 		151C8E7AD60BAECB8D6E7140 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundCue.swift; sourceTree = "<group>"; };
@@ -452,6 +454,7 @@
 				88A003741FACD62A63A8BADB /* DictationTranscriber.swift */,
 				B5AE8532315C968275964F0D /* HistoryCipher.swift */,
 				9790DBB08FBDC02856AF160E /* Keychain.swift */,
+				1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */,
 				5ACF761DCA999E2FFDA1503F /* LocalLLMEngine.swift */,
 				BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */,
 				1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */,
@@ -620,6 +623,7 @@
 				1EDF795FC341042929C62D62 /* HistoryCipher.swift in Sources */,
 				A18F956E8D227E52D0BCC84D /* IdleCompactView.swift in Sources */,
 				41353545E0AC114388EC3AD4 /* Keychain.swift in Sources */,
+				02136F25211397AFCB03D436 /* LLMModelStore.swift in Sources */,
 				19618E784C110C715811BBB6 /* LiquidGlass.swift in Sources */,
 				80A4687395BA0CBA2D28F23D /* LocalLLMEngine.swift in Sources */,
 				BA8A28CB1698DE3063B9BA0F /* LoginItem.swift in Sources */,
