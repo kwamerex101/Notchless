@@ -67,14 +67,7 @@ final class NotchMouseTracker {
     /// origin to match `NSEvent.mouseLocation`, with slack for easy targeting.
     private func currentRect() -> CGRect {
         if rectDirty {
-            let sizing = NotchSizing.size(for: model.content, metrics: metrics)
-            let pad: CGFloat = 6
-            cachedRect = CGRect(
-                x: metrics.notchCenterX - sizing.width / 2 - pad,
-                y: metrics.screenTopY - sizing.height - pad,
-                width: sizing.width + pad * 2,
-                height: sizing.height + pad * 2
-            )
+            cachedRect = NotchSizing.screenBand(for: model.content, metrics: metrics, pad: 6)
             rectDirty = false
         }
         return cachedRect
