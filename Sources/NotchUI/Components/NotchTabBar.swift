@@ -11,6 +11,9 @@ struct NotchTabBar: View {
     let active: NotchActivity
     let battery: BatteryInfo?
     var onSelect: (NotchActivity) -> Void
+    /// Width of the hardware notch — reserved as the centre gap so the glyphs
+    /// (left) and battery (right) stay in the wings, clear of the camera.
+    var notchWidth: CGFloat = 200
 
     /// Reserved height of the strip.
     static let height: CGFloat = 22
@@ -39,7 +42,7 @@ struct NotchTabBar: View {
                     .accessibilityLabel(Text(activity.tabLabel))
                     .accessibilityAddTraits(activity == active ? [.isSelected, .isButton] : .isButton)
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: notchWidth + 12)
             if let battery {
                 Text("\(battery.level)%")
                     .font(.system(size: 10, weight: .medium))

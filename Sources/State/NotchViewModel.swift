@@ -109,7 +109,9 @@ final class NotchViewModel: ObservableObject {
     /// least one activity is live — the notch stays bare when nothing is.
     var carouselActivities: [NotchActivity] {
         var result = liveActivities
-        for page in [NotchActivity.calendar, .stats, .claudeUsage] where !result.contains(page) {
+        var pages: [NotchActivity] = [.calendar, .stats]
+        if settings.claudeUsageEnabled { pages.append(.claudeUsage) }
+        for page in pages where !result.contains(page) {
             result.append(page)
         }
         return result
@@ -141,13 +143,14 @@ final class NotchViewModel: ObservableObject {
         return liveActivities.first
     }
 
-    /// Advances the Auto carousel to the next page (horizontal swipe) — through
-    /// the live activities and the calendar/stats pages.
+    /// Advances the carousel to the next page (horizontal swipe) — through the
+    /// live activities and the calendar/stats/claude pages. Works in every idle
+    /// mode as long as there's more than one page to move between.
     func cycleLiveActivity() {
-        guard !liveActivities.isEmpty else { return }
         let carousel = carouselActivities
         guard carousel.count >= 2 else { return }
-        let current = manualActivity.flatMap { carousel.contains($0) ? $0 : nil } ?? liveActivities[0]
+        let current = (manualActivity.flatMap { carousel.contains($0) ? $0 : nil })
+            ?? liveActivities.first ?? carousel[0]
         let index = carousel.firstIndex(of: current) ?? 0
         manualActivity = carousel[(index + 1) % carousel.count]
     }
@@ -195,7 +198,7 @@ final class NotchViewModel: ObservableObject {
         case .clipboard: return true
         case .todos: return settings.todosEnabled && !todos.isEmpty
         case .privacy: return privacy?.isActive ?? false
-        case .claudeUsage: return claudeStats != nil
+        case .claudeUsage: return settings.claudeUsageEnabled && claudeStats != nil
         case .goals: return settings.goalsEnabled && goals.hasActiveGoals
         }
     }
