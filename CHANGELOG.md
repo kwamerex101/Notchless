@@ -2,6 +2,49 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.2.0] — 2026-07-06
+
+A performance, battery, and polish release. No features were removed; test
+coverage went from 30 to 67.
+
+### Performance & battery
+- **Idle CPU is now ~0%.** The always-on pollers (clipboard, system stats,
+  privacy camera/mic scan) start and stop with their settings toggles instead of
+  running constantly, and stats sample slowly unless their readout is on screen.
+- **The music visualizer no longer repaints the whole notch.** Audio levels live
+  in a dedicated model and the system-audio tap feeds the UI at a throttled
+  30 Hz — and only runs while music is playing *and* its visualizer is visible.
+- **Dropped the twice-a-second now-playing refresh** — elapsed time is
+  extrapolated locally in the scrubber, so nothing updates while collapsed.
+- **Claude usage stats parse incrementally** — only changed transcript files are
+  re-read. The follow-screen timer runs only in Active-display mode, the hover
+  region is cached, and settings write only the key that changed.
+
+### Fixed
+- **Keyboard input works in the notch** — Tasks quick-add and Goals quick-log
+  could not be typed into before.
+- **"Hide in fullscreen" now applies when toggled** (not only at launch).
+- **iCloud sync no longer flips settings off** when another Mac has a different
+  key set; a corrupt Goals save is backed up instead of discarded.
+- Notifications replay their entrance; the Calendar panel shows a real "enable
+  access" prompt instead of a blank day when permission is denied.
+
+### Changed (feel)
+- **Real morph and page transitions** (the previous ones were inert): the
+  carousel slides directionally and album art grows from the compact sliver into
+  the expanded tile.
+- **Hover no longer over-triggers** — the notch grows slightly, then expands
+  after a short dwell. Every button reacts to hover and press; play/pause and
+  task checkboxes animate their icon swap.
+- **Numbers roll** instead of flashing (battery %, CPU %, timer, cost, track
+  time); the scrubber grows with a grab knob and a release haptic; HUD and
+  notifications bloom out of the notch.
+- Respects **Reduce Motion** and adds **VoiceOver labels** on notch controls.
+
+### Internal
+- Hardened runtime on Release builds (notarization-ready); dev-only tooling is
+  `#if DEBUG`-gated; added GitHub Actions CI (build + test).
+
 ## [1.1.3] — 2026-07-06
 
 ### Added
