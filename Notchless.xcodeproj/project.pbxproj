@@ -22,6 +22,7 @@
 		29591514593BEC3CA130C411 /* MonthGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */; };
 		2EBA5724103EB2F4A25861D1 /* OnboardingStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1B55F8B1EA568166FE2A99 /* OnboardingStep.swift */; };
 		2EFF1A4D493ABA3EA02ADB80 /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BCB0085DDCAFEBADD7B266 /* NotificationView.swift */; };
+		2F7EF27C2A809D3F090AE0C9 /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = FED496F03943988A5661F68C /* FluidAudio */; };
 		3203400C2B08EEE623AF2642 /* DictationHotkey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFB73DAD95884D3AF747F72 /* DictationHotkey.swift */; };
 		344F79ACA38A91C56DF3AB38 /* MediaRemoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069DD84D7362D2E99FC1974D /* MediaRemoteProvider.swift */; };
 		363DEC8533B71DB483C37AE2 /* CalendarSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F807BFE4141F4EEC2E04A1 /* CalendarSnapshot.swift */; };
@@ -29,6 +30,7 @@
 		3A639723CF59773C1D1C50D4 /* TextPolish.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50E5AE6B902488140207BE5 /* TextPolish.swift */; };
 		43CC7A9080A291F8BE4BD7AA /* PowerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4110D43A0E5299DE82CD0C35 /* PowerService.swift */; };
 		54BE67E3DF480053519E1996 /* GeneralPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7C371A4406389B266AA7E2 /* GeneralPane.swift */; };
+		558F9729FFE83085D2784147 /* ParakeetTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */; };
 		57C451CB77724BFC8C0A47F3 /* MediaKeyTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46C86B09DA7A425C195845C /* MediaKeyTap.swift */; };
 		5814005032654FD0891558A7 /* MirrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14464252ABBBB88578C82163 /* MirrorView.swift */; };
 		5EFBF404F651C37E94C68F53 /* NotchGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD02EC3DED0756D03D86582 /* NotchGeometry.swift */; };
@@ -83,6 +85,7 @@
 		ECDD69D6D8A7E205726DBF9A /* NotificationsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E29A8D6C6C6B9D21FFB41843 /* NotificationsController.swift */; };
 		EFB78AA22EB956491E9E0FD2 /* CalendarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7436C1E71C7C818FEBB90CF8 /* CalendarController.swift */; };
 		F14D81FF71DAC194762E6FF0 /* BluetoothService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */; };
+		F44E514A7B4FA994205C18A8 /* ParakeetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */; };
 		F721B62A4AE944C7CF5BC17A /* PermissionRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92DA3597A1503D887F3BBC8F /* PermissionRequester.swift */; };
 		FBA068FD6CD736D9363A94A6 /* FocusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAD4D4508381A1837D0D5D9 /* FocusService.swift */; };
 		FE2C848DA16FC60DBC21C055 /* NotchSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B63A9BE0757848CDAE7E12 /* NotchSizing.swift */; };
@@ -103,6 +106,7 @@
 		169D3F0F0EAD0DC89BBF9787 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		17D48F00CAEB14383F7588BF /* NotchPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchPanel.swift; sourceTree = "<group>"; };
 		18B63A9BE0757848CDAE7E12 /* NotchSizing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchSizing.swift; sourceTree = "<group>"; };
+		1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetTranscriber.swift; sourceTree = "<group>"; };
 		23F807BFE4141F4EEC2E04A1 /* CalendarSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSnapshot.swift; sourceTree = "<group>"; };
 		27D68034B03512AB12A8F253 /* AudioOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputService.swift; sourceTree = "<group>"; };
 		286F0633A7BE13DC7A7E3B8C /* NotchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchViewModel.swift; sourceTree = "<group>"; };
@@ -153,6 +157,7 @@
 		B981ADF62D0E9492C32F5889 /* NotchShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchShape.swift; sourceTree = "<group>"; };
 		B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothService.swift; sourceTree = "<group>"; };
 		BB7D0ED643A7581A1B38DDAF /* DebugRender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRender.swift; sourceTree = "<group>"; };
+		BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetEngine.swift; sourceTree = "<group>"; };
 		BF84E32EAF33037E27A1924A /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		C23798CAD00021C31D06C419 /* MediaRemoteBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRemoteBridge.swift; sourceTree = "<group>"; };
 		C40AF2391776BBCC4E091A2E /* AdapterNowPlayingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterNowPlayingProvider.swift; sourceTree = "<group>"; };
@@ -174,6 +179,17 @@
 		FCAD4D4508381A1837D0D5D9 /* FocusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusService.swift; sourceTree = "<group>"; };
 		FF1CF8B6D5BC5B91583D9D2E /* SpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriber.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A5DD439B2EA7D1CA9AE69776 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F7EF27C2A809D3F090AE0C9 /* FluidAudio in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0811ACEBCCA464B3FABD50B5 /* Settings */ = {
@@ -412,6 +428,8 @@
 				86378CA9D2E1F2ACF1CF6E26 /* DictationSnippets.swift */,
 				88A003741FACD62A63A8BADB /* DictationTranscriber.swift */,
 				B5AE8532315C968275964F0D /* HistoryCipher.swift */,
+				BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */,
+				1F928F38E2267C704D0A22C5 /* ParakeetTranscriber.swift */,
 				0D64FA4B151E20A53E5F8214 /* Paster.swift */,
 				15FC7A9F3CD3E2E4CD05A5D6 /* SoundCue.swift */,
 				FF1CF8B6D5BC5B91583D9D2E /* SpeechTranscriber.swift */,
@@ -465,6 +483,7 @@
 			buildPhases = (
 				83DA0496306E548E2E258C27 /* Sources */,
 				0624C30F59F6BC07913E6F91 /* Resources */,
+				A5DD439B2EA7D1CA9AE69776 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -472,6 +491,7 @@
 			);
 			name = Notchless;
 			packageProductDependencies = (
+				FED496F03943988A5661F68C /* FluidAudio */,
 			);
 			productName = Notchless;
 			productReference = 32124AF7D00009638CC6909B /* Notchless.app */;
@@ -500,6 +520,9 @@
 			);
 			mainGroup = 904626937C02FFC384F166E9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4B2257032D0FC4DB9E82D138 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F7FC90E4F66DAAE0DB7DAC51 /* Products */;
 			projectDirPath = "";
@@ -590,6 +613,8 @@
 				2EBA5724103EB2F4A25861D1 /* OnboardingStep.swift in Sources */,
 				872C4394EB12D2F3DD16D8BB /* OnboardingView.swift in Sources */,
 				B50430E3059C902649C2B6DB /* OnboardingWindowController.swift in Sources */,
+				F44E514A7B4FA994205C18A8 /* ParakeetEngine.swift in Sources */,
+				558F9729FFE83085D2784147 /* ParakeetTranscriber.swift in Sources */,
 				EBD837C808F8B1C988F91A7C /* Paster.swift in Sources */,
 				F721B62A4AE944C7CF5BC17A /* PermissionRequester.swift in Sources */,
 				43CC7A9080A291F8BE4BD7AA /* PowerService.swift in Sources */,
@@ -797,6 +822,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4B2257032D0FC4DB9E82D138 /* XCRemoteSwiftPackageReference "FluidAudio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FluidInference/FluidAudio";
+			requirement = {
+				kind = exactVersion;
+				version = 0.15.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FED496F03943988A5661F68C /* FluidAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4B2257032D0FC4DB9E82D138 /* XCRemoteSwiftPackageReference "FluidAudio" */;
+			productName = FluidAudio;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 08891B146850EC86CF9FCC47 /* Project object */;
 }

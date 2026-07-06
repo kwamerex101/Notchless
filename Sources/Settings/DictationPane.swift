@@ -7,6 +7,7 @@ struct DictationPane: View {
     @ObservedObject var dictionary = DictationDictionary.shared
     @ObservedObject var history = DictationHistory.shared
     @ObservedObject var snippets = DictationSnippets.shared
+    @ObservedObject var parakeet = ParakeetModelStore.shared
 
     @State private var newTerm = ""
     @State private var newTrigger = ""
@@ -56,6 +57,24 @@ struct DictationPane: View {
                 }
                 Divider()
                 ToggleRow(title: "Sound cues", isOn: $settings.soundCues)
+            }
+
+            SectionLabel("Transcription engine")
+            CardGroup {
+                HStack {
+                    Text("Engine")
+                    Spacer()
+                    Picker("", selection: $settings.engine) {
+                        ForEach(DictationEngine.allCases) { Text($0.title).tag($0) }
+                    }.labelsHidden().frame(width: 220)
+                }
+                Text(settings.engine.detail)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if settings.engine == .parakeet {
+                    Divider()
+                    ParakeetStatusRow(status: parakeet.status) { parakeet.preload() }
+                }
             }
 
             SectionLabel("AI cleanup")
@@ -188,6 +207,42 @@ struct DictationPane: View {
             deviceTypes: [.microphone, .external],
             mediaType: .audio, position: .unspecified
         ).devices.map { ($0.uniqueID, $0.localizedName) }
+    }
+}
+
+/// Shows the Parakeet model's download/load state with a download action.
+struct ParakeetStatusRow: View {
+    let status: ParakeetModelStore.Status
+    let download: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            switch status {
+            case .notLoaded:
+                Image(systemName: "arrow.down.circle").foregroundStyle(.secondary)
+                Text("Model not downloaded (~600 MB)").foregroundStyle(.secondary)
+                Spacer()
+                Button("Download", action: download)
+            case .downloading(let fraction):
+                ProgressView(value: fraction).frame(width: 120)
+                Text("Downloading… \(Int(fraction * 100))%").foregroundStyle(.secondary)
+                Spacer()
+            case .ready:
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Text("Model ready").foregroundStyle(.secondary)
+                Spacer()
+            case .unsupported:
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Text("Requires an Apple Silicon Mac").foregroundStyle(.secondary)
+                Spacer()
+            case .failed(let message):
+                Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
+                Text(message).foregroundStyle(.secondary).lineLimit(1)
+                Spacer()
+                Button("Retry", action: download)
+            }
+        }
+        .font(.callout)
     }
 }
 
