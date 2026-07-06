@@ -20,8 +20,12 @@ enum DebugRender {
             ],
             weatherText: "Cloudy", weatherSymbol: "cloud.fill", temperature: "18°")
 
+        let fullBattery = BatteryInfo(level: 100, isCharging: true, isPluggedIn: true,
+                                      isCharged: false, timeRemaining: nil, timeToFull: 24)
+
         render(.idle(.playing), np: np, cal: cal, name: "state_idle_playing", metrics: metrics)
         render(.idle(.calendar), np: np, cal: cal, name: "state_idle_calendar", metrics: metrics)
+        render(.idle(.battery), np: nil, cal: nil, battery: fullBattery, name: "state_idle_battery", metrics: metrics)
         render(.hud(.sound(level: 0.6, muted: false)), np: nil, cal: nil, name: "state_hud_sound", metrics: metrics)
         render(.hud(.display(level: 0.4)), np: nil, cal: nil, name: "state_hud_display", metrics: metrics)
         render(.notification(TransientNotification(systemImage: "battery.100.bolt", tint: .green,
@@ -76,6 +80,7 @@ enum DebugRender {
     }
 
     private static func render(_ content: NotchContent, np: NowPlayingInfo?, cal: CalendarSnapshot?,
+                               battery: BatteryInfo? = nil,
                                name: String, metrics: NotchMetrics) {
         let sizing = NotchSizing.size(for: content, metrics: metrics)
         let store = FileTrayStore()
@@ -86,7 +91,7 @@ enum DebugRender {
             Group {
                 switch content {
                 case .idle(let a):
-                    IdleCompactView(activity: a, nowPlaying: np, calendar: cal, metrics: metrics)
+                    IdleCompactView(activity: a, nowPlaying: np, calendar: cal, battery: battery, metrics: metrics)
                 case .hud(let k):
                     HUDView(kind: k, metrics: metrics)
                 case .notification(let n):
