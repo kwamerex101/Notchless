@@ -95,6 +95,8 @@ struct IdleCompactView: View {
                 if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
                 if privacy?.micActive ?? false { PulsingDot(color: .orange) }
             }
+        case .goals:
+            GoalCompactView().leading
         }
     }
 
@@ -149,6 +151,8 @@ struct IdleCompactView: View {
                 }
             }
             .font(.system(size: 13, weight: .semibold))
+        case .goals:
+            GoalCompactView().trailing
         }
     }
 

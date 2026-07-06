@@ -91,6 +91,8 @@ struct NotchRootView: View {
                 PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
             case .claudeUsage:
                 ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
+            case .goals:
+                GoalExpandedView(metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)
