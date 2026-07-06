@@ -13,6 +13,7 @@ struct NowPlayingExpandedView: View {
 
     @State private var scrubbing = false
     @State private var scrubValue: Double = 0
+    @State private var scrubHovering = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -86,16 +87,29 @@ struct NowPlayingExpandedView: View {
 
     private func scrubberRow(now: Date) -> some View {
         let progress = scrubbing ? scrubValue : (info?.progress(at: now) ?? 0)
+        let trackHeight: CGFloat = (scrubHovering || scrubbing) ? 9 : 6
         return HStack(spacing: 8) {
             Text(info?.elapsedText(at: now) ?? "0:00")
-                .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 34, alignment: .leading)
+                .contentTransition(.numericText())
             GeometryReader { geo in
+                let fillWidth = geo.size.width * CGFloat(progress)
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.white.opacity(0.2))
-                    Capsule().fill(Color.white).frame(width: geo.size.width * CGFloat(progress))
+                    Capsule().fill(Color.white).frame(width: fillWidth)
+                        // Non-scrubbing progress glides between the 2 Hz updates.
+                        .animation(scrubbing ? nil : .linear(duration: 0.5), value: fillWidth)
+                    // A grab knob at the fill edge while hovering/scrubbing.
+                    if scrubHovering || scrubbing {
+                        Circle().fill(.white).frame(width: 11, height: 11)
+                            .shadow(color: .black.opacity(0.3), radius: 2)
+                            .offset(x: min(max(fillWidth - 5.5, 0), geo.size.width - 11))
+                    }
                 }
-                .contentShape(Rectangle())
+                // Tall invisible hit area centred on the thin track.
+                .frame(height: geo.size.height, alignment: .center)
+                .contentShape(Rectangle().inset(by: -8))
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { v in
@@ -105,13 +119,17 @@ struct NowPlayingExpandedView: View {
                         .onEnded { _ in
                             if let d = info?.duration, d > 0 { onCommand(.seek(scrubValue * d)) }
                             scrubbing = false
+                            if SettingsStore.shared.hapticFeedback { HapticService.tap() }
                         }
                 )
             }
-            .frame(height: 6)
+            .frame(height: trackHeight)
+            .animation(NotchMotion.micro, value: trackHeight)
+            .onHover { scrubHovering = $0 }
             Text(info?.remainingText(at: now) ?? "-0:00")
-                .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 40, alignment: .trailing)
+                .contentTransition(.numericText())
         }
     }
 

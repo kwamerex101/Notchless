@@ -46,10 +46,16 @@ struct MarqueeText: View {
     }
 
     private func restart(gap: CGFloat) {
-        offset = 0
+        // Cancel any in-flight repeatForever by snapping the offset back without
+        // animation, otherwise the old animation can keep ghost-scrolling.
+        var reset = Transaction()
+        reset.disablesAnimations = true
+        withTransaction(reset) { offset = 0 }
+
         guard overflow else { return }
         let distance = textWidth + gap
-        withAnimation(.linear(duration: Double(distance / speed)).repeatForever(autoreverses: false)) {
+        // Hold ~1.5s before the first scroll so a title reads before it moves.
+        withAnimation(.linear(duration: Double(distance / speed)).delay(1.5).repeatForever(autoreverses: false)) {
             offset = -distance
         }
     }

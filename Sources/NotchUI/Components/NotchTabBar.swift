@@ -50,6 +50,8 @@ struct NotchTabBar: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(0.6))
                     .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.default, value: battery.level)
             }
         }
         .padding(.horizontal, 14)

@@ -120,21 +120,29 @@ struct IdleCompactView: View {
         case .battery:
             if SettingsStore.shared.batteryShowPercentage {
                 Text("\(battery?.level ?? 0)%")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: battery?.level)
             }
         case .stats:
             Text("\(Int((stats?.cpu ?? 0) * 100))%")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: stats?.cpu)
         case .claudeUsage:
             Text(claudeCompactTrailing)
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: claudeCompactTrailing)
         case .timer:
             Text(timer?.label ?? "0:00")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+                .contentTransition(.numericText())
+                .animation(.default, value: timer?.label)
         case .clipboard:
             ClipboardBadge()
         case .todos:
