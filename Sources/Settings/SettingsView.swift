@@ -4,7 +4,7 @@ import SwiftUI
 enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
-    case nowPlaying, calendar, fileTray, lockScreen
+    case nowPlaying, calendar, fileTray, dictation, lockScreen
     case license, about
 
     var id: String { rawValue }
@@ -20,6 +20,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .nowPlaying: return "Now Playing"
         case .calendar: return "Calendar"
         case .fileTray: return "File Tray"
+        case .dictation: return "Dictation"
         case .lockScreen: return "Lock Screen"
         case .license: return "License"
         case .about: return "About"
@@ -37,6 +38,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .nowPlaying: return "play.circle.fill"
         case .calendar: return "calendar"
         case .fileTray: return "tray.fill"
+        case .dictation: return "mic.fill"
         case .lockScreen: return "lock.fill"
         case .license: return "checkmark.seal.fill"
         case .about: return "info.circle.fill"
@@ -54,6 +56,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .nowPlaying: return .red
         case .calendar: return .red
         case .fileTray: return .gray
+        case .dictation: return .teal
         case .lockScreen: return .black
         case .license: return .teal
         case .about: return .gray
@@ -75,7 +78,7 @@ struct SettingsView: View {
                     ForEach([SettingsSection.battery, .connectivity, .focus, .display, .sound]) { row($0) }
                 }
                 Section("Live Activities") {
-                    ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .lockScreen]) { row($0) }
+                    ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation, .lockScreen]) { row($0) }
                 }
                 Section("Alcove") {
                     ForEach([SettingsSection.license, .about]) { row($0) }
@@ -115,6 +118,7 @@ struct SettingsView: View {
     @ViewBuilder private var content: some View {
         switch selection {
         case .general: GeneralPane(settings: settings)
+        case .dictation: DictationPane()
         default: PlaceholderPane(section: selection, settings: settings)
         }
     }

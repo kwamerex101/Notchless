@@ -13,10 +13,9 @@ final class DictationHotkey {
     private var runLoopSource: CFRunLoopSource?
     private var isDown = false
 
-    /// The modifier that must be held to dictate. Right Option keeps the left
-    /// modifiers free for normal shortcuts.
-    private let triggerFlag: CGEventFlags = .maskAlternate
-    private let triggerKeyCode: Int64 = 61  // kVK_RightOption
+    /// All of these flags must be held to trigger dictation. Settable so the
+    /// user's chosen combo takes effect without restarting the tap.
+    var requiredFlags: CGEventFlags = [.maskControl, .maskAlternate]
 
     func start() {
         guard AXIsProcessTrusted() else {
@@ -67,19 +66,14 @@ final class DictationHotkey {
     }
 
     private func handle(_ event: CGEvent) {
-        // The specific key that changed is in the keycode field of a
-        // flagsChanged event; combine with the current flag state.
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-        let flagHeld = event.flags.contains(triggerFlag)
-
-        if keyCode == triggerKeyCode {
-            if flagHeld, !isDown {
-                isDown = true
-                onPress?()
-            } else if !flagHeld, isDown {
-                isDown = false
-                onRelease?()
-            }
+        // Trigger when every required flag is held; release when any drops.
+        let allHeld = event.flags.contains(requiredFlags)
+        if allHeld, !isDown {
+            isDown = true
+            onPress?()
+        } else if !allHeld, isDown {
+            isDown = false
+            onRelease?()
         }
     }
 }

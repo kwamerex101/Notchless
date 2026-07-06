@@ -38,9 +38,21 @@ enum DebugRender {
         render(.dictation(.transcribing), np: nil, cal: nil, name: "state_dictation_transcribing", metrics: metrics)
         render(.dictation(.success("Hey, can you send me the notes from today")), np: nil, cal: nil, name: "state_dictation_success", metrics: metrics)
 
+        renderPlain(DictationPane().padding(20).frame(width: 560, height: 980)
+            .background(Color(nsColor: .windowBackgroundColor)), name: "settings_dictation")
+
         renderOnboarding(startIndex: 0, name: "onboarding_welcome")
         renderOnboarding(startIndex: 1, name: "onboarding_calendar")
         renderOnboarding(startIndex: 5, name: "onboarding_camera")
+    }
+
+    private static func renderPlain<V: View>(_ view: V, name: String) {
+        let r = ImageRenderer(content: view)
+        r.scale = 2
+        if let img = r.nsImage, let tiff = img.tiffRepresentation,
+           let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: "/tmp/\(name).png"))
+        }
     }
 
     private static func renderOnboarding(startIndex: Int, name: String) {
