@@ -34,80 +34,80 @@ final class SettingsStore: ObservableObject {
     private let cloud = NSUbiquitousKeyValueStore.default
 
     // General
-    @Published var launchAtLogin: Bool { didSet { persist(oldValue != launchAtLogin) } }
-    @Published var syncViaICloud: Bool { didSet { persist(oldValue != syncViaICloud) } }
-    @Published var hideInFullscreen: Bool { didSet { persist(oldValue != hideInFullscreen) } }
-    @Published var hideInMissionControl: Bool { didSet { persist(oldValue != hideInMissionControl) } }
-    @Published var hideFromScreenCapture: Bool { didSet { persist(oldValue != hideFromScreenCapture) } }
-    @Published var forceSimulatedNotch: Bool { didSet { persist(oldValue != forceSimulatedNotch) } }
-    @Published var simulatedDisplay: SimulatedDisplay { didSet { persist(oldValue != simulatedDisplay) } }
+    @Published var launchAtLogin: Bool { didSet { persist(Keys.launchAtLogin, launchAtLogin, oldValue != launchAtLogin) } }
+    @Published var syncViaICloud: Bool { didSet { persist(Keys.syncViaICloud, syncViaICloud, oldValue != syncViaICloud) } }
+    @Published var hideInFullscreen: Bool { didSet { persist(Keys.hideInFullscreen, hideInFullscreen, oldValue != hideInFullscreen) } }
+    @Published var hideInMissionControl: Bool { didSet { persist(Keys.hideInMissionControl, hideInMissionControl, oldValue != hideInMissionControl) } }
+    @Published var hideFromScreenCapture: Bool { didSet { persist(Keys.hideFromScreenCapture, hideFromScreenCapture, oldValue != hideFromScreenCapture) } }
+    @Published var forceSimulatedNotch: Bool { didSet { persist(Keys.forceSimulatedNotch, forceSimulatedNotch, oldValue != forceSimulatedNotch) } }
+    @Published var simulatedDisplay: SimulatedDisplay { didSet { persist(Keys.simulatedDisplay, simulatedDisplay.rawValue, oldValue != simulatedDisplay) } }
 
     // Idle activity
-    @Published var idleActivity: NotchActivity { didSet { persist(oldValue != idleActivity) } }
-    @Published var idleMostRecent: Bool { didSet { persist(oldValue != idleMostRecent) } }
-    @Published var forceEnableActivity: Bool { didSet { persist(oldValue != forceEnableActivity) } }
+    @Published var idleActivity: NotchActivity { didSet { persist(Keys.idleActivity, idleActivity.rawValue, oldValue != idleActivity) } }
+    @Published var idleMostRecent: Bool { didSet { persist(Keys.idleMostRecent, idleMostRecent, oldValue != idleMostRecent) } }
+    @Published var forceEnableActivity: Bool { didSet { persist(Keys.forceEnableActivity, forceEnableActivity, oldValue != forceEnableActivity) } }
 
     // Appearance
-    @Published var glassStyle: GlassStyle { didSet { persist(oldValue != glassStyle) } }
-    @Published var glassIntensity: Double { didSet { persist(oldValue != glassIntensity) } }
+    @Published var glassStyle: GlassStyle { didSet { persist(Keys.glassStyle, glassStyle.rawValue, oldValue != glassStyle) } }
+    @Published var glassIntensity: Double { didSet { persist(Keys.glassIntensity, glassIntensity, oldValue != glassIntensity) } }
 
     // Behaviour
-    @Published var progressiveBlur: Bool { didSet { persist(oldValue != progressiveBlur) } }
-    @Published var hapticFeedback: Bool { didSet { persist(oldValue != hapticFeedback) } }
-    @Published var albumArtGlow: Bool { didSet { persist(oldValue != albumArtGlow) } }
+    @Published var progressiveBlur: Bool { didSet { persist(Keys.progressiveBlur, progressiveBlur, oldValue != progressiveBlur) } }
+    @Published var hapticFeedback: Bool { didSet { persist(Keys.hapticFeedback, hapticFeedback, oldValue != hapticFeedback) } }
+    @Published var albumArtGlow: Bool { didSet { persist(Keys.albumArtGlow, albumArtGlow, oldValue != albumArtGlow) } }
 
     // Notifications
-    @Published var batteryEnabled: Bool { didSet { persist(oldValue != batteryEnabled) } }
-    @Published var connectivityEnabled: Bool { didSet { persist(oldValue != connectivityEnabled) } }
-    @Published var focusEnabled: Bool { didSet { persist(oldValue != focusEnabled) } }
-    @Published var displayHUDEnabled: Bool { didSet { persist(oldValue != displayHUDEnabled) } }
-    @Published var soundHUDEnabled: Bool { didSet { persist(oldValue != soundHUDEnabled) } }
-    @Published var fileTrayEnabled: Bool { didSet { persist(oldValue != fileTrayEnabled) } }
-    @Published var todosEnabled: Bool { didSet { persist(oldValue != todosEnabled) } }
+    @Published var batteryEnabled: Bool { didSet { persist(Keys.batteryEnabled, batteryEnabled, oldValue != batteryEnabled) } }
+    @Published var connectivityEnabled: Bool { didSet { persist(Keys.connectivityEnabled, connectivityEnabled, oldValue != connectivityEnabled) } }
+    @Published var focusEnabled: Bool { didSet { persist(Keys.focusEnabled, focusEnabled, oldValue != focusEnabled) } }
+    @Published var displayHUDEnabled: Bool { didSet { persist(Keys.displayHUDEnabled, displayHUDEnabled, oldValue != displayHUDEnabled) } }
+    @Published var soundHUDEnabled: Bool { didSet { persist(Keys.soundHUDEnabled, soundHUDEnabled, oldValue != soundHUDEnabled) } }
+    @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
+    @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 
     // Goals
-    @Published var goalsEnabled: Bool { didSet { persist(oldValue != goalsEnabled) } }
-    @Published var claudeUsageEnabled: Bool { didSet { persist(oldValue != claudeUsageEnabled) } }
-    @Published var statsEnabled: Bool { didSet { persist(oldValue != statsEnabled) } }
-    @Published var currencyCode: String { didSet { persist(oldValue != currencyCode) } }
-    @Published var currencySymbol: String { didSet { persist(oldValue != currencySymbol) } }
+    @Published var goalsEnabled: Bool { didSet { persist(Keys.goalsEnabled, goalsEnabled, oldValue != goalsEnabled) } }
+    @Published var claudeUsageEnabled: Bool { didSet { persist(Keys.claudeUsageEnabled, claudeUsageEnabled, oldValue != claudeUsageEnabled) } }
+    @Published var statsEnabled: Bool { didSet { persist(Keys.statsEnabled, statsEnabled, oldValue != statsEnabled) } }
+    @Published var currencyCode: String { didSet { persist(Keys.currencyCode, currencyCode, oldValue != currencyCode) } }
+    @Published var currencySymbol: String { didSet { persist(Keys.currencySymbol, currencySymbol, oldValue != currencySymbol) } }
 
     // Battery
-    @Published var batteryShowPercentage: Bool { didSet { persist(oldValue != batteryShowPercentage) } }
-    @Published var batteryLowThreshold: Int { didSet { persist(oldValue != batteryLowThreshold) } }
-    @Published var batteryNotifyCharged: Bool { didSet { persist(oldValue != batteryNotifyCharged) } }
+    @Published var batteryShowPercentage: Bool { didSet { persist(Keys.batteryShowPercentage, batteryShowPercentage, oldValue != batteryShowPercentage) } }
+    @Published var batteryLowThreshold: Int { didSet { persist(Keys.batteryLowThreshold, batteryLowThreshold, oldValue != batteryLowThreshold) } }
+    @Published var batteryNotifyCharged: Bool { didSet { persist(Keys.batteryNotifyCharged, batteryNotifyCharged, oldValue != batteryNotifyCharged) } }
 
     // Now Playing / media
-    @Published var liveAudioVisualizer: Bool { didSet { persist(oldValue != liveAudioVisualizer) } }
-    @Published var swipeToSeek: Bool { didSet { persist(oldValue != swipeToSeek) } }
-    @Published var swipeGesturesEnabled: Bool { didSet { persist(oldValue != swipeGesturesEnabled) } }
-    @Published var showTabBar: Bool { didSet { persist(oldValue != showTabBar) } }
+    @Published var liveAudioVisualizer: Bool { didSet { persist(Keys.liveAudioVisualizer, liveAudioVisualizer, oldValue != liveAudioVisualizer) } }
+    @Published var swipeToSeek: Bool { didSet { persist(Keys.swipeToSeek, swipeToSeek, oldValue != swipeToSeek) } }
+    @Published var swipeGesturesEnabled: Bool { didSet { persist(Keys.swipeGesturesEnabled, swipeGesturesEnabled, oldValue != swipeGesturesEnabled) } }
+    @Published var showTabBar: Bool { didSet { persist(Keys.showTabBar, showTabBar, oldValue != showTabBar) } }
 
     // Calendar
-    @Published var calendarShowWeather: Bool { didSet { persist(oldValue != calendarShowWeather) } }
-    @Published var calendarShowEvents: Bool { didSet { persist(oldValue != calendarShowEvents) } }
+    @Published var calendarShowWeather: Bool { didSet { persist(Keys.calendarShowWeather, calendarShowWeather, oldValue != calendarShowWeather) } }
+    @Published var calendarShowEvents: Bool { didSet { persist(Keys.calendarShowEvents, calendarShowEvents, oldValue != calendarShowEvents) } }
 
     // Stats
-    @Published var statsRefreshSeconds: Double { didSet { persist(oldValue != statsRefreshSeconds) } }
-    @Published var statsShowCPU: Bool { didSet { persist(oldValue != statsShowCPU) } }
-    @Published var statsShowMemory: Bool { didSet { persist(oldValue != statsShowMemory) } }
-    @Published var statsShowNetwork: Bool { didSet { persist(oldValue != statsShowNetwork) } }
+    @Published var statsRefreshSeconds: Double { didSet { persist(Keys.statsRefreshSeconds, statsRefreshSeconds, oldValue != statsRefreshSeconds) } }
+    @Published var statsShowCPU: Bool { didSet { persist(Keys.statsShowCPU, statsShowCPU, oldValue != statsShowCPU) } }
+    @Published var statsShowMemory: Bool { didSet { persist(Keys.statsShowMemory, statsShowMemory, oldValue != statsShowMemory) } }
+    @Published var statsShowNetwork: Bool { didSet { persist(Keys.statsShowNetwork, statsShowNetwork, oldValue != statsShowNetwork) } }
 
     // Timer / Clipboard / Privacy
-    @Published var timerSoundOnFinish: Bool { didSet { persist(oldValue != timerSoundOnFinish) } }
-    @Published var clipboardEnabled: Bool { didSet { persist(oldValue != clipboardEnabled) } }
-    @Published var clipboardHistorySize: Int { didSet { persist(oldValue != clipboardHistorySize) } }
-    @Published var privacyIndicatorEnabled: Bool { didSet { persist(oldValue != privacyIndicatorEnabled) } }
+    @Published var timerSoundOnFinish: Bool { didSet { persist(Keys.timerSoundOnFinish, timerSoundOnFinish, oldValue != timerSoundOnFinish) } }
+    @Published var clipboardEnabled: Bool { didSet { persist(Keys.clipboardEnabled, clipboardEnabled, oldValue != clipboardEnabled) } }
+    @Published var clipboardHistorySize: Int { didSet { persist(Keys.clipboardHistorySize, clipboardHistorySize, oldValue != clipboardHistorySize) } }
+    @Published var privacyIndicatorEnabled: Bool { didSet { persist(Keys.privacyIndicatorEnabled, privacyIndicatorEnabled, oldValue != privacyIndicatorEnabled) } }
 
     // Claude usage
-    @Published var claudeCompactStyle: ClaudeCompactStyle { didSet { persist(oldValue != claudeCompactStyle) } }
-    @Published var claudeShowSession: Bool { didSet { persist(oldValue != claudeShowSession) } }
-    @Published var claudeShowWeek: Bool { didSet { persist(oldValue != claudeShowWeek) } }
-    @Published var claudeShowSpend: Bool { didSet { persist(oldValue != claudeShowSpend) } }
-    @Published var claudeShowChart: Bool { didSet { persist(oldValue != claudeShowChart) } }
-    @Published var claudeShowLegend: Bool { didSet { persist(oldValue != claudeShowLegend) } }
-    @Published var claudeChartDays: Int { didSet { persist(oldValue != claudeChartDays) } }
-    @Published var claudeChartCost: Bool { didSet { persist(oldValue != claudeChartCost) } }
+    @Published var claudeCompactStyle: ClaudeCompactStyle { didSet { persist(Keys.claudeCompactStyle, claudeCompactStyle.rawValue, oldValue != claudeCompactStyle) } }
+    @Published var claudeShowSession: Bool { didSet { persist(Keys.claudeShowSession, claudeShowSession, oldValue != claudeShowSession) } }
+    @Published var claudeShowWeek: Bool { didSet { persist(Keys.claudeShowWeek, claudeShowWeek, oldValue != claudeShowWeek) } }
+    @Published var claudeShowSpend: Bool { didSet { persist(Keys.claudeShowSpend, claudeShowSpend, oldValue != claudeShowSpend) } }
+    @Published var claudeShowChart: Bool { didSet { persist(Keys.claudeShowChart, claudeShowChart, oldValue != claudeShowChart) } }
+    @Published var claudeShowLegend: Bool { didSet { persist(Keys.claudeShowLegend, claudeShowLegend, oldValue != claudeShowLegend) } }
+    @Published var claudeChartDays: Int { didSet { persist(Keys.claudeChartDays, claudeChartDays, oldValue != claudeChartDays) } }
+    @Published var claudeChartCost: Bool { didSet { persist(Keys.claudeChartCost, claudeChartCost, oldValue != claudeChartCost) } }
 
     private var loading = false
 
@@ -228,67 +228,28 @@ final class SettingsStore: ObservableObject {
         if syncViaICloud { cloud.synchronize() }
     }
 
-    private func persist(_ changed: Bool) {
+    private var cloudSyncPending = false
+
+    /// Writes a single changed key to `UserDefaults` (and, when enabled, the
+    /// iCloud KVS). Only the one key that changed is written — a slider drag no
+    /// longer rewrites all ~50 keys per tick — and `cloud.synchronize()` is
+    /// coalesced to at most once per runloop turn.
+    private func persist(_ key: String, _ value: Any, _ changed: Bool) {
         guard !loading, changed else { return }
-        let pairs: [(String, Any)] = [
-            (Keys.launchAtLogin, launchAtLogin),
-            (Keys.syncViaICloud, syncViaICloud),
-            (Keys.hideInFullscreen, hideInFullscreen),
-            (Keys.hideInMissionControl, hideInMissionControl),
-            (Keys.hideFromScreenCapture, hideFromScreenCapture),
-            (Keys.forceSimulatedNotch, forceSimulatedNotch),
-            (Keys.simulatedDisplay, simulatedDisplay.rawValue),
-            (Keys.idleActivity, idleActivity.rawValue),
-            (Keys.glassStyle, glassStyle.rawValue),
-            (Keys.glassIntensity, glassIntensity),
-            (Keys.idleMostRecent, idleMostRecent),
-            (Keys.forceEnableActivity, forceEnableActivity),
-            (Keys.progressiveBlur, progressiveBlur),
-            (Keys.hapticFeedback, hapticFeedback),
-            (Keys.albumArtGlow, albumArtGlow),
-            (Keys.batteryEnabled, batteryEnabled),
-            (Keys.connectivityEnabled, connectivityEnabled),
-            (Keys.focusEnabled, focusEnabled),
-            (Keys.displayHUDEnabled, displayHUDEnabled),
-            (Keys.soundHUDEnabled, soundHUDEnabled),
-            (Keys.fileTrayEnabled, fileTrayEnabled),
-            (Keys.todosEnabled, todosEnabled),
-            (Keys.batteryShowPercentage, batteryShowPercentage),
-            (Keys.batteryLowThreshold, batteryLowThreshold),
-            (Keys.batteryNotifyCharged, batteryNotifyCharged),
-            (Keys.liveAudioVisualizer, liveAudioVisualizer),
-            (Keys.swipeToSeek, swipeToSeek),
-            (Keys.swipeGesturesEnabled, swipeGesturesEnabled),
-            (Keys.showTabBar, showTabBar),
-            (Keys.calendarShowWeather, calendarShowWeather),
-            (Keys.calendarShowEvents, calendarShowEvents),
-            (Keys.statsRefreshSeconds, statsRefreshSeconds),
-            (Keys.statsShowCPU, statsShowCPU),
-            (Keys.statsShowMemory, statsShowMemory),
-            (Keys.statsShowNetwork, statsShowNetwork),
-            (Keys.timerSoundOnFinish, timerSoundOnFinish),
-            (Keys.clipboardEnabled, clipboardEnabled),
-            (Keys.clipboardHistorySize, clipboardHistorySize),
-            (Keys.privacyIndicatorEnabled, privacyIndicatorEnabled),
-            (Keys.claudeCompactStyle, claudeCompactStyle.rawValue),
-            (Keys.claudeShowSession, claudeShowSession),
-            (Keys.claudeShowWeek, claudeShowWeek),
-            (Keys.claudeShowSpend, claudeShowSpend),
-            (Keys.claudeShowChart, claudeShowChart),
-            (Keys.claudeShowLegend, claudeShowLegend),
-            (Keys.claudeChartDays, claudeChartDays),
-            (Keys.claudeChartCost, claudeChartCost),
-            (Keys.goalsEnabled, goalsEnabled),
-            (Keys.claudeUsageEnabled, claudeUsageEnabled),
-            (Keys.statsEnabled, statsEnabled),
-            (Keys.currencyCode, currencyCode),
-            (Keys.currencySymbol, currencySymbol),
-        ]
-        for (k, v) in pairs {
-            defaults.set(v, forKey: k)
-            if syncViaICloud { cloud.set(v, forKey: k) }
+        defaults.set(value, forKey: key)
+        guard syncViaICloud else { return }
+        cloud.set(value, forKey: key)
+        scheduleCloudSync()
+    }
+
+    private func scheduleCloudSync() {
+        guard !cloudSyncPending else { return }
+        cloudSyncPending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.cloudSyncPending = false
+            self.cloud.synchronize()
         }
-        if syncViaICloud { cloud.synchronize() }
     }
 
     /// Inbound iCloud change (a write from another Mac): mirror every key back
