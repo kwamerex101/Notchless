@@ -100,6 +100,7 @@ final class NotchViewModel: ObservableObject {
         if notchTimer?.isActive ?? false { result.append(.timer) }
         if nowPlaying != nil { result.append(.playing) }
         if settings.todosEnabled, !todos.isEmpty { result.append(.todos) }
+        if settings.goalsEnabled, goals.hasActiveGoals { result.append(.goals) }
         if let battery, battery.isPluggedIn || battery.isCharging { result.append(.battery) }
         return result
     }
