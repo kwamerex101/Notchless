@@ -61,8 +61,9 @@ final class NotchViewModel: ObservableObject {
     private var collapseWork: DispatchWorkItem?
     private var goalObserver: AnyCancellable?
 
-    static let morph = Animation.spring(response: 0.42, dampingFraction: 0.78)
-    static let quickMorph = Animation.spring(response: 0.3, dampingFraction: 0.82)
+    // Thin aliases onto the shared motion vocabulary (NotchMotion).
+    static let morph = NotchMotion.morph
+    static let quickMorph = NotchMotion.quick
 
     init(settings: SettingsStore? = nil) {
         self.settings = settings ?? .shared
@@ -252,7 +253,7 @@ final class NotchViewModel: ObservableObject {
                 }
             }
             collapseWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.collapseGrace, execute: work)
         }
     }
 
@@ -270,7 +271,7 @@ final class NotchViewModel: ObservableObject {
                 withAnimation(Self.morph) { self?.dictation = nil }
             }
             dictationDismiss = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.dictationDismiss, execute: work)
         }
     }
 
@@ -297,7 +298,7 @@ final class NotchViewModel: ObservableObject {
             withAnimation(Self.morph) { self?.hud = nil }
         }
         hudDismiss = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.hudDismiss, execute: work)
     }
 
     // MARK: - Notifications

@@ -132,7 +132,7 @@ struct RecordingWaveform: View {
                         .frame(width: 3, height: height(at: i, time: t))
                 }
             }
-            .animation(.spring(response: 0.16, dampingFraction: 0.6), value: spectrum)
+            .animation(NotchMotion.spectrum, value: spectrum)
         }
     }
 

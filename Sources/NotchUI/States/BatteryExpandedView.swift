@@ -37,7 +37,7 @@ struct BatteryExpandedView: View {
                 .trim(from: 0, to: level)
                 .stroke(ringColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: level)
+                .animation(NotchMotion.fill, value: level)
             Image(systemName: (battery?.isCharging ?? false) ? "bolt.fill" : "battery.100")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(ringColor)
