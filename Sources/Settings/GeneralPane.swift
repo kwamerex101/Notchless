@@ -91,6 +91,7 @@ extension NotchActivity {
         case .stats: return "Stats"
         case .timer: return "Timer"
         case .clipboard: return "Clipboard"
+        case .todos: return "Tasks"
         case .privacy: return "Privacy"
         case .claudeUsage: return "Claude"
         }
@@ -107,6 +108,7 @@ extension NotchActivity {
         case .stats: return "cpu"
         case .timer: return "timer"
         case .clipboard: return "doc.on.clipboard"
+        case .todos: return "checklist"
         case .privacy: return "checkmark.shield"
         case .claudeUsage: return "chart.pie.fill"
         }
