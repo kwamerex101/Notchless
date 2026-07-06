@@ -45,6 +45,7 @@
 		6FECCF70903BE7ACBA10D80F /* OSDSuppressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E98779ED36B57471977EF2DE /* OSDSuppressor.swift */; };
 		70A88A0FFD040CA1FB786E34 /* FileTrayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C644C5BAAD160A9D15B01F3A /* FileTrayView.swift */; };
 		720374509F92779850C194E8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78BCEBB323CDAD6A811E8554 /* SettingsView.swift */; };
+		72DEE317B05A1C697A6E5FEC /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = E306D38308F488634521A017 /* LLM */; };
 		742A0CDFB94FCFB8F30B5FDC /* NowPlayingInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0792D249EAFCEC1EEF403D61 /* NowPlayingInfo.swift */; };
 		74BCDFEFB26C88D0C152E17B /* NotchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90F95E41E2E1BBC18897287 /* NotchRootView.swift */; };
 		7BE3B919A50B22D15AA965F9 /* DictationPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE525E793DDE3B7457DDD256 /* DictationPane.swift */; };
@@ -206,6 +207,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F7EF27C2A809D3F090AE0C9 /* FluidAudio in Frameworks */,
+				72DEE317B05A1C697A6E5FEC /* LLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -522,6 +524,7 @@
 			name = Notchless;
 			packageProductDependencies = (
 				FED496F03943988A5661F68C /* FluidAudio */,
+				E306D38308F488634521A017 /* LLM */,
 			);
 			productName = Notchless;
 			productReference = 32124AF7D00009638CC6909B /* Notchless.app */;
@@ -552,6 +555,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4B2257032D0FC4DB9E82D138 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+				B669E106D273B3E0137B5A00 /* XCRemoteSwiftPackageReference "LLM.swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F7FC90E4F66DAAE0DB7DAC51 /* Products */;
@@ -872,9 +876,22 @@
 				version = 0.15.2;
 			};
 		};
+		B669E106D273B3E0137B5A00 /* XCRemoteSwiftPackageReference "LLM.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/eastriverlee/LLM.swift";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		E306D38308F488634521A017 /* LLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B669E106D273B3E0137B5A00 /* XCRemoteSwiftPackageReference "LLM.swift" */;
+			productName = LLM;
+		};
 		FED496F03943988A5661F68C /* FluidAudio */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4B2257032D0FC4DB9E82D138 /* XCRemoteSwiftPackageReference "FluidAudio" */;
