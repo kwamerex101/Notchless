@@ -19,9 +19,18 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 22) {
             VStack(spacing: 22) {
-                PrimingIllustration(step: step)
-                    .frame(width: 300, height: 210)
-                    .padding(.top, 24)
+                switch step.kind {
+                case .priming:
+                    PrimingIllustration(step: step)
+                        .frame(width: 300, height: 210)
+                        .padding(.top, 24)
+                case .models:
+                    OnboardingModels()
+                        .padding(.horizontal, 28).padding(.top, 24)
+                case .tryDictation:
+                    OnboardingDictationTry()
+                        .padding(.horizontal, 28).padding(.top, 24)
+                }
 
                 Text(step.title)
                     .font(.system(size: 17, weight: .semibold))
@@ -29,7 +38,7 @@ struct OnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 30)
 
-                if !step.apps.isEmpty {
+                if step.kind == .priming, !step.apps.isEmpty {
                     AppIconRow(step: step)
                         .padding(.horizontal, 28)
                 }
@@ -170,6 +179,96 @@ struct AppIconRow: View {
     private static func appIcon(_ bundleID: String) -> NSImage? {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
         return NSWorkspace.shared.icon(forFile: url.path)
+    }
+}
+
+/// Onboarding page for optionally downloading on-device models. Downloads run
+/// in the background so the user can keep going.
+struct OnboardingModels: View {
+    @ObservedObject private var parakeet = ParakeetModelStore.shared
+    @ObservedObject private var llm = LLMModelStore.shared
+
+    var body: some View {
+        VStack(spacing: 12) {
+            card(title: "Parakeet · Neural Engine",
+                 detail: "Faster and more accurate. ~600 MB, Apple Silicon.") {
+                ParakeetStatusRow(status: parakeet.status) { parakeet.preload() }
+            }
+            card(title: "On-device cleanup · Gemma",
+                 detail: "Polish transcripts locally, no network. Optional.") {
+                GemmaStatusRow(status: llm.status, sizeText: llm.selected.sizeText,
+                               download: { llm.download() }, delete: { llm.delete() })
+            }
+        }
+    }
+
+    @ViewBuilder private func card<Content: View>(
+        title: String, detail: String, @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.system(size: 13, weight: .semibold))
+            Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 12, style: .continuous),
+                     fallback: .thinMaterial)
+    }
+}
+
+/// Onboarding "try it" field — a self-contained live dictation demo using Apple
+/// Speech, so the user can see it work before finishing setup.
+struct OnboardingDictationTry: View {
+    @State private var text = ""
+    @State private var isRecording = false
+    @State private var level: CGFloat = 0
+    @State private var transcriber = SpeechTranscriber()
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ScrollView {
+                Text(text.isEmpty ? "Your words will appear here…" : text)
+                    .font(.system(size: 13))
+                    .foregroundStyle(text.isEmpty ? .secondary : .primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+            }
+            .frame(height: 96)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 12, style: .continuous),
+                         fallback: .thinMaterial)
+
+            Button(action: toggle) {
+                HStack(spacing: 8) {
+                    Image(systemName: isRecording ? "stop.fill" : "mic.fill")
+                    Text(isRecording ? "Stop" : "Tap to talk")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+            }
+            .liquidGlassProminentButton(tint: isRecording ? .red : .teal)
+        }
+        .onDisappear { transcriber.cancel() }
+    }
+
+    private func toggle() {
+        isRecording ? stop() : start()
+    }
+
+    private func start() {
+        transcriber.onPartial = { text = $0 }
+        transcriber.onLevel = { level = $0 }
+        isRecording = true
+        Task { try? await transcriber.start() }
+    }
+
+    private func stop() {
+        isRecording = false
+        Task {
+            let final = await transcriber.finish()
+            if !final.isEmpty { text = final }
+        }
     }
 }
 

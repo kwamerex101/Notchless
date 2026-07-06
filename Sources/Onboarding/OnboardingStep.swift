@@ -31,6 +31,13 @@ enum AppRef {
     }
 }
 
+/// What the middle of an onboarding page renders.
+enum OnboardingKind {
+    case priming        // the stylized permission-dialog mock
+    case models         // download optional on-device models
+    case tryDictation   // a live "try it" text field
+}
+
 /// One page in the onboarding walkthrough.
 struct OnboardingStep: Identifiable {
     let id = UUID()
@@ -43,6 +50,7 @@ struct OnboardingStep: Identifiable {
     var permission: PermissionKind?
     /// Highlight the "Allow" button in the illustration (permission steps).
     var highlightAllow: Bool
+    var kind: OnboardingKind = .priming
 
     static let all: [OnboardingStep] = [
         OnboardingStep(
@@ -99,6 +107,20 @@ struct OnboardingStep: Identifiable {
             appLabels: ["Speak", "It types", "Anywhere"],
             subtitle: "Choose \"Allow\" once macOS requests Microphone and Speech Recognition. Hold Control + Option and talk — dictation runs on-device.",
             permission: .microphone, highlightAllow: true
+        ),
+        OnboardingStep(
+            title: "Pick a speech model",
+            badgeSymbol: "waveform", badgeColor: .teal,
+            apps: [], appLabels: [],
+            subtitle: "Apple Speech works right away with no download. For higher accuracy, download Parakeet — it runs on the Neural Engine and keeps downloading in the background while you continue.",
+            permission: nil, highlightAllow: false, kind: .models
+        ),
+        OnboardingStep(
+            title: "Give it a try",
+            badgeSymbol: "mic.fill", badgeColor: .teal,
+            apps: [], appLabels: [],
+            subtitle: "Tap the mic, say a sentence, and watch it appear. This is just a practice field — normally your words type into whatever app you're using.",
+            permission: nil, highlightAllow: false, kind: .tryDictation
         ),
         OnboardingStep(
             title: "You're all set.",
