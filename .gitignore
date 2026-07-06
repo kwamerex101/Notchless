@@ -27,3 +27,4 @@ build-release/
 dmg_staging/
 *.dmg
 dist/
+scripts/release.sh
