@@ -145,6 +145,15 @@ final class NotchViewModel: ObservableObject {
         manualActivity = carousel[(index + 1) % carousel.count]
     }
 
+    /// Jumps the carousel straight to `activity` (a tab tap). Mirrors what a
+    /// swipe does for one step: sets the manual pick and gives haptic feedback.
+    /// Ignored if `activity` isn't a current carousel page.
+    func select(_ activity: NotchActivity) {
+        guard carouselActivities.contains(activity) else { return }
+        withAnimation(Self.morph) { manualActivity = activity }
+        if settings.hapticFeedback { HapticService.tap() }
+    }
+
     /// Which activity a click/hover expands into.
     var activeExpandedActivity: NotchActivity {
         switch settings.idleActivity {
