@@ -11,13 +11,15 @@ struct NotchRootView: View {
     var body: some View {
         let content = model.content
         let sizing = NotchSizing.size(for: content, metrics: metrics)
+        let barExtra = tabBarVisible ? NotchTabBar.height : 0
+        let panelHeight = sizing.height + barExtra
 
         let expanded = { if case .expanded = content { return true } else { return false } }()
 
         return VStack(spacing: 0) {
             NotchShape(topCornerRadius: sizing.topRadius, bottomCornerRadius: sizing.bottomRadius)
                 .fill(Color.black)
-                .frame(width: sizing.width, height: sizing.height)
+                .frame(width: sizing.width, height: panelHeight)
                 .background {
                     if expanded, model.settings.progressiveBlur {
                         ProgressiveBlur()
@@ -29,7 +31,7 @@ struct NotchRootView: View {
                 }
                 .overlay {
                     contentView(content)
-                        .frame(width: sizing.width, height: sizing.height)
+                        .frame(width: sizing.width, height: panelHeight)
                         .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                               bottomCornerRadius: sizing.bottomRadius))
                         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
@@ -45,7 +47,7 @@ struct NotchRootView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(NotchViewModel.morph, value: sizing.width)
-        .animation(NotchViewModel.morph, value: sizing.height)
+        .animation(NotchViewModel.morph, value: panelHeight)
     }
 
     @ViewBuilder
@@ -65,32 +67,17 @@ struct NotchRootView: View {
         case let .notification(note):
             NotificationView(note: note, metrics: metrics)
         case let .expanded(activity):
-            switch activity {
-            case .playing, .none, .auto:
-                NowPlayingExpandedView(info: model.nowPlaying, musicSpectrum: model.musicSpectrum,
-                                       metrics: metrics, glow: glowColor, onCommand: onCommand,
-                                       onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
-            case .calendar:
-                CalendarExpandedView(snapshot: model.calendar, metrics: metrics)
-            case .duo:
-                DuoExpandedView(info: model.nowPlaying, snapshot: model.calendar,
-                                metrics: metrics, onCommand: onCommand)
-            case .dictation:
-                DictationHintView(metrics: metrics)
-            case .battery:
-                BatteryExpandedView(battery: model.battery, metrics: metrics)
-            case .stats:
-                StatsExpandedView(stats: model.stats, metrics: metrics)
-            case .timer:
-                TimerExpandedView(timer: model.notchTimer, metrics: metrics)
-            case .clipboard:
-                ClipboardExpandedView(metrics: metrics)
-            case .todos:
-                TodoExpandedView(metrics: metrics)
-            case .privacy:
-                PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
-            case .claudeUsage:
-                ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
+            if tabBarVisible {
+                VStack(spacing: 0) {
+                    NotchTabBar(activities: model.carouselActivities,
+                                active: activity,
+                                battery: model.battery,
+                                metrics: metrics,
+                                onSelect: { model.select($0) })
+                    expandedBody(activity)
+                }
+            } else {
+                expandedBody(activity)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)
@@ -99,6 +86,44 @@ struct NotchRootView: View {
         case let .dictation(phase):
             DictationView(phase: phase, metrics: metrics, level: model.dictationLevel, spectrum: model.dictationSpectrum)
         }
+    }
+
+    @ViewBuilder
+    private func expandedBody(_ activity: NotchActivity) -> some View {
+        switch activity {
+        case .playing, .none, .auto:
+            NowPlayingExpandedView(info: model.nowPlaying, musicSpectrum: model.musicSpectrum,
+                                   metrics: metrics, glow: glowColor, onCommand: onCommand,
+                                   onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
+        case .calendar:
+            CalendarExpandedView(snapshot: model.calendar, metrics: metrics)
+        case .duo:
+            DuoExpandedView(info: model.nowPlaying, snapshot: model.calendar,
+                            metrics: metrics, onCommand: onCommand)
+        case .dictation:
+            DictationHintView(metrics: metrics)
+        case .battery:
+            BatteryExpandedView(battery: model.battery, metrics: metrics)
+        case .stats:
+            StatsExpandedView(stats: model.stats, metrics: metrics)
+        case .timer:
+            TimerExpandedView(timer: model.notchTimer, metrics: metrics)
+        case .clipboard:
+            ClipboardExpandedView(metrics: metrics)
+        case .todos:
+            TodoExpandedView(metrics: metrics)
+        case .privacy:
+            PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
+        case .claudeUsage:
+            ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
+        }
+    }
+
+    /// The strip shows only in the expanded state, when enabled, and only if
+    /// there is more than one page to move between.
+    private var tabBarVisible: Bool {
+        guard case .expanded = model.content else { return false }
+        return model.settings.showTabBar && model.carouselActivities.count >= 2
     }
 
     private var glowColor: Color? {
