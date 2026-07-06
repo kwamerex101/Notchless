@@ -2,6 +2,17 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.1.3] — 2026-07-06
+
+### Added
+- **Goal timeline & catch-up rate.** Each goal now shows its start → deadline
+  (both editable), months remaining, and **"Save ₵X/mo to finish on time"** —
+  the amount you need to save each month from now, `(target − current) ÷ months
+  left`. Shown in Settings and in the expanded notch goal row.
+
+### Changed
+- The **pinned goal's pin is now red** (Settings card + notch row).
+
 ## [1.1.2] — 2026-07-06
 
 ### Added
