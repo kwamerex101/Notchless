@@ -69,7 +69,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
             }
-            .liquidGlassProminentButton(tint: .teal)
+            .liquidGlassProminentButton(tint: AppTheme.accent)
             .padding(.horizontal, 34)
             .padding(.bottom, 26)
         }
@@ -260,7 +260,7 @@ struct OnboardingDictationTry: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
             }
-            .liquidGlassProminentButton(tint: isRecording ? .red : .teal)
+            .liquidGlassProminentButton(tint: isRecording ? .red : AppTheme.accent)
         }
         .onDisappear { transcriber.cancel() }
     }

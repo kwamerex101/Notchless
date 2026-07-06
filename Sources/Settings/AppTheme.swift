@@ -4,10 +4,14 @@ import SwiftUI
 /// multi-colour gradient wash (teal → indigo → warm) bleeding up through the
 /// glass — the look used across Settings and onboarding.
 enum AppTheme {
-    /// Mint/teal accent used for highlights, stars, and prominent buttons.
-    static let accent = Color(red: 0.24, green: 0.86, blue: 0.63)
+    /// Primary accent for buttons/highlights — follows the user's macOS accent
+    /// colour (System Settings → Appearance → Colour), live-updating with it.
+    static let accent = Color.accentColor
     /// Near-black base behind everything.
     static let base = Color(red: 0.055, green: 0.06, blue: 0.078)
+    /// Fixed decorative wash colour (kept independent of the accent so the
+    /// backdrop doesn't clash when the accent changes).
+    static let wash = Color(red: 0.24, green: 0.86, blue: 0.63)
 }
 
 /// A full-bleed themed backdrop: dark base with a few large, soft colour blobs.
@@ -18,7 +22,7 @@ struct ThemedBackground: View {
 
             // Soft colour blobs, heavily blurred, low opacity.
             Circle()
-                .fill(AppTheme.accent.opacity(0.20))
+                .fill(AppTheme.wash.opacity(0.20))
                 .frame(width: 520, height: 520)
                 .blur(radius: 140)
                 .offset(x: -240, y: -220)
