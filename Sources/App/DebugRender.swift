@@ -9,6 +9,12 @@ enum DebugRender {
 
     static func run(metrics: NotchMetrics) {
         guard isEnabled else { return }
+        if GoalStore.shared.goals.isEmpty {
+            _ = GoalStore.shared.addGoal(name: "Save 100k", target: 100_000,
+                                         deadline: Date().addingTimeInterval(120 * 86_400))
+            _ = GoalStore.shared.logContribution(goalID: GoalStore.shared.goals[0].id,
+                                                 amount: 42_000, label: "MTN stocks")
+        }
         let np = NowPlayingInfo(title: "Never Gonna Give You Up (Official Remaster)",
                                 artist: "Rick Astley", album: "Whenever You Need Somebody",
                                 artwork: solidArt(), isPlaying: true, elapsed: 42, duration: 213)
@@ -26,6 +32,7 @@ enum DebugRender {
         render(.idle(.playing), np: np, cal: cal, name: "state_idle_playing", metrics: metrics)
         render(.idle(.calendar), np: np, cal: cal, name: "state_idle_calendar", metrics: metrics)
         render(.idle(.battery), np: nil, cal: nil, battery: fullBattery, name: "state_idle_battery", metrics: metrics)
+        render(.idle(.goals), np: nil, cal: nil, name: "state_idle_goals", metrics: metrics)
         render(.hud(.sound(level: 0.6, muted: false)), np: nil, cal: nil, name: "state_hud_sound", metrics: metrics)
         render(.hud(.display(level: 0.4)), np: nil, cal: nil, name: "state_hud_display", metrics: metrics)
         render(.notification(TransientNotification(systemImage: "battery.100.bolt", tint: .green,

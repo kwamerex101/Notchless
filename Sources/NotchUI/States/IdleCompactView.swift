@@ -86,7 +86,7 @@ struct IdleCompactView: View {
                 if privacy?.micActive ?? false { PulsingDot(color: .orange) }
             }
         case .goals:
-            EmptyView()
+            GoalCompactView().leading
         }
     }
 
@@ -135,7 +135,7 @@ struct IdleCompactView: View {
             }
             .font(.system(size: 13, weight: .semibold))
         case .goals:
-            EmptyView()
+            GoalCompactView().trailing
         }
     }
 
