@@ -18,6 +18,7 @@ final class NotchViewModel: ObservableObject {
     @Published var battery: BatteryInfo?
     @Published var stats: SystemStats?
     @Published var notchTimer: NotchTimerInfo?
+    @Published var privacy: PrivacyStatus?
     /// Live audio-band levels (low→high) from the system-audio tap, driving the
     /// now-playing visualizer. Empty when not capturing.
     @Published var musicSpectrum: [CGFloat] = []
@@ -76,6 +77,10 @@ final class NotchViewModel: ObservableObject {
     /// The concrete activity to rest in the notch at idle, or nil for a bare
     /// notch. In Auto mode this is whatever Live Activity is currently live.
     private func resolvedIdleActivity(hovering: Bool) -> NotchActivity? {
+        // The privacy dot always takes precedence — like macOS's own indicator,
+        // it shows whenever the camera/mic is in use, whatever the idle mode.
+        if let privacy, privacy.isActive { return .privacy }
+
         switch settings.idleActivity {
         case .none:
             return nil
@@ -101,6 +106,7 @@ final class NotchViewModel: ObservableObject {
 
     /// Which activity a click/hover expands into.
     var activeExpandedActivity: NotchActivity {
+        if let privacy, privacy.isActive { return .privacy }
         switch settings.idleActivity {
         case .none, .auto:
             return nowPlaying != nil ? .playing : .calendar
@@ -121,6 +127,7 @@ final class NotchViewModel: ObservableObject {
         case .stats: return stats != nil
         case .timer: return true  // always rests so it can be started from the notch
         case .clipboard: return true
+        case .privacy: return privacy?.isActive ?? false
         }
     }
 

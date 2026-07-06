@@ -10,6 +10,7 @@ struct IdleCompactView: View {
     var stats: SystemStats? = nil
     var musicSpectrum: [CGFloat] = []
     var timer: NotchTimerInfo? = nil
+    var privacy: PrivacyStatus? = nil
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -59,6 +60,15 @@ struct IdleCompactView: View {
             Image(systemName: "doc.on.clipboard")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+        case .privacy:
+            HStack(spacing: 4) {
+                if privacy?.cameraActive ?? false {
+                    Circle().fill(Color.green).frame(width: 8, height: 8)
+                }
+                if privacy?.micActive ?? false {
+                    Circle().fill(Color.orange).frame(width: 8, height: 8)
+                }
+            }
         }
     }
 
@@ -89,6 +99,10 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
         case .clipboard:
             ClipboardBadge()
+        case .privacy:
+            Text(privacy?.label ?? "")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white)
         }
     }
 
