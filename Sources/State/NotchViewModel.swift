@@ -32,6 +32,10 @@ final class NotchViewModel: ObservableObject {
     let fileTray = FileTrayStore()
     @Published var isDropTargeted = false
 
+    // Todos
+    let todos = TodoStore.shared
+    private var todosObserver: AnyCancellable?
+
     // Camera mirror
     @Published var showMirror = false
 
@@ -55,6 +59,9 @@ final class NotchViewModel: ObservableObject {
 
     init(settings: SettingsStore? = nil) {
         self.settings = settings ?? .shared
+        todosObserver = todos.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
     }
 
     // MARK: - Resolved presentation
@@ -85,6 +92,7 @@ final class NotchViewModel: ObservableObject {
         if privacy?.isActive ?? false { result.append(.privacy) }
         if notchTimer?.isActive ?? false { result.append(.timer) }
         if nowPlaying != nil { result.append(.playing) }
+        if settings.todosEnabled, !todos.isEmpty { result.append(.todos) }
         if let battery, battery.isPluggedIn || battery.isCharging { result.append(.battery) }
         return result
     }
@@ -163,6 +171,7 @@ final class NotchViewModel: ObservableObject {
         case .stats: return stats != nil
         case .timer: return true  // always rests so it can be started from the notch
         case .clipboard: return true
+        case .todos: return settings.todosEnabled && !todos.isEmpty
         case .privacy: return privacy?.isActive ?? false
         case .claudeUsage: return claudeStats != nil
         }
