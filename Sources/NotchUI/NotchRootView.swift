@@ -57,7 +57,7 @@ struct NotchRootView: View {
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
                             calendar: model.calendar, battery: model.battery,
                             stats: model.stats, musicSpectrum: model.musicSpectrum,
-                            timer: model.notchTimer, metrics: metrics)
+                            timer: model.notchTimer, privacy: model.privacy, metrics: metrics)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
@@ -83,6 +83,8 @@ struct NotchRootView: View {
                 TimerExpandedView(timer: model.notchTimer, metrics: metrics)
             case .clipboard:
                 ClipboardExpandedView(metrics: metrics)
+            case .privacy:
+                PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)
