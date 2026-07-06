@@ -182,4 +182,70 @@ final class TodoStoreTests: XCTestCase {
         let back = try JSONDecoder().decode(Todo.self, from: data)
         XCTAssertEqual(back, todo)
     }
+
+    // MARK: - Store: subtasks & notes
+
+    func test_addSubtask_appendsTrimmedAndRejectsEmpty() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "  step 1  ")
+        store.addSubtask(to: pid, title: "   ")
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["step 1"])
+    }
+
+    func test_toggleSubtask_flipsAndStays() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        let sid = store.items[0].subtasks[0].id
+        store.toggleSubtask(sid, in: pid)
+        XCTAssertTrue(store.items[0].subtasks[0].isDone)   // stays in the list
+        XCTAssertEqual(store.items[0].subtasks.count, 2)
+    }
+
+    func test_toggleLastSubtask_autoCompletesParent() {
+        let store = makeStore() // immediate scheduler + delay 0 → removal is synchronous
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
+        XCTAssertEqual(store.items.count, 1)               // not yet: one subtask open
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
+        XCTAssertTrue(store.items.isEmpty)                 // all done → parent vanished
+    }
+
+    func test_manualComplete_withOpenSubtasks_removesParent() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.complete(pid)                                // manual override
+        XCTAssertTrue(store.items.isEmpty)
+    }
+
+    func test_updateSubtaskTitle_removeSubtask_moveSubtask() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        ["a", "b", "c"].forEach { store.addSubtask(to: pid, title: $0) }
+        let a = store.items[0].subtasks[0].id
+        store.updateSubtaskTitle(a, in: pid, to: "A")
+        XCTAssertEqual(store.items[0].subtasks[0].title, "A")
+        store.moveSubtask(in: pid, from: IndexSet(integer: 2), to: 0)   // "c" → front
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["c", "A", "b"])
+        store.removeSubtask(store.items[0].subtasks[0].id, from: pid)   // removes "c"
+        XCTAssertEqual(store.items[0].subtasks.map(\.title), ["A", "b"])
+    }
+
+    func test_updateNotes_setsNotes() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.updateNotes(of: pid, to: "ping https://x.com")
+        XCTAssertEqual(store.items[0].notes, "ping https://x.com")
+    }
 }
