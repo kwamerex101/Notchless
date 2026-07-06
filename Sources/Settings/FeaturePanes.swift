@@ -179,6 +179,10 @@ struct ClaudeStatsPane: View {
         VStack(alignment: .leading, spacing: 16) {
             PaneHeader(section: .claudeStats)
 
+            CardGroup {
+                ToggleRow(title: "Show Claude usage in the notch", isOn: $settings.claudeUsageEnabled)
+            }
+
             SectionLabel("Compact notch")
             CardGroup {
                 LabeledRow("Show") {

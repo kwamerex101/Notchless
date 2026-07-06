@@ -50,10 +50,11 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
             } else if abs(swipeX) > threshold, abs(swipeX) > abs(swipeY) * dominance {
                 swipeFired = true
                 MainActor.assumeIsolated {
-                    // In Auto with something live, swipe pages through the
-                    // activities (playing / calendar / stats / …); otherwise it
-                    // scrubs the current track.
-                    if SettingsStore.shared.idleActivity == .auto, !(model?.liveActivities.isEmpty ?? true) {
+                    // Horizontal swipe pages through the carousel (playing /
+                    // calendar / stats / …) in every idle mode, matching the tab
+                    // strip. Scrub the track by dragging the scrubber instead; we
+                    // only fall back to seek when there's nothing to page through.
+                    if (model?.carouselActivities.count ?? 0) >= 2 {
                         model?.cycleLiveActivity()
                     } else {
                         seek(forward: swipeX < 0)
