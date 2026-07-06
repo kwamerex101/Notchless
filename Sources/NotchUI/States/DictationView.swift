@@ -8,6 +8,8 @@ struct DictationView: View {
     let metrics: NotchMetrics
     /// Live audio level 0…1 for the recording waveform.
     var level: CGFloat = 0.5
+    /// Live frequency-band levels (low→high) driving the waveform.
+    var spectrum: [CGFloat] = []
 
     var body: some View {
         HStack(spacing: 12) {
@@ -63,7 +65,7 @@ struct DictationView: View {
     @ViewBuilder private var trailing: some View {
         switch phase {
         case .recording:
-            RecordingWaveform(level: level)
+            RecordingWaveform(spectrum: spectrum)
                 .frame(width: 96, height: 26)
         case .transcribing, .cleaning:
             ProgressView()
@@ -114,42 +116,59 @@ struct DictationHintView: View {
     }
 }
 
-/// A live, symmetric recording waveform that reacts to the audio level with
-/// energetic up-and-down motion.
+/// A symmetric recording waveform driven by the live audio spectrum: it mirrors
+/// out from the center bar, tall bars tracking whichever tones are present. When
+/// nothing is being said it settles into a slow heartbeat pulse.
 struct RecordingWaveform: View {
-    var level: CGFloat
+    var spectrum: [CGFloat]
     var barCount: Int = 11
 
     private let maxHeight: CGFloat = 26
     private let minHeight: CGFloat = 3
-
-    @State private var seeds: [CGFloat]
-    private let timer = Timer.publish(every: 0.07, on: .main, in: .common).autoconnect()
-
-    init(level: CGFloat, barCount: Int = 11) {
-        self.level = level
-        self.barCount = barCount
-        _seeds = State(initialValue: (0..<barCount).map { _ in CGFloat.random(in: 0.1...1) })
-    }
+    /// Below this the input counts as silence → heartbeat.
+    private let speakingThreshold: CGFloat = 0.06
 
     var body: some View {
-        HStack(alignment: .center, spacing: 3) {
-            ForEach(0..<barCount, id: \.self) { i in
-                Capsule()
-                    .fill(Color(nsColor: .systemRed))
-                    .frame(width: 3, height: height(at: i))
+        // TimelineView drives the continuous heartbeat; when speech arrives the
+        // spectrum takes over.
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<barCount, id: \.self) { i in
+                    Capsule()
+                        .fill(Color(nsColor: .systemRed))
+                        .frame(width: 3, height: height(at: i, time: t))
+                }
             }
-        }
-        // Springy so bars visibly snap up and down each tick.
-        .animation(.spring(response: 0.18, dampingFraction: 0.55), value: seeds)
-        .onReceive(timer) { _ in
-            seeds = seeds.map { _ in CGFloat.random(in: 0.1...1) }
+            .animation(.spring(response: 0.16, dampingFraction: 0.6), value: spectrum)
         }
     }
 
-    private func height(at index: Int) -> CGFloat {
-        // Keep it lively even in quiet moments, and swing wide when loud.
-        let energy = max(0.45, min(1, level * 1.4))
-        return minHeight + (maxHeight - minHeight) * seeds[index] * energy
+    private var center: Int { (barCount - 1) / 2 }
+
+    private var energy: CGFloat { spectrum.max() ?? 0 }
+
+    private func height(at index: Int, time: TimeInterval) -> CGFloat {
+        let distance = abs(index - center)   // 0 at center, grows outward
+
+        if energy > speakingThreshold {
+            // Symmetric: center = lowest band, mirroring out to higher tones.
+            let band = spectrum.isEmpty ? 0 : spectrum[min(distance, spectrum.count - 1)]
+            return minHeight + (maxHeight - minHeight) * band
+        }
+
+        // Heartbeat: a soft double-thump that ripples out from the center.
+        let cycle = 1.15
+        let phase = time.truncatingRemainder(dividingBy: cycle) / cycle
+        let beat = thump(phase, at: 0.0) + 0.6 * thump(phase, at: 0.16)
+        let falloff = 1 - (CGFloat(distance) / CGFloat(center + 1)) * 0.65
+        let pulse = (0.10 + 0.22 * CGFloat(beat)) * falloff
+        return minHeight + (maxHeight - minHeight) * pulse
+    }
+
+    /// A narrow gaussian "beat" centered at `at` within the 0…1 cycle.
+    private func thump(_ phase: Double, at: Double) -> Double {
+        let d = phase - at
+        return exp(-(d * d) / (2 * 0.0015))
     }
 }

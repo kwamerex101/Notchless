@@ -10,6 +10,8 @@ protocol DictationTranscriber: AnyObject {
     var onPartial: ((String) -> Void)? { get set }
     /// Normalized input level 0…1 for the live waveform.
     var onLevel: ((CGFloat) -> Void)? { get set }
+    /// Normalized frequency-band levels (low→high) for the live waveform.
+    var onSpectrum: (([CGFloat]) -> Void)? { get set }
 
     /// Requests permissions and begins capturing + transcribing.
     func start() async throws
