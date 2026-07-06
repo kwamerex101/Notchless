@@ -18,21 +18,36 @@ final class BluetoothService: NSObject {
         )
     }
 
-    @objc private func deviceConnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+    // These are `nonisolated` because IOBluetooth delivers the notification on
+    // whatever thread it likes — the legacy connect registration fires on the
+    // main run loop, but the CoreBluetooth coordinator also routes the same
+    // event on its own background queue. Calling the @MainActor body directly
+    // off-thread made `model.show()` publish from two threads at once, which
+    // deadlocked Combine's ObservableObjectPublisher at launch. So we hop to
+    // main ourselves and do all state/publish work there, serially.
+    @objc private nonisolated func deviceConnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
         let name = device.name ?? "Device"
-        onConnect?(name)
         let key = device.addressString ?? name
-        disconnectNotifications[key] = device.register(
-            forDisconnectNotification: self,
-            selector: #selector(deviceDisconnected(_:device:))
-        )
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                self.onConnect?(name)
+                self.disconnectNotifications[key] = device.register(
+                    forDisconnectNotification: self,
+                    selector: #selector(self.deviceDisconnected(_:device:))
+                )
+            }
+        }
     }
 
-    @objc private func deviceDisconnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+    @objc private nonisolated func deviceDisconnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
         let name = device.name ?? "Device"
-        onDisconnect?(name)
         let key = device.addressString ?? name
-        disconnectNotifications[key]?.unregister()
-        disconnectNotifications[key] = nil
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                self.onDisconnect?(name)
+                self.disconnectNotifications[key]?.unregister()
+                self.disconnectNotifications[key] = nil
+            }
+        }
     }
 }
