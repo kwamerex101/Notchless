@@ -78,8 +78,36 @@ These are real limits, not omissions — they need your machine, your grants, or
 - **Multi-monitor geometry** — auto-detects whether aux-area rects are local or global and clamps
   the notch centre into the target screen, so a 2nd display can't push the panel off-screen.
 
+## Perf / UX / polish pass (branch `feat/perf-ux-polish`, 2026-07-06)
+
+Executed the 20-task plan in `docs/superpowers/plans/2026-07-06-perf-ux-polish.md`.
+Build green, 67 tests pass (was 30). No features removed.
+
+- **Idle cost:** every always-on poller (clipboard, stats, privacy) is now gated on its
+  settings toggle and, for stats, on visibility; the follow-screen timer runs only in
+  Active-display mode; Claude-usage parsing is incremental (per-file mtime/size cache); the
+  audio tap is throttled to 30 Hz and gated on the visualizer being on screen; the 0.5 s
+  now-playing republish is gone (view-local elapsed extrapolation). High-frequency audio
+  levels live in a dedicated `AudioLevelsModel`, so the visualizer no longer repaints the
+  whole notch tree.
+- **Bugs fixed:** notch text fields can now receive keyboard input (Tasks quick-add / Goals
+  quick-log); live fullscreen-hide toggle; partial iCloud pulls no longer flip toggles off;
+  goal save/load is corruption-resilient; notifications replay their entrance; calendar
+  permission-denied shows a real prompt.
+- **Motion/UX:** one `NotchMotion`/`NotchDesign` vocabulary; real (previously dead) content
+  transitions with directional carousel slides and matched-geometry album art; hover-intent
+  dwell + universal hover/press feedback (`NotchButtonStyle`); rolling numerals; grabbable
+  scrubber; HUD/notification bloom; Reduce Motion + VoiceOver labels.
+- **Hygiene:** Release enables hardened runtime (Debug off); `GoalSelfTest`/`DebugRender`
+  are `#if DEBUG`-gated; GitHub Actions CI runs build+test.
+
+**Still to verify on-device (not measurable in CI):** actual CPU/energy/idle-wakeup numbers
+via `powermetrics`/Activity Monitor, and a visual pass on the new animations. **Deferred:**
+the `ActivityDescriptor` registry refactor (T18 — pure internal, needs pixel-diff verification)
+and Sparkle auto-update (T20 H4). Re-cut + notarize the DMG from a Release build before the
+next public release.
+
 ## Suggested next session
 
 - Bundle mediaremote-adapter so Now Playing works on macOS 26 (unblocks the headline feature).
 - Do a screenshot-driven tuning pass against the reference video.
-- `git init` + first commit (I set up `.gitignore` but did not initialize git).
