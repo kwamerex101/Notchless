@@ -44,6 +44,9 @@ struct NotchSizing {
                 return NotchSizing(width: w + 130, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .claudeUsage:
                 return NotchSizing(width: w + 120, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .goals:
+                // Placeholder sizing until Task 6 ships the real compact view.
+                return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
@@ -89,6 +92,9 @@ struct NotchSizing {
                 return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:
                 return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
+            case .goals:
+                // Placeholder sizing until Task 7 ships the real expanded view.
+                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             }
         }
     }
