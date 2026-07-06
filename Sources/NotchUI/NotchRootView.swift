@@ -77,6 +77,8 @@ struct NotchRootView: View {
                         .id(contentKey(content))
                         .transition(contentTransition)
                 }
+                // Slight magnetic growth while the hover dwell is pending.
+                .scaleEffect(model.interaction == .hovering && !reduceMotion ? 1.03 : 1, anchor: .top)
                 .contentShape(NotchShape(topCornerRadius: sizing.topRadius,
                                          bottomCornerRadius: sizing.bottomRadius))
                 .onTapGesture { model.tapped() }

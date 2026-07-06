@@ -32,15 +32,17 @@ struct NotchTabBar: View {
     var body: some View {
         HStack(spacing: 12) {
             ForEach(window, id: \.self) { activity in
-                Image(systemName: activity.tabGlyph)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .opacity(activity == active ? 1.0 : 0.35)
-                    .frame(width: 18, height: 18)
-                    .contentShape(Rectangle())
-                    .onTapGesture { onSelect(activity) }
-                    .accessibilityLabel(Text(activity.tabLabel))
-                    .accessibilityAddTraits(activity == active ? [.isSelected, .isButton] : .isButton)
+                Button { onSelect(activity) } label: {
+                    Image(systemName: activity.tabGlyph)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .opacity(activity == active ? 1.0 : 0.35)
+                        .frame(width: 18, height: 18)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(NotchButtonStyle())
+                .accessibilityLabel(Text(activity.tabLabel))
+                .accessibilityAddTraits(activity == active ? [.isSelected, .isButton] : .isButton)
             }
             Spacer(minLength: notchWidth + 12)
             if let battery {

@@ -117,16 +117,19 @@ struct NowPlayingExpandedView: View {
 
     private var transport: some View {
         HStack(spacing: 26) {
-            transportButton("shuffle", size: 13) { onCommand(.toggleShuffle) }
-            transportButton("backward.fill", size: 15) { onCommand(.previous) }
+            transportButton("shuffle", size: 13, label: "Shuffle") { onCommand(.toggleShuffle) }
+            transportButton("backward.fill", size: 15, label: "Previous") { onCommand(.previous) }
             Button { onCommand(.playPause) } label: {
                 Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 34, height: 34)
                     .background(Circle().fill(Color.white.opacity(0.14)))
-            }.buttonStyle(.plain)
-            transportButton("forward.fill", size: 15) { onCommand(.next) }
+            }
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel((info?.isPlaying ?? false) ? "Pause" : "Play")
+            transportButton("forward.fill", size: 15, label: "Next") { onCommand(.next) }
             outputPicker
         }
     }
@@ -156,11 +159,14 @@ struct NowPlayingExpandedView: View {
         .fixedSize()
     }
 
-    private func transportButton(_ name: String, size: CGFloat, action: @escaping () -> Void) -> some View {
+    private func transportButton(_ name: String, size: CGFloat, label: String,
+                                 action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: name)
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.85))
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(NotchButtonStyle())
+        .accessibilityLabel(label)
     }
 }

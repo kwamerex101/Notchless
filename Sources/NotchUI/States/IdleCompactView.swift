@@ -85,13 +85,14 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
         case .todos:
             Button {
-                if let id = todos.next?.id { todos.complete(id) }
+                if let id = todos.next?.id { withAnimation(NotchMotion.micro) { todos.complete(id) } }
             } label: {
                 Image(systemName: "circle")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel("Complete task")
         case .privacy:
             HStack(spacing: 4) {
                 if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
