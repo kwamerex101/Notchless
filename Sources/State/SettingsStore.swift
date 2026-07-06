@@ -308,6 +308,7 @@ final class SettingsStore: ObservableObject {
             liveAudioVisualizer = cloud.bool(forKey: Keys.liveAudioVisualizer)
             swipeToSeek = cloud.bool(forKey: Keys.swipeToSeek)
             swipeGesturesEnabled = cloud.bool(forKey: Keys.swipeGesturesEnabled)
+            showTabBar = cloud.bool(forKey: Keys.showTabBar)
             calendarShowWeather = cloud.bool(forKey: Keys.calendarShowWeather)
             calendarShowEvents = cloud.bool(forKey: Keys.calendarShowEvents)
             statsRefreshSeconds = cloud.double(forKey: Keys.statsRefreshSeconds)
