@@ -90,6 +90,7 @@ extension NotchActivity {
         case .battery: return "Battery"
         case .stats: return "Stats"
         case .timer: return "Timer"
+        case .clipboard: return "Clipboard"
         }
     }
     var pickerImage: String {
@@ -103,6 +104,7 @@ extension NotchActivity {
         case .battery: return "battery.100"
         case .stats: return "cpu"
         case .timer: return "timer"
+        case .clipboard: return "doc.on.clipboard"
         }
     }
 }

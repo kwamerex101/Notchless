@@ -27,11 +27,17 @@ struct NotchSizing {
             case .dictation:
                 return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .battery:
-                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // +150 (not +110): each wing must clear the `edgeInset` plus a
+                // full "100%" readout, else the leading "1" falls into the
+                // physical notch cutout and reads as "00%".
+                return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .stats:
-                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // Same reasoning as .battery — CPU can read "100%".
+                return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .timer:
                 return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .clipboard:
+                return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
@@ -69,6 +75,8 @@ struct NotchSizing {
                 return NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
             case .timer:
                 return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
+            case .clipboard:
+                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             }
         }
     }

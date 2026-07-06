@@ -81,6 +81,8 @@ struct NotchRootView: View {
                 StatsExpandedView(stats: model.stats, metrics: metrics)
             case .timer:
                 TimerExpandedView(timer: model.notchTimer, metrics: metrics)
+            case .clipboard:
+                ClipboardExpandedView(metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)

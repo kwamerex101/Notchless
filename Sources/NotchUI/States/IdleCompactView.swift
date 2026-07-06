@@ -55,6 +55,10 @@ struct IdleCompactView: View {
             Image(systemName: "timer")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle((timer?.isFinished ?? false) ? .orange : .white)
+        case .clipboard:
+            Image(systemName: "doc.on.clipboard")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
         }
     }
 
@@ -83,6 +87,8 @@ struct IdleCompactView: View {
             Text(timer?.label ?? "0:00")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
+        case .clipboard:
+            ClipboardBadge()
         }
     }
 

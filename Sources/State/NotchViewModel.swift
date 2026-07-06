@@ -120,6 +120,7 @@ final class NotchViewModel: ObservableObject {
         case .battery: return battery != nil
         case .stats: return stats != nil
         case .timer: return true  // always rests so it can be started from the notch
+        case .clipboard: return true
         }
     }
 
