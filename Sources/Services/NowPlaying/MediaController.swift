@@ -8,12 +8,6 @@ import Combine
 final class MediaController {
     private let model: NotchViewModel
     private let provider: NowPlayingProvider
-    private var ticker: Timer?
-
-    /// Elapsed time and the wall-clock instant it was last reported, so the
-    /// ticker can extrapolate without drifting.
-    private var baseElapsed: TimeInterval = 0
-    private var baseInstant = Date()
     private var lastColorTitle: String?
 
     init(model: NotchViewModel, provider: NowPlayingProvider? = nil) {
@@ -27,8 +21,10 @@ final class MediaController {
     func start() {
         provider.onChange = { [weak self] info in
             guard let self else { return }
-            self.baseElapsed = info?.elapsed ?? 0
-            self.baseInstant = Date()
+            var info = info
+            // Stamp the report instant so the view can extrapolate elapsed time
+            // itself — no half-second model republish while playing.
+            info?.elapsedAt = Date()
             // Re-extract the glow color only when the track changes, not on
             // every playback update.
             if info?.title != self.lastColorTitle {
@@ -36,14 +32,11 @@ final class MediaController {
                 self.model.artworkColor = info?.artwork.flatMap(ColorExtractor.vibrantColor)
             }
             self.model.nowPlaying = info
-            self.updateTicker(playing: info?.isPlaying ?? false)
         }
         provider.start()
     }
 
     func stop() {
-        ticker?.invalidate()
-        ticker = nil
         provider.stop()
     }
 
@@ -51,25 +44,13 @@ final class MediaController {
         // Optimistic local update for snappy feedback, then let the provider
         // reconcile on its next notification.
         if case .playPause = command, var info = model.nowPlaying {
+            // Freeze the position at the current extrapolated value before
+            // toggling, so a pause stops the clock exactly where it looked.
+            info.elapsed = info.elapsed(at: Date())
+            info.elapsedAt = Date()
             info.isPlaying.toggle()
-            baseElapsed = info.elapsed
-            baseInstant = Date()
             model.nowPlaying = info
-            updateTicker(playing: info.isPlaying)
         }
         provider.send(command)
-    }
-
-    private func updateTicker(playing: Bool) {
-        ticker?.invalidate()
-        guard playing else { return }
-        ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, var info = self.model.nowPlaying, info.isPlaying else { return }
-                let projected = self.baseElapsed + Date().timeIntervalSince(self.baseInstant)
-                info.elapsed = min(info.duration, projected)
-                self.model.nowPlaying = info
-            }
-        }
     }
 }
