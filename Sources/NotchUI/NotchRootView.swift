@@ -57,7 +57,8 @@ struct NotchRootView: View {
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
                             calendar: model.calendar, battery: model.battery,
                             stats: model.stats, musicSpectrum: model.musicSpectrum,
-                            timer: model.notchTimer, privacy: model.privacy, metrics: metrics)
+                            timer: model.notchTimer, privacy: model.privacy,
+                            glow: glowColor, metrics: metrics)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
