@@ -2,6 +2,18 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.1.1] — 2026-07-06
+
+### Fixed
+- **Notch tab bar visibility.** The expanded-notch tab strip no longer hides
+  behind the hardware notch. It now shows a compact three-glyph window on the
+  left — previous · active · next, active highlighted — with the battery
+  percentage on the right, sitting just below the notch. Tapping a neighbour
+  slides the window so every page stays reachable.
+- **Seamless tab-bar background.** The strip now shares the active view's
+  background — plain black views stay black, and Now Playing's album-art glow
+  now flows up through the strip so it reads as one surface.
+
 ## [1.1.0] — 2026-07-06
 
 A big feature release: the notch gains a task manager, a goals tracker, and a
