@@ -51,14 +51,29 @@ final class DictationHistory: ObservableObject {
         if records.count > 500 { records = Array(records.prefix(500)) }
     }
 
-    private func load() {
-        guard let data = try? Data(contentsOf: url),
-              let decoded = try? JSONDecoder().decode([DictationRecord].self, from: data) else { return }
-        records = decoded
+    /// Re-writes the file in the new encryption state (called when the toggle
+    /// flips), so existing records aren't lost.
+    func reencrypt(encrypted: Bool) {
+        save(forceEncrypted: encrypted)
     }
 
-    private func save() {
-        guard let data = try? JSONEncoder().encode(records) else { return }
+    private var wantsEncryption: Bool { DictationSettings.shared.encryptHistory }
+
+    private func load() {
+        guard let raw = try? Data(contentsOf: url) else { return }
+        // Try plaintext JSON first; if that fails, try decrypting.
+        if let decoded = try? JSONDecoder().decode([DictationRecord].self, from: raw) {
+            records = decoded
+        } else if let plain = HistoryCipher.decrypt(raw),
+                  let decoded = try? JSONDecoder().decode([DictationRecord].self, from: plain) {
+            records = decoded
+        }
+    }
+
+    private func save(forceEncrypted: Bool? = nil) {
+        guard let json = try? JSONEncoder().encode(records) else { return }
+        let encrypt = forceEncrypted ?? wantsEncryption
+        let data = encrypt ? (HistoryCipher.encrypt(json) ?? json) : json
         try? data.write(to: url, options: .atomic)
     }
 }
