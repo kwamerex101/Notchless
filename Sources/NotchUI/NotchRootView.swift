@@ -38,9 +38,11 @@ struct NotchRootView: View {
                     if expanded, model.settings.progressiveBlur {
                         ProgressiveBlur()
                             .frame(width: sizing.width + 24, height: panelHeight + 20)
-                            .clipShape(RoundedRectangle(cornerRadius: sizing.bottomRadius + 6, style: .continuous))
+                            .clipShape(NotchShape(topCornerRadius: sizing.topRadius + 2,
+                                                  bottomCornerRadius: sizing.bottomRadius + 6))
                             .opacity(0.5)
                             .allowsHitTesting(false)
+                            .transition(.opacity)
                     }
                 }
                 // Panel-level tint, drawn behind BOTH the tab strip and the
@@ -56,6 +58,7 @@ struct NotchRootView: View {
                             .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                                   bottomCornerRadius: sizing.bottomRadius))
                             .allowsHitTesting(false)
+                            .transition(.opacity)
                     }
                 }
                 .overlay {
@@ -63,6 +66,10 @@ struct NotchRootView: View {
                         .frame(width: sizing.width, height: panelHeight)
                         .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                               bottomCornerRadius: sizing.bottomRadius))
+                        // Key on the content's identity so a state change actually
+                        // inserts/removes the view — otherwise the transition below
+                        // never fires and swaps fall back to a plain crossfade.
+                        .id(contentKey(content))
                         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
                 }
                 .contentShape(NotchShape(topCornerRadius: sizing.topRadius,
@@ -75,9 +82,26 @@ struct NotchRootView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(NotchViewModel.morph, value: sizing.width)
-        .animation(NotchViewModel.morph, value: panelHeight)
+        // One spring drives width, height, AND the corner radii together
+        // (NotchShape interpolates its radii), so the shape stretches as one
+        // continuous object instead of the radii snapping.
+        .animation(NotchMotion.morph, value: sizing)
         .environment(\.notchKeyFocus, { [weak model] want in model?.requestKeyFocus?(want) })
+    }
+
+    /// Stable identity per content state so SwiftUI runs insert/remove
+    /// transitions on a change (a plain view swap wouldn't animate).
+    private func contentKey(_ content: NotchContent) -> String {
+        switch content {
+        case .bare: return "bare"
+        case let .idle(a): return "idle.\(a.rawValue)"
+        case .hud: return "hud"
+        case let .notification(n): return "notif.\(n.id)"
+        case let .expanded(a): return "expanded.\(a.rawValue)"
+        case let .fileTray(expanded): return "tray.\(expanded)"
+        case .mirror: return "mirror"
+        case .dictation: return "dictation"
+        }
     }
 
     @ViewBuilder

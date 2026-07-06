@@ -182,8 +182,16 @@ final class NotchViewModel: ObservableObject {
         let current = (manualActivity.flatMap { carousel.contains($0) ? $0 : nil })
             ?? liveActivities.first ?? carousel[0]
         let index = carousel.firstIndex(of: current) ?? 0
-        manualActivity = carousel[(index + 1) % carousel.count]
+        // Same motion + haptic as a tab tap, so a swipe animates identically
+        // instead of jump-cutting.
+        lastMoveDirection = 1
+        withAnimation(Self.morph) { manualActivity = carousel[(index + 1) % carousel.count] }
+        if settings.hapticFeedback { HapticService.tap() }
     }
+
+    /// Direction of the most recent carousel move (+1 forward, -1 back), so the
+    /// view can slide page content the right way. Read by NotchRootView.
+    private(set) var lastMoveDirection = 1
 
     /// Jumps the carousel straight to `activity` (a tab tap). Mirrors what a
     /// swipe does for one step: sets the manual pick and gives haptic feedback.

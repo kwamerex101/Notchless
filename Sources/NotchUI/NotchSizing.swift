@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Target geometry for a given content state, derived from the physical notch
 /// metrics. Tunable against `references/` — see PLAN.md §3.
-struct NotchSizing {
+struct NotchSizing: Equatable {
     var width: CGFloat
     var height: CGFloat
     var topRadius: CGFloat
