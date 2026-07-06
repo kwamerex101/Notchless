@@ -53,3 +53,28 @@ targets:
         DEVELOPMENT_TEAM: "${DEVELOPMENT_TEAM}"
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+  NotchlessTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Notchless
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rexdanquah.NotchlessTests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+        DEVELOPMENT_TEAM: "${DEVELOPMENT_TEAM}"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+schemes:
+  Notchless:
+    build:
+      targets:
+        Notchless: all
+    test:
+      targets:
+        - NotchlessTests
