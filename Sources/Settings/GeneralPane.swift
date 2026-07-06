@@ -46,6 +46,27 @@ struct GeneralPane: View {
                 }
             }
 
+            // Appearance
+            SectionLabel("Liquid Glass")
+            CardGroup {
+                SegmentedCards(
+                    options: GlassStyle.allCases,
+                    selection: $settings.glassStyle,
+                    title: { $0.title },
+                    systemImage: { $0 == .clear ? "circle.dotted" : "circle.fill" }
+                )
+                Divider()
+                HStack {
+                    Text("Intensity")
+                    Spacer()
+                    Slider(value: $settings.glassIntensity, in: 0...1).frame(width: 160)
+                    Text("\(Int(settings.glassIntensity * 100))%").frame(width: 42, alignment: .trailing)
+                }
+                Text("Choose a Clear or Tinted glass look for the notch and Settings, and how strong it is.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             // Behaviour
             SectionLabel("Behaviour")
             CardGroup {
