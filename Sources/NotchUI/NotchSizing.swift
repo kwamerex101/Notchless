@@ -26,6 +26,8 @@ struct NotchSizing {
                 return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .dictation:
                 return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .battery:
+                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
@@ -57,6 +59,8 @@ struct NotchSizing {
                 return NotchSizing(width: max(w + 40, 560), height: 158, topRadius: 10, bottomRadius: 24)
             case .dictation:
                 return NotchSizing(width: max(w + 40, 400), height: h + 66, topRadius: 10, bottomRadius: 22)
+            case .battery:
+                return NotchSizing(width: max(w + 40, 360), height: 128, topRadius: 10, bottomRadius: 24)
             }
         }
     }

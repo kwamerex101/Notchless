@@ -55,7 +55,7 @@ struct NotchRootView: View {
             Color.clear
         case let .idle(activity):
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
-                            calendar: model.calendar, metrics: metrics)
+                            calendar: model.calendar, battery: model.battery, metrics: metrics)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
@@ -73,6 +73,8 @@ struct NotchRootView: View {
                                 metrics: metrics, onCommand: onCommand)
             case .dictation:
                 DictationHintView(metrics: metrics)
+            case .battery:
+                BatteryExpandedView(battery: model.battery, metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)

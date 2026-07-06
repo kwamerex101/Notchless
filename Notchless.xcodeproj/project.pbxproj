@@ -21,6 +21,7 @@
 		210550D839B4DEE15F29E6FF /* DictationPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB62E0243F69E04077655E7 /* DictationPhase.swift */; };
 		22BEC9D31B37808F61204B7F /* DictationTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A003741FACD62A63A8BADB /* DictationTranscriber.swift */; };
 		27171402888E732A82628AE1 /* NowPlayingExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5DC4308AB30C81490BB451 /* NowPlayingExpandedView.swift */; };
+		28FDD79316AF13EEFAA4FB9C /* BatteryInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0E639D039BCAD8A483DA77 /* BatteryInfo.swift */; };
 		29591514593BEC3CA130C411 /* MonthGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */; };
 		2EBA5724103EB2F4A25861D1 /* OnboardingStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1B55F8B1EA568166FE2A99 /* OnboardingStep.swift */; };
 		2EFF1A4D493ABA3EA02ADB80 /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BCB0085DDCAFEBADD7B266 /* NotificationView.swift */; };
@@ -29,6 +30,7 @@
 		322CBA757B63BDB9EB347C90 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53F0B09F7F6F4EFA30345E2B /* StyleStore.swift */; };
 		344F79ACA38A91C56DF3AB38 /* MediaRemoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069DD84D7362D2E99FC1974D /* MediaRemoteProvider.swift */; };
 		363DEC8533B71DB483C37AE2 /* CalendarSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F807BFE4141F4EEC2E04A1 /* CalendarSnapshot.swift */; };
+		366F80BBEAD17958640B199D /* BatteryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08D02C3963195376B0C2EBB /* BatteryController.swift */; };
 		367DBD6FF12C1BF17D017692 /* SpokenCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376414265497D8D44092C2 /* SpokenCommands.swift */; };
 		3A639723CF59773C1D1C50D4 /* TextPolish.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50E5AE6B902488140207BE5 /* TextPolish.swift */; };
 		41353545E0AC114388EC3AD4 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9790DBB08FBDC02856AF160E /* Keychain.swift */; };
@@ -40,6 +42,7 @@
 		5EFBF404F651C37E94C68F53 /* NotchGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD02EC3DED0756D03D86582 /* NotchGeometry.swift */; };
 		645101E6DBF58D1CCEB31F8A /* NotchHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB9816D2931E8FF58D1B6E8 /* NotchHostingView.swift */; };
 		66EF452C0CA9BE2F1F175300 /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FE9EFABAF7A64882FD4ED5 /* WeatherService.swift */; };
+		691DE15FF9F175D840816BE9 /* BatteryExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */; };
 		6BA59A063E37B6C9B640B33E /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 502259DFF8DBF23D721DBAF9 /* AppIcon.icns */; };
 		6FC9B8CBA32BA24790397380 /* TranscriptHygiene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2947C4AF2C8A01F1D6A355E0 /* TranscriptHygiene.swift */; };
 		6FECCF70903BE7ACBA10D80F /* OSDSuppressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E98779ED36B57471977EF2DE /* OSDSuppressor.swift */; };
@@ -184,9 +187,11 @@
 		B5AE8532315C968275964F0D /* HistoryCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCipher.swift; sourceTree = "<group>"; };
 		B981ADF62D0E9492C32F5889 /* NotchShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchShape.swift; sourceTree = "<group>"; };
 		B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothService.swift; sourceTree = "<group>"; };
+		BB0E639D039BCAD8A483DA77 /* BatteryInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInfo.swift; sourceTree = "<group>"; };
 		BB7D0ED643A7581A1B38DDAF /* DebugRender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugRender.swift; sourceTree = "<group>"; };
 		BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetEngine.swift; sourceTree = "<group>"; };
 		BF84E32EAF33037E27A1924A /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
+		C08D02C3963195376B0C2EBB /* BatteryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryController.swift; sourceTree = "<group>"; };
 		C23798CAD00021C31D06C419 /* MediaRemoteBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRemoteBridge.swift; sourceTree = "<group>"; };
 		C40AF2391776BBCC4E091A2E /* AdapterNowPlayingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterNowPlayingProvider.swift; sourceTree = "<group>"; };
 		C644C5BAAD160A9D15B01F3A /* FileTrayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTrayView.swift; sourceTree = "<group>"; };
@@ -200,6 +205,7 @@
 		DEB62E0243F69E04077655E7 /* DictationPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationPhase.swift; sourceTree = "<group>"; };
 		E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGrid.swift; sourceTree = "<group>"; };
 		E29A8D6C6C6B9D21FFB41843 /* NotificationsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsController.swift; sourceTree = "<group>"; };
+		E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryExpandedView.swift; sourceTree = "<group>"; };
 		E98779ED36B57471977EF2DE /* OSDSuppressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSDSuppressor.swift; sourceTree = "<group>"; };
 		EE7C371A4406389B266AA7E2 /* GeneralPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralPane.swift; sourceTree = "<group>"; };
 		F3A45D9D9BB21BF583940877 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -316,6 +322,7 @@
 			isa = PBXGroup;
 			children = (
 				D5DAD3EDAA13719B6BB0B58B /* Audio */,
+				DE00EC9EED81713F18AB97F7 /* Battery */,
 				396FB14F4055671AE45E0BC7 /* Bluetooth */,
 				5CDDFE936712696CF23BA205 /* Brightness */,
 				CBAABD5BB7FECE92A731638E /* Calendar */,
@@ -345,6 +352,7 @@
 		8539A268C47C7F1580ABE2A1 /* States */ = {
 			isa = PBXGroup;
 			children = (
+				E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */,
 				2F033CA4C5E864BE6FB31026 /* CalendarExpandedView.swift */,
 				8E0748A812F9F42C421EF0CA /* DictationView.swift */,
 				9BF82551C4728C8BB952619D /* DuoExpandedView.swift */,
@@ -485,6 +493,15 @@
 			path = Dictation;
 			sourceTree = "<group>";
 		};
+		DE00EC9EED81713F18AB97F7 /* Battery */ = {
+			isa = PBXGroup;
+			children = (
+				C08D02C3963195376B0C2EBB /* BatteryController.swift */,
+				BB0E639D039BCAD8A483DA77 /* BatteryInfo.swift */,
+			);
+			path = Battery;
+			sourceTree = "<group>";
+		};
 		ECD0926BBFB1CF701F381A71 /* Power */ = {
 			isa = PBXGroup;
 			children = (
@@ -603,6 +620,9 @@
 				CF1849A63606DC2CDD335AC6 /* AppTheme.swift in Sources */,
 				D796BED27ED47C828BD3A16B /* AudioOutputService.swift in Sources */,
 				920804F844DDE74B24333D9E /* AudioService.swift in Sources */,
+				366F80BBEAD17958640B199D /* BatteryController.swift in Sources */,
+				691DE15FF9F175D840816BE9 /* BatteryExpandedView.swift in Sources */,
+				28FDD79316AF13EEFAA4FB9C /* BatteryInfo.swift in Sources */,
 				F14D81FF71DAC194762E6FF0 /* BluetoothService.swift in Sources */,
 				FACCDF8CD83FD1FAC4CF9726 /* BuiltinTransforms.swift in Sources */,
 				EFB78AA22EB956491E9E0FD2 /* CalendarController.swift in Sources */,
