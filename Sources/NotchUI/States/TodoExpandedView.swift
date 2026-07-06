@@ -64,8 +64,20 @@ struct TodoExpandedView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(todo.isDone ? .white.opacity(0.4) : .white)
                 .strikethrough(todo.isDone, color: .white.opacity(0.5))
-                .lineLimit(2)
+                .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Read-only signals (checking/editing happens in Settings).
+            if todo.subtaskProgress.total > 0 {
+                Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
+                    .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.55))
+            }
+            if todo.hasNotes {
+                Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.55))
+            }
         }
     }
 

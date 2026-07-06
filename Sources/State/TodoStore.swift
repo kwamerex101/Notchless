@@ -1,17 +1,68 @@
 import SwiftUI
 
-/// A single task in the notch checklist. Pure data — title + done state.
+/// A checkable sub-item of a `Todo`. Pure data.
+struct Subtask: Identifiable, Codable, Equatable {
+    let id: UUID
+    var title: String
+    var isDone: Bool
+
+    init(id: UUID = UUID(), title: String, isDone: Bool = false) {
+        self.id = id
+        self.title = title
+        self.isDone = isDone
+    }
+}
+
+/// A single task in the notch checklist: title + done state, plus an optional
+/// ordered list of subtasks and a free-text notes field.
 struct Todo: Identifiable, Codable, Equatable {
     let id: UUID
     var title: String
     var isDone: Bool
     var createdAt: Date
+    var subtasks: [Subtask]
+    var notes: String
 
-    init(id: UUID = UUID(), title: String, isDone: Bool = false, createdAt: Date = Date()) {
+    init(id: UUID = UUID(), title: String, isDone: Bool = false,
+         createdAt: Date = Date(), subtasks: [Subtask] = [], notes: String = "") {
         self.id = id
         self.title = title
         self.isDone = isDone
         self.createdAt = createdAt
+        self.subtasks = subtasks
+        self.notes = notes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, isDone, createdAt, subtasks, notes
+    }
+
+    // Custom decode so v1 JSON (no `subtasks`/`notes`) still loads — existing
+    // saved tasks must not be lost. Encoding stays synthesized.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        isDone = try c.decode(Bool.self, forKey: .isDone)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        subtasks = try c.decodeIfPresent([Subtask].self, forKey: .subtasks) ?? []
+        notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
+    }
+
+    /// (completed, total) subtasks — drives the "2/5" progress badge.
+    var subtaskProgress: (done: Int, total: Int) {
+        (subtasks.filter(\.isDone).count, subtasks.count)
+    }
+
+    /// True when there's non-whitespace note text (drives the note/link glyph).
+    var hasNotes: Bool {
+        !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// True only when there is at least one subtask and all are done — the
+    /// trigger for hybrid auto-complete.
+    var allSubtasksDone: Bool {
+        !subtasks.isEmpty && subtasks.allSatisfy(\.isDone)
     }
 }
 
@@ -50,6 +101,9 @@ final class TodoStore: ObservableObject {
     private let removalDelay: TimeInterval
     private let schedule: (TimeInterval, @escaping () -> Void) -> Void
     private var cloudObserver: NSObjectProtocol?
+    /// Parents whose delayed post-completion removal is still pending. Lets an
+    /// un-check within the strike-through window cancel the removal.
+    private var pendingRemoval: Set<UUID> = []
 
     init(
         defaults: UserDefaults = .standard,
@@ -80,15 +134,33 @@ final class TodoStore: ObservableObject {
     }
 
     /// Marks a task done (drives the strike-through), then removes it after
-    /// `removalDelay` so it briefly shows completed before vanishing.
+    /// `removalDelay` — unless the completion is cancelled first (e.g. a subtask
+    /// is un-checked within the window).
     func complete(_ id: UUID) {
         guard let i = items.firstIndex(where: { $0.id == id }), !items[i].isDone else { return }
         items[i].isDone = true
+        pendingRemoval.insert(id)
         persist()
-        schedule(removalDelay) { [weak self] in self?.remove(id) }
+        schedule(removalDelay) { [weak self] in self?.finalizeRemoval(id) }
+    }
+
+    /// Fires after `removalDelay`. Removes the task only if its completion is
+    /// still pending (not cancelled by an un-check in the meantime).
+    private func finalizeRemoval(_ id: UUID) {
+        guard pendingRemoval.contains(id) else { return }
+        remove(id)
+    }
+
+    /// Cancels a pending post-completion removal and un-marks the parent, so a
+    /// task rescued within the strike-through window stays put.
+    private func cancelCompletion(_ id: UUID) {
+        guard pendingRemoval.remove(id) != nil else { return }
+        if let i = items.firstIndex(where: { $0.id == id }) { items[i].isDone = false }
+        persist()
     }
 
     func remove(_ id: UUID) {
+        pendingRemoval.remove(id)
         items.removeAll { $0.id == id }
         persist()
     }
@@ -102,6 +174,56 @@ final class TodoStore: ObservableObject {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let i = items.firstIndex(where: { $0.id == id }) else { return }
         items[i].title = trimmed
+        persist()
+    }
+
+    func addSubtask(to parentID: UUID, title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.append(Subtask(title: trimmed))
+        persist()
+    }
+
+    /// Flips a subtask's done state (it stays in the list, struck through). If
+    /// that leaves every subtask done, the parent auto-completes (hybrid rule):
+    /// `complete` runs its strike-through-then-vanish, taking the subtasks along.
+    func toggleSubtask(_ subtaskID: UUID, in parentID: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }),
+              let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
+        items[i].subtasks[j].isDone.toggle()
+        persist()
+        if items[i].allSubtasksDone {
+            complete(parentID)
+        } else {
+            cancelCompletion(parentID)   // no-op unless a completion was pending
+        }
+    }
+
+    func updateSubtaskTitle(_ subtaskID: UUID, in parentID: UUID, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let i = items.firstIndex(where: { $0.id == parentID }),
+              let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
+        items[i].subtasks[j].title = trimmed
+        persist()
+    }
+
+    func removeSubtask(_ subtaskID: UUID, from parentID: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.removeAll { $0.id == subtaskID }
+        persist()
+    }
+
+    func moveSubtask(in parentID: UUID, from source: IndexSet, to destination: Int) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].subtasks.move(fromOffsets: source, toOffset: destination)
+        persist()
+    }
+
+    func updateNotes(of parentID: UUID, to notes: String) {
+        guard let i = items.firstIndex(where: { $0.id == parentID }) else { return }
+        items[i].notes = notes
         persist()
     }
 

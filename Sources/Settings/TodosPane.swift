@@ -8,6 +8,7 @@ struct TodosPane: View {
     @ObservedObject private var store = TodoStore.shared
     @State private var newTitle = ""
     @State private var confirmClear = false
+    @State private var expanded: Set<UUID> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -34,15 +35,34 @@ struct TodosPane: View {
                     // expanded list (a CardGroup isn't a reorderable List, and
                     // order = priority is most useful right where you glance at it).
                     ForEach(store.items) { todo in
-                        HStack(spacing: 8) {
-                            TextField("Task", text: binding(for: todo))
-                                .textFieldStyle(.plain)
-                            Spacer()
-                            Button {
-                                store.remove(todo.id)
-                            } label: {
-                                Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
-                            }.buttonStyle(.plain)
+                        VStack(spacing: 6) {
+                            HStack(spacing: 8) {
+                                Button { toggleExpanded(todo.id) } label: {
+                                    Image(systemName: expanded.contains(todo.id) ? "chevron.down" : "chevron.right")
+                                        .font(.caption).foregroundStyle(.secondary).frame(width: 12)
+                                }.buttonStyle(.plain)
+
+                                TextField("Task", text: binding(for: todo))
+                                    .textFieldStyle(.plain)
+                                Spacer()
+
+                                if todo.subtaskProgress.total > 0 {
+                                    Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
+                                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                                }
+                                if todo.hasNotes {
+                                    Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Button {
+                                    store.remove(todo.id)
+                                } label: {
+                                    Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                                }.buttonStyle(.plain)
+                            }
+                            if expanded.contains(todo.id) {
+                                TodoRowEditor(todoID: todo.id)
+                            }
                         }
                         if todo.id != store.items.last?.id { Divider() }
                     }
@@ -64,6 +84,10 @@ struct TodosPane: View {
     private func addTask() {
         store.add(newTitle)
         newTitle = ""
+    }
+
+    private func toggleExpanded(_ id: UUID) {
+        if expanded.contains(id) { expanded.remove(id) } else { expanded.insert(id) }
     }
 
     /// A binding that renames the task on edit; empty edits are ignored by
