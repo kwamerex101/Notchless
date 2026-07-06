@@ -126,7 +126,20 @@ final class PermissionsModel: ObservableObject {
 
     /// Not-set permissions trigger the system prompt; already-decided ones open
     /// System Settings (macOS won't let an app flip its own grant).
+    ///
+    /// Accessibility is special: `AXIsProcessTrusted()` never reports
+    /// "not determined", so we always fire the prompt — that's also what
+    /// registers the app in the Accessibility list so a toggle even appears —
+    /// and then open Settings so the user can flip it on.
     func act(on permission: AppPermission) {
+        if permission == .accessibility {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+            if let url = permission.settingsURL {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { NSWorkspace.shared.open(url) }
+            }
+            return
+        }
         if states[permission] == .notDetermined {
             request(permission)
             // Re-read shortly after the prompt is answered.

@@ -56,7 +56,12 @@ private struct PermissionRow: View {
                 Text(state.label).font(.caption).foregroundStyle(.secondary)
             }
             .frame(width: 78, alignment: .leading)
-            Button(state == .notDetermined ? "Enable" : "Settings", action: action)
+            Button(buttonLabel, action: action)
         }
+    }
+
+    private var buttonLabel: String {
+        if permission == .accessibility { return state == .granted ? "Settings" : "Enable" }
+        return state == .notDetermined ? "Enable" : "Settings"
     }
 }
