@@ -71,6 +71,8 @@ struct NotchRootView: View {
             case .duo:
                 DuoExpandedView(info: model.nowPlaying, snapshot: model.calendar,
                                 metrics: metrics, onCommand: onCommand)
+            case .dictation:
+                DictationHintView(metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)

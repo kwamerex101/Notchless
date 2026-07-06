@@ -79,6 +79,35 @@ struct DictationView: View {
     }
 }
 
+/// Shown when the dictation idle activity is hovered — a calm affordance
+/// telling the user how to start.
+struct DictationHintView: View {
+    let metrics: NotchMetrics
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "mic.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(Color.teal.gradient))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Dictate anywhere")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text("Hold Right ⌥ Option, then speak")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, metrics.notchHeight + 6)
+        .padding(.horizontal, 26)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
 /// A live, symmetric recording waveform that reacts to the audio level.
 struct RecordingWaveform: View {
     var level: CGFloat

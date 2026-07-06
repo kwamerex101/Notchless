@@ -82,6 +82,7 @@ final class NotchViewModel: ObservableObject {
         case .playing: return nowPlaying != nil
         case .calendar: return true
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
+        case .dictation: return true  // the mic-ready cue always rests in the notch
         }
     }
 
