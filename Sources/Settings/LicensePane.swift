@@ -50,6 +50,11 @@ struct AboutPane: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Button("Run setup again") { OnboardingWindowController.shared.rerun() }
+            Divider().padding(.vertical, 4)
+            Text("Uninstall").font(.headline)
+            Text("Removes downloaded data, history, dictionary, snippets, settings, and moves Notchless to the Trash.")
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Button("Uninstall & delete all data", role: .destructive) { Uninstaller.uninstall() }
             Spacer()
         }
     }

@@ -6,8 +6,11 @@ struct DictationPane: View {
     @ObservedObject var settings = DictationSettings.shared
     @ObservedObject var dictionary = DictationDictionary.shared
     @ObservedObject var history = DictationHistory.shared
+    @ObservedObject var snippets = DictationSnippets.shared
 
     @State private var newTerm = ""
+    @State private var newTrigger = ""
+    @State private var newExpansion = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -67,6 +70,32 @@ struct DictationPane: View {
                 Text("When on, transcripts are tidied via the local Claude CLI (uses your Claude Code sign-in). Falls back to the raw text if it's not installed.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                Divider()
+                ToggleRow(title: "Voice commands", isOn: $settings.voiceCommands)
+                Text("Say “new line”, “new paragraph”, or “scratch that” to format as you speak. Formatting only — never runs shell or file actions.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            SectionLabel("Snippets")
+            CardGroup {
+                HStack {
+                    TextField("Trigger (e.g. my email)", text: $newTrigger).textFieldStyle(.roundedBorder)
+                    TextField("Expands to…", text: $newExpansion).textFieldStyle(.roundedBorder)
+                    Button("Add", action: addSnippet).disabled(newTrigger.isEmpty || newExpansion.isEmpty)
+                }
+                ForEach(snippets.snippets) { snippet in
+                    Divider()
+                    HStack {
+                        Text(snippet.trigger).font(.callout.weight(.medium))
+                        Image(systemName: "arrow.right").font(.caption).foregroundStyle(.secondary)
+                        Text(snippet.expansion).font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                        Spacer()
+                        Button { snippets.remove(snippet) } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                        }.buttonStyle(.plain)
+                    }
+                }
             }
 
             SectionLabel("Output")
@@ -112,6 +141,8 @@ struct DictationPane: View {
                     Stepper("\(settings.historyRetentionDays) days", value: $settings.historyRetentionDays, in: 1...365)
                         .fixedSize()
                 }
+                Divider()
+                ToggleRow(title: "Encrypt history at rest", isOn: $settings.encryptHistory)
                 if history.records.isEmpty {
                     Divider()
                     Text("No dictations yet.").font(.callout).foregroundStyle(.secondary)
@@ -136,6 +167,12 @@ struct DictationPane: View {
     private func addTerm() {
         dictionary.add(newTerm)
         newTerm = ""
+    }
+
+    private func addSnippet() {
+        snippets.add(trigger: newTrigger, expansion: newExpansion)
+        newTrigger = ""
+        newExpansion = ""
     }
 
     // MARK: - Enumerations

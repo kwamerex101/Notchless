@@ -75,8 +75,11 @@ final class DictationController {
                 model.setDictation(.error("Couldn't hear that"))
                 return
             }
-            var text = TextPolish.apply(
-                raw,
+            var text = raw
+            if settings.voiceCommands { text = SpokenCommands.apply(text) }
+            text = DictationSnippets.shared.expand(text)
+            text = TextPolish.apply(
+                text,
                 dictionary: model.dictationDictionary.terms,
                 capitalize: settings.autoCapitalize
             )

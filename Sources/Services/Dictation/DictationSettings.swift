@@ -91,6 +91,8 @@ final class DictationSettings: ObservableObject {
     @Published var historyRetentionDays: Int { didSet { persist(Keys.retention, historyRetentionDays) } }
     @Published var maxRecordingSeconds: Int { didSet { persist(Keys.maxDuration, maxRecordingSeconds) } }
     @Published var soundCues: Bool { didSet { persist(Keys.soundCues, soundCues) } }
+    @Published var voiceCommands: Bool { didSet { persist(Keys.voiceCommands, voiceCommands) } }
+    @Published var encryptHistory: Bool { didSet { persist(Keys.encrypt, encryptHistory); DictationHistory.shared.reencrypt(encrypted: encryptHistory) } }
 
     init() {
         defaults.register(defaults: [
@@ -104,6 +106,8 @@ final class DictationSettings: ObservableObject {
             Keys.retention: 30,
             Keys.maxDuration: 120,
             Keys.soundCues: true,
+            Keys.voiceCommands: false,
+            Keys.encrypt: false,
         ])
         enabled = defaults.bool(forKey: Keys.enabled)
         hotkey = DictationHotkeyOption(rawValue: defaults.string(forKey: Keys.hotkey) ?? "") ?? .controlOption
@@ -115,6 +119,8 @@ final class DictationSettings: ObservableObject {
         historyRetentionDays = defaults.integer(forKey: Keys.retention)
         maxRecordingSeconds = defaults.integer(forKey: Keys.maxDuration)
         soundCues = defaults.bool(forKey: Keys.soundCues)
+        voiceCommands = defaults.bool(forKey: Keys.voiceCommands)
+        encryptHistory = defaults.bool(forKey: Keys.encrypt)
     }
 
     private func persist(_ key: String, _ value: Any) {
@@ -132,5 +138,7 @@ final class DictationSettings: ObservableObject {
         static let retention = "dictation.retentionDays"
         static let maxDuration = "dictation.maxDurationSeconds"
         static let soundCues = "dictation.soundCues"
+        static let voiceCommands = "dictation.voiceCommands"
+        static let encrypt = "dictation.encryptHistory"
     }
 }
