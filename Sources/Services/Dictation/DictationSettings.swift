@@ -98,6 +98,54 @@ enum DictationCleanup: String, CaseIterable, Identifiable {
     }
 }
 
+/// Which cleanup backend runs the polish.
+enum DictationCleanupBackend: String, CaseIterable, Identifiable {
+    case auto       // API if a key is set, else the local CLI
+    case cli        // local `claude` CLI (Claude Code sign-in)
+    case api        // direct Anthropic API with a stored key
+    case onDevice   // local Gemma via llama.cpp (heavy)
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .auto: return "Automatic"
+        case .cli: return "Claude CLI"
+        case .api: return "Anthropic API"
+        case .onDevice: return "On-device (Gemma)"
+        }
+    }
+}
+
+/// How aggressively cleanup rewrites the transcript.
+enum DictationCleanupIntensity: String, CaseIterable, Identifiable {
+    case light      // structural only: punctuation, casing, obvious errors
+    case medium     // clarity edits, split run-ons
+    case high       // concise rewrites
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .light: return "Light"
+        case .medium: return "Medium"
+        case .high: return "High"
+        }
+    }
+
+    /// Instruction appended to the cleanup prompt.
+    var instruction: String {
+        switch self {
+        case .light:
+            return "Fix only punctuation, capitalization, and obvious speech-to-text errors. Do NOT reword."
+        case .medium:
+            return "Fix punctuation and casing, split run-on sentences, and lightly improve clarity. Preserve the speaker's wording and meaning."
+        case .high:
+            return "Fix punctuation and casing, and rewrite for concision and clarity while preserving all facts and intent."
+        }
+    }
+}
+
 /// All persisted dictation preferences. Self-contained (own UserDefaults keys)
 /// so it doesn't bloat the main SettingsStore.
 @MainActor
@@ -113,6 +161,18 @@ final class DictationSettings: ObservableObject {
     @Published var microphoneUID: String { didSet { persist(Keys.mic, microphoneUID) } }
     @Published var output: DictationOutput { didSet { persist(Keys.output, output.rawValue) } }
     @Published var cleanup: DictationCleanup { didSet { persist(Keys.cleanup, cleanup.rawValue) } }
+    @Published var cleanupBackend: DictationCleanupBackend { didSet { persist(Keys.cleanupBackend, cleanupBackend.rawValue) } }
+    @Published var cleanupIntensity: DictationCleanupIntensity { didSet { persist(Keys.cleanupIntensity, cleanupIntensity.rawValue) } }
+    @Published var cleanupTimeoutSeconds: Int { didSet { persist(Keys.cleanupTimeout, cleanupTimeoutSeconds) } }
+
+    /// Anthropic API key, stored in the Keychain (never UserDefaults).
+    var anthropicAPIKey: String {
+        get { Keychain.string(for: Keys.anthropicKeyAccount) ?? "" }
+        set {
+            Keychain.set(newValue, for: Keys.anthropicKeyAccount)
+            objectWillChange.send()
+        }
+    }
     @Published var autoCapitalize: Bool { didSet { persist(Keys.autoCap, autoCapitalize) } }
     @Published var historyRetentionDays: Int { didSet { persist(Keys.retention, historyRetentionDays) } }
     @Published var maxRecordingSeconds: Int { didSet { persist(Keys.maxDuration, maxRecordingSeconds) } }
@@ -129,6 +189,9 @@ final class DictationSettings: ObservableObject {
             Keys.mic: "",
             Keys.output: DictationOutput.pasteActiveApp.rawValue,
             Keys.cleanup: DictationCleanup.off.rawValue,
+            Keys.cleanupBackend: DictationCleanupBackend.auto.rawValue,
+            Keys.cleanupIntensity: DictationCleanupIntensity.light.rawValue,
+            Keys.cleanupTimeout: 20,
             Keys.autoCap: true,
             Keys.retention: 30,
             Keys.maxDuration: 120,
@@ -143,6 +206,9 @@ final class DictationSettings: ObservableObject {
         microphoneUID = defaults.string(forKey: Keys.mic) ?? ""
         output = DictationOutput(rawValue: defaults.string(forKey: Keys.output) ?? "") ?? .pasteActiveApp
         cleanup = DictationCleanup(rawValue: defaults.string(forKey: Keys.cleanup) ?? "") ?? .off
+        cleanupBackend = DictationCleanupBackend(rawValue: defaults.string(forKey: Keys.cleanupBackend) ?? "") ?? .auto
+        cleanupIntensity = DictationCleanupIntensity(rawValue: defaults.string(forKey: Keys.cleanupIntensity) ?? "") ?? .light
+        cleanupTimeoutSeconds = defaults.integer(forKey: Keys.cleanupTimeout)
         autoCapitalize = defaults.bool(forKey: Keys.autoCap)
         historyRetentionDays = defaults.integer(forKey: Keys.retention)
         maxRecordingSeconds = defaults.integer(forKey: Keys.maxDuration)
@@ -163,6 +229,10 @@ final class DictationSettings: ObservableObject {
         static let mic = "dictation.mic"
         static let output = "dictation.output"
         static let cleanup = "dictation.cleanup"
+        static let cleanupBackend = "dictation.cleanupBackend"
+        static let cleanupIntensity = "dictation.cleanupIntensity"
+        static let cleanupTimeout = "dictation.cleanupTimeoutSeconds"
+        static let anthropicKeyAccount = "com.rexdanquah.Notchless.anthropicKey"
         static let autoCap = "dictation.autoCapitalize"
         static let retention = "dictation.retentionDays"
         static let maxDuration = "dictation.maxDurationSeconds"

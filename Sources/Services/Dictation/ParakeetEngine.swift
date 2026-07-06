@@ -33,6 +33,7 @@ final class ParakeetModelStore: ObservableObject {
         if let loadTask { return try await loadTask.value }
 
         #if arch(arm64)
+        DictationLog.log("parakeet: starting download+load (v3)")
         status = .downloading(0)
         let task = Task { () throws -> AsrManager in
             let models = try await AsrModels.downloadAndLoad(
@@ -54,10 +55,12 @@ final class ParakeetModelStore: ObservableObject {
             self.manager = manager
             self.loadTask = nil
             self.status = .ready
+            DictationLog.log("parakeet: model ready")
             return manager
         } catch {
             self.loadTask = nil
             self.status = .failed(error.localizedDescription)
+            DictationLog.log("parakeet: load FAILED: \(error)")
             throw error
         }
         #else

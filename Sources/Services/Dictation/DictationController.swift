@@ -36,7 +36,11 @@ final class DictationController {
     }
 
     private func beginRecording() {
-        guard settings.enabled, !isRecording else { return }
+        guard settings.enabled, !isRecording else {
+            DictationLog.log("beginRecording ignored (enabled=\(settings.enabled), isRecording=\(isRecording))")
+            return
+        }
+        DictationLog.log("beginRecording engine=\(settings.engine.rawValue)")
         isRecording = true
         // Pick up any hotkey change since launch.
         hotkey.requiredFlags = settings.hotkey.requiredFlags
@@ -50,9 +54,13 @@ final class DictationController {
         Task {
             do {
                 try await transcriber.start()
+                DictationLog.log("capture started")
             } catch {
                 isRecording = false
-                model.setDictation(.error((error as? DictationError)?.errorDescription ?? "Couldn't start"))
+                let message = (error as? DictationError)?.errorDescription
+                    ?? (error as? ParakeetError)?.errorDescription ?? "Couldn't start"
+                DictationLog.log("capture start FAILED: \(message) (\(error))")
+                model.setDictation(.error(message))
             }
         }
     }
@@ -85,15 +93,17 @@ final class DictationController {
         guard isRecording else { return }
         isRecording = false
         maxDurationTimer?.invalidate()
+        DictationLog.log("endRecording → transcribing")
         model.setDictation(.transcribing)
         Task {
             let raw = await transcriber.finish()
+            DictationLog.log("transcript raw=\"\(raw.prefix(120))\" (len=\(raw.count))")
             guard !raw.isEmpty else {
                 if settings.soundCues { SoundCue.failed() }
                 model.setDictation(.error("Couldn't hear that"))
                 return
             }
-            var text = raw
+            var text = TranscriptHygiene.clean(raw)
             if settings.voiceCommands { text = SpokenCommands.apply(text) }
             text = DictationSnippets.shared.expand(text)
             text = TextPolish.apply(
@@ -101,13 +111,20 @@ final class DictationController {
                 dictionary: model.dictationDictionary.terms,
                 capitalize: settings.autoCapitalize
             )
-            // Optional AI polish (Claude CLI); falls back to `text` if unavailable.
+            // Optional AI polish; falls back to `text` on any failure/timeout.
             if TranscriptCleaner.shouldClean(text, mode: settings.cleanup) {
                 model.setDictation(.cleaning)
-                text = await TranscriptCleaner.clean(text)
+                text = await TranscriptCleaner.clean(
+                    text,
+                    backend: settings.cleanupBackend,
+                    intensity: settings.cleanupIntensity,
+                    timeoutSeconds: settings.cleanupTimeoutSeconds,
+                    apiKey: settings.anthropicAPIKey
+                )
             }
             model.dictationHistory.add(text, retentionDays: settings.historyRetentionDays)
             DictationOutputRouter.deliver(text, to: settings.output)
+            DictationLog.log("delivered via \(settings.output.rawValue): \"\(text.prefix(120))\"")
             if settings.soundCues { SoundCue.delivered() }
             model.setDictation(.success(text))
         }
