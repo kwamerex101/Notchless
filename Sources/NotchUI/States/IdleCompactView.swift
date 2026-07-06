@@ -11,6 +11,7 @@ struct IdleCompactView: View {
     var musicSpectrum: [CGFloat] = []
     var timer: NotchTimerInfo? = nil
     var privacy: PrivacyStatus? = nil
+    var claudeStats: ClaudeUsageStats? = nil
     var glow: Color? = nil
     /// All concurrently-live activities (for the pager dots) and the order used.
     var liveActivities: [NotchActivity] = []
@@ -71,6 +72,9 @@ struct IdleCompactView: View {
             Image(systemName: "cpu")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+        case .claudeUsage:
+            MiniPie(slices: (claudeStats?.slices ?? []).map { (Double($0.value), $0.color) })
+                .frame(width: 18, height: 18)
         case .timer:
             Image(systemName: "timer")
                 .font(.system(size: 14, weight: .semibold))
@@ -110,6 +114,10 @@ struct IdleCompactView: View {
         case .stats:
             Text("\(Int((stats?.cpu ?? 0) * 100))%")
                 .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+        case .claudeUsage:
+            Text(ClaudeUsageStats.format(claudeStats?.total ?? 0))
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
         case .timer:
             Text(timer?.label ?? "0:00")
