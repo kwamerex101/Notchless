@@ -86,6 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DebugRender.run(metrics: metrics)  // no-op unless DI_DEBUG_RENDER is set
         let panel = NotchPanel(contentRect: frame)
         let host = NotchHostingView(rootView: makeRootView(metrics), model: model, metrics: metrics)
+        host.onMediaCommand = { [weak self] in self?.media.send($0) }
         host.frame = NSRect(origin: .zero, size: frame.size)
         host.autoresizingMask = [.width, .height]
         panel.contentView = host
