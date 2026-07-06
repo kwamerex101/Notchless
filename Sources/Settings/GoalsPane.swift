@@ -101,6 +101,7 @@ private struct GoalSettingsCard: View {
                 Spacer()
                 Button { store.setPinned(live.id) } label: {
                     Image(systemName: live.id == store.pinnedID ? "pin.fill" : "pin")
+                        .foregroundStyle(live.id == store.pinnedID ? .red : .secondary)
                 }.buttonStyle(.borderless).help("Pin as the notch cue")
                 Button(role: .destructive) { store.deleteGoal(live.id) } label: {
                     Image(systemName: "trash")

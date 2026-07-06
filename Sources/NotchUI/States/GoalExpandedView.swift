@@ -46,13 +46,14 @@ struct GoalExpandedView: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
                 if goal.id == store.pinnedID {
-                    Image(systemName: "pin.fill").font(.system(size: 9)).foregroundStyle(.yellow)
+                    Image(systemName: "pin.fill").font(.system(size: 9)).foregroundStyle(.red)
                 }
                 Text(goal.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
                 Spacer()
                 Button { store.setPinned(goal.id) } label: {
                     Image(systemName: goal.id == store.pinnedID ? "pin.fill" : "pin")
-                        .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
+                        .font(.system(size: 10))
+                        .foregroundStyle(goal.id == store.pinnedID ? .red : .white.opacity(0.6))
                 }.buttonStyle(.plain)
             }
             ProgressView(value: goal.fraction)
