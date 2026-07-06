@@ -9,6 +9,7 @@ struct IdleCompactView: View {
     var battery: BatteryInfo? = nil
     var stats: SystemStats? = nil
     var musicSpectrum: [CGFloat] = []
+    var timer: NotchTimerInfo? = nil
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -50,6 +51,10 @@ struct IdleCompactView: View {
             Image(systemName: "cpu")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+        case .timer:
+            Image(systemName: "timer")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle((timer?.isFinished ?? false) ? .orange : .white)
         }
     }
 
@@ -73,6 +78,10 @@ struct IdleCompactView: View {
         case .stats:
             Text("\(Int((stats?.cpu ?? 0) * 100))%")
                 .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+        case .timer:
+            Text(timer?.label ?? "0:00")
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white)
         }
     }

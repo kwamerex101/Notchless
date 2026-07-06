@@ -89,6 +89,7 @@ extension NotchActivity {
         case .dictation: return "Dictation"
         case .battery: return "Battery"
         case .stats: return "Stats"
+        case .timer: return "Timer"
         }
     }
     var pickerImage: String {
@@ -101,6 +102,7 @@ extension NotchActivity {
         case .dictation: return "mic.fill"
         case .battery: return "battery.100"
         case .stats: return "cpu"
+        case .timer: return "timer"
         }
     }
 }
