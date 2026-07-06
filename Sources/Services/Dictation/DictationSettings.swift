@@ -56,6 +56,31 @@ enum DictationOutput: String, CaseIterable, Identifiable {
     }
 }
 
+/// Which speech-to-text backend transcribes the audio.
+enum DictationEngine: String, CaseIterable, Identifiable {
+    /// Apple's on-device Speech framework — no download, works everywhere.
+    case appleSpeech
+    /// NVIDIA Parakeet TDT running on the Neural Engine via FluidAudio.
+    /// Higher accuracy, but needs Apple Silicon and a one-time model download.
+    case parakeet
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .appleSpeech: return "Apple Speech"
+        case .parakeet: return "Parakeet (Neural Engine)"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .appleSpeech: return "On-device, no download. Works on any Mac."
+        case .parakeet: return "Higher accuracy. Apple Silicon only, one-time model download."
+        }
+    }
+}
+
 /// Whether/when to polish the raw transcript.
 enum DictationCleanup: String, CaseIterable, Identifiable {
     case off
@@ -82,6 +107,7 @@ final class DictationSettings: ObservableObject {
     private let defaults = UserDefaults.standard
 
     @Published var enabled: Bool { didSet { persist(Keys.enabled, enabled) } }
+    @Published var engine: DictationEngine { didSet { persist(Keys.engine, engine.rawValue) } }
     @Published var hotkey: DictationHotkeyOption { didSet { persist(Keys.hotkey, hotkey.rawValue) } }
     @Published var languageID: String { didSet { persist(Keys.language, languageID) } }
     @Published var microphoneUID: String { didSet { persist(Keys.mic, microphoneUID) } }
@@ -97,6 +123,7 @@ final class DictationSettings: ObservableObject {
     init() {
         defaults.register(defaults: [
             Keys.enabled: true,
+            Keys.engine: DictationEngine.appleSpeech.rawValue,
             Keys.hotkey: DictationHotkeyOption.controlOption.rawValue,
             Keys.language: Locale.current.identifier,
             Keys.mic: "",
@@ -110,6 +137,7 @@ final class DictationSettings: ObservableObject {
             Keys.encrypt: false,
         ])
         enabled = defaults.bool(forKey: Keys.enabled)
+        engine = DictationEngine(rawValue: defaults.string(forKey: Keys.engine) ?? "") ?? .appleSpeech
         hotkey = DictationHotkeyOption(rawValue: defaults.string(forKey: Keys.hotkey) ?? "") ?? .controlOption
         languageID = defaults.string(forKey: Keys.language) ?? Locale.current.identifier
         microphoneUID = defaults.string(forKey: Keys.mic) ?? ""
@@ -129,6 +157,7 @@ final class DictationSettings: ObservableObject {
 
     private enum Keys {
         static let enabled = "dictation.enabled"
+        static let engine = "dictation.engine"
         static let hotkey = "dictation.hotkey"
         static let language = "dictation.language"
         static let mic = "dictation.mic"
