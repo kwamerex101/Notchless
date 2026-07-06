@@ -80,6 +80,7 @@
 		BA340133076C4E8CDDCA18A5 /* DictationSnippets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86378CA9D2E1F2ACF1CF6E26 /* DictationSnippets.swift */; };
 		BA8A28CB1698DE3063B9BA0F /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49143FC7028CA29D3CDFEF8B /* LoginItem.swift */; };
 		BDBAE5608769B6C96CFF5749 /* DebugRender.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7D0ED643A7581A1B38DDAF /* DebugRender.swift */; };
+		BE32DA154376F5CA427AADB2 /* SystemAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CF41BD0F0A551BFA2E6FE3 /* SystemAudioTap.swift */; };
 		BEE1B804D7875AF94FD95D60 /* AppContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E131F1640F333CA31A1B9B4 /* AppContext.swift */; };
 		C0DC34CA2DC352BA548174B0 /* HUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D317627CFB43D0BC2AD3B346 /* HUDView.swift */; };
 		C185C3B31042D20293529F25 /* FileTrayStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E573782811B2DD439B0166 /* FileTrayStore.swift */; };
@@ -209,6 +210,7 @@
 		D54CFEB740F3CC1FE3E5BF30 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
 		D9DBEFD958A6F2DC1B51F3CE /* ClaudeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAPIClient.swift; sourceTree = "<group>"; };
 		DEB62E0243F69E04077655E7 /* DictationPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationPhase.swift; sourceTree = "<group>"; };
+		E1CF41BD0F0A551BFA2E6FE3 /* SystemAudioTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioTap.swift; sourceTree = "<group>"; };
 		E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGrid.swift; sourceTree = "<group>"; };
 		E29A8D6C6C6B9D21FFB41843 /* NotificationsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsController.swift; sourceTree = "<group>"; };
 		E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryExpandedView.swift; sourceTree = "<group>"; };
@@ -280,6 +282,7 @@
 				C23798CAD00021C31D06C419 /* MediaRemoteBridge.swift */,
 				069DD84D7362D2E99FC1974D /* MediaRemoteProvider.swift */,
 				0792D249EAFCEC1EEF403D61 /* NowPlayingInfo.swift */,
+				E1CF41BD0F0A551BFA2E6FE3 /* SystemAudioTap.swift */,
 			);
 			path = NowPlaying;
 			sourceTree = "<group>";
@@ -724,6 +727,7 @@
 				53D68B452962692E0BA73CB0 /* StatsController.swift in Sources */,
 				304DCEF32FDE3017A29FFB4C /* StatsExpandedView.swift in Sources */,
 				322CBA757B63BDB9EB347C90 /* StyleStore.swift in Sources */,
+				BE32DA154376F5CA427AADB2 /* SystemAudioTap.swift in Sources */,
 				AAECAFF8632E84F68708D361 /* SystemStats.swift in Sources */,
 				3A639723CF59773C1D1C50D4 /* TextPolish.swift in Sources */,
 				B3681F4C8AB56CF252F8B855 /* TranscriptCleaner.swift in Sources */,

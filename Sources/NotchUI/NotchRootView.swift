@@ -56,7 +56,7 @@ struct NotchRootView: View {
         case let .idle(activity):
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
                             calendar: model.calendar, battery: model.battery,
-                            stats: model.stats, metrics: metrics)
+                            stats: model.stats, musicSpectrum: model.musicSpectrum, metrics: metrics)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
@@ -64,8 +64,8 @@ struct NotchRootView: View {
         case let .expanded(activity):
             switch activity {
             case .playing, .none, .auto:
-                NowPlayingExpandedView(info: model.nowPlaying, metrics: metrics,
-                                       glow: glowColor, onCommand: onCommand,
+                NowPlayingExpandedView(info: model.nowPlaying, musicSpectrum: model.musicSpectrum,
+                                       metrics: metrics, glow: glowColor, onCommand: onCommand,
                                        onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
             case .calendar:
                 CalendarExpandedView(snapshot: model.calendar, metrics: metrics)
