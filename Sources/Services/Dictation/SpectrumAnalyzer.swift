@@ -15,12 +15,18 @@ final class SpectrumAnalyzer: @unchecked Sendable {
     private let setup: FFTSetup
     private var window: [Float]
     private var runningPeak: Float = 1e-4
+    /// Per-band smoothed output: fast rise, slow fall, so bars snap up on a beat
+    /// and ease down instead of jittering frame-to-frame.
+    private var smoothed: [CGFloat]
+    private let attack: CGFloat = 0.6
+    private let release: CGFloat = 0.22
 
     init(bandCount: Int = 6) {
         self.bandCount = bandCount
         self.log2n = vDSP_Length(log2(Double(fftSize)))
         self.setup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2))!
         self.window = [Float](repeating: 0, count: fftSize)
+        self.smoothed = [CGFloat](repeating: 0, count: bandCount)
         vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
     }
 
@@ -65,7 +71,15 @@ final class SpectrumAnalyzer: @unchecked Sendable {
         // both fill the bars sensibly.
         let frameMax = rawBands.max() ?? 0
         runningPeak = max(runningPeak * 0.995, frameMax, 1e-4)
-        return rawBands.map { CGFloat(min(1, $0 / runningPeak)) }
+
+        // Fast-attack / slow-release smoothing: bars pop up on transients and
+        // ease back down instead of flickering each frame.
+        for b in 0..<bandCount {
+            let target = CGFloat(min(1, rawBands[b] / runningPeak))
+            let coeff = target > smoothed[b] ? attack : release
+            smoothed[b] += (target - smoothed[b]) * coeff
+        }
+        return smoothed
     }
 
     /// Log-spaced bin boundary for band `b`, biased toward the speech range.

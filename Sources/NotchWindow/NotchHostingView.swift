@@ -38,13 +38,16 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
         swipeX += event.scrollingDeltaX
         swipeY += event.scrollingDeltaY
 
-        let threshold: CGFloat = 28
+        // A deliberate swipe: needs real travel and a clearly dominant axis so a
+        // small or diagonal nudge doesn't trigger a switch.
+        let threshold: CGFloat = 75
+        let dominance: CGFloat = 1.6
         if !swipeFired {
-            if abs(swipeY) > abs(swipeX), abs(swipeY) > threshold {
+            if abs(swipeY) > threshold, abs(swipeY) > abs(swipeX) * dominance {
                 swipeFired = true
                 let openIt = swipeY < 0   // fingers move down → open
                 MainActor.assumeIsolated { openIt ? model?.tapped() : model?.collapse() }
-            } else if abs(swipeX) > threshold {
+            } else if abs(swipeX) > threshold, abs(swipeX) > abs(swipeY) * dominance {
                 swipeFired = true
                 MainActor.assumeIsolated {
                     // In Auto with something live, swipe pages through the
