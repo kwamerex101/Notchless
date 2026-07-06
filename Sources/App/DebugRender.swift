@@ -41,7 +41,6 @@ enum DebugRender {
         render(.expanded(.playing), np: np, cal: cal, name: "state_expanded_playing", metrics: metrics)
         render(.expanded(.calendar), np: np, cal: cal, name: "state_expanded_calendar", metrics: metrics)
         render(.expanded(.duo), np: np, cal: cal, name: "state_expanded_duo", metrics: metrics)
-        render(.expanded(.goals), np: nil, cal: nil, name: "state_expanded_goals", metrics: metrics)
         render(.fileTray(expanded: true), np: nil, cal: nil, name: "state_filetray_empty", metrics: metrics)
 
         render(.idle(.dictation), np: nil, cal: nil, name: "state_dictation_idle", metrics: metrics)
