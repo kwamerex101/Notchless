@@ -2,6 +2,9 @@ import SwiftUI
 
 /// Which idle activity the notch shows when nothing transient is happening.
 enum NotchActivity: String, CaseIterable, Codable {
+    /// Live Activities: automatically show whatever is happening right now
+    /// (media playing, …) and nothing when nothing is — like iOS.
+    case auto
     case none
     case playing
     case calendar

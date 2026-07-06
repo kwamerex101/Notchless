@@ -27,7 +27,7 @@ struct IdleCompactView: View {
 
     @ViewBuilder private var leading: some View {
         switch activity {
-        case .playing, .duo, .none:
+        case .playing, .duo, .none, .auto:
             artwork
         case .calendar:
             Text(calendar?.dayNumber ?? "")
@@ -44,7 +44,7 @@ struct IdleCompactView: View {
 
     @ViewBuilder private var trailing: some View {
         switch activity {
-        case .playing, .duo, .none:
+        case .playing, .duo, .none, .auto:
             VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false, height: 12)
                 .frame(width: 20)
         case .calendar:

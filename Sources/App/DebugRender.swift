@@ -93,7 +93,7 @@ enum DebugRender {
                     NotificationView(note: n, metrics: metrics)
                 case .expanded(let a):
                     switch a {
-                    case .playing, .none: NowPlayingExpandedView(info: np, metrics: metrics, glow: .pink)
+                    case .playing, .none, .auto: NowPlayingExpandedView(info: np, metrics: metrics, glow: .pink)
                     case .calendar: CalendarExpandedView(snapshot: cal, metrics: metrics)
                     case .duo: DuoExpandedView(info: np, snapshot: cal, metrics: metrics)
                     case .dictation: DictationHintView(metrics: metrics)

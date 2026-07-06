@@ -60,6 +60,7 @@ struct GeneralPane: View {
 extension NotchActivity {
     var pickerTitle: String {
         switch self {
+        case .auto: return "Auto"
         case .none: return "None"
         case .playing: return "Playing"
         case .calendar: return "Calendar"
@@ -69,6 +70,7 @@ extension NotchActivity {
     }
     var pickerImage: String {
         switch self {
+        case .auto: return "sparkles"
         case .none: return "nosign"
         case .playing: return "play.fill"
         case .calendar: return "calendar"

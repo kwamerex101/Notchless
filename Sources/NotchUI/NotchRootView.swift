@@ -62,7 +62,7 @@ struct NotchRootView: View {
             NotificationView(note: note, metrics: metrics)
         case let .expanded(activity):
             switch activity {
-            case .playing, .none:
+            case .playing, .none, .auto:
                 NowPlayingExpandedView(info: model.nowPlaying, metrics: metrics,
                                        glow: glowColor, onCommand: onCommand,
                                        onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
