@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var hud = HUDController(model: model)
     private lazy var battery = BatteryController(model: model)
     private lazy var stats = StatsController(model: model)
+    private lazy var timerController = TimerController(model: model)
     private lazy var audioTap = SystemAudioTap(model: model)
     private var playbackObserver: AnyCancellable?
     private lazy var calendar = CalendarController(model: model)
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         media.start()
         battery.start()
         stats.start()
+        timerController.start()
 
         // Only capture system audio while something is actually playing.
         playbackObserver = model.$nowPlaying

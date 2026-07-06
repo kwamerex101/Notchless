@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0029F1247A11AF71D23B083A /* TimerExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F062A26DB3BE4D77C98A8B /* TimerExpandedView.swift */; };
 		01F34F9436297606B950030C /* NotchlessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CFE1E4F2676C86CECCB7EE /* NotchlessApp.swift */; };
 		02136F25211397AFCB03D436 /* LLMModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */; };
 		0250D3AC1DF27F1CDA1EB52A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8612F3D7D4F7BD6C51E6033C /* SettingsStore.swift */; };
@@ -23,6 +24,7 @@
 		27171402888E732A82628AE1 /* NowPlayingExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5DC4308AB30C81490BB451 /* NowPlayingExpandedView.swift */; };
 		28FDD79316AF13EEFAA4FB9C /* BatteryInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0E639D039BCAD8A483DA77 /* BatteryInfo.swift */; };
 		29591514593BEC3CA130C411 /* MonthGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */; };
+		2E4A4641AFFC46D0B67BF24C /* TimerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C9C1CD9837519373287975 /* TimerController.swift */; };
 		2EBA5724103EB2F4A25861D1 /* OnboardingStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1B55F8B1EA568166FE2A99 /* OnboardingStep.swift */; };
 		2EFF1A4D493ABA3EA02ADB80 /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BCB0085DDCAFEBADD7B266 /* NotificationView.swift */; };
 		2F7EF27C2A809D3F090AE0C9 /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = FED496F03943988A5661F68C /* FluidAudio */; };
@@ -74,6 +76,7 @@
 		AFA6D894EB27F9923358892D /* DictationDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8890A325BFB95C7D5EBB013A /* DictationDictionary.swift */; };
 		B3681F4C8AB56CF252F8B855 /* TranscriptCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB6CF685F8336B22B5518E4 /* TranscriptCleaner.swift */; };
 		B463327ABD84563142C4CCA2 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1CF8B6D5BC5B91583D9D2E /* SpeechTranscriber.swift */; };
+		B46FD381B540AEDE576A3B48 /* NotchTimerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868CD6F6B392D7DAEDA46B75 /* NotchTimerInfo.swift */; };
 		B4C89090D50D4A1428FB749E /* NotchPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D48F00CAEB14383F7588BF /* NotchPanel.swift */; };
 		B50430E3059C902649C2B6DB /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54CFEB740F3CC1FE3E5BF30 /* OnboardingWindowController.swift */; };
 		B9A29D1A34231911A8564038 /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA2ED9B29203616F7768230 /* SpectrumAnalyzer.swift */; };
@@ -141,6 +144,7 @@
 		31FE9EFABAF7A64882FD4ED5 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
 		32124AF7D00009638CC6909B /* Notchless.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Notchless.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32471DD16AC835C67E00A57B /* DisplayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayService.swift; sourceTree = "<group>"; };
+		32C9C1CD9837519373287975 /* TimerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerController.swift; sourceTree = "<group>"; };
 		36139405A50DAF64C3F68515 /* HUDController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDController.swift; sourceTree = "<group>"; };
 		3B8B146BE74DA2E6A2E8FC72 /* SystemStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStats.swift; sourceTree = "<group>"; };
 		3D8927724EE3BBFF1AAD6647 /* CorrectionMiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionMiner.swift; sourceTree = "<group>"; };
@@ -166,6 +170,7 @@
 		7C538E54FF02A2F6DE45489A /* AudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioService.swift; sourceTree = "<group>"; };
 		8612F3D7D4F7BD6C51E6033C /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		86378CA9D2E1F2ACF1CF6E26 /* DictationSnippets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationSnippets.swift; sourceTree = "<group>"; };
+		868CD6F6B392D7DAEDA46B75 /* NotchTimerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchTimerInfo.swift; sourceTree = "<group>"; };
 		88577E13DD2CD2DAE7AD8F30 /* ProgressiveBlur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressiveBlur.swift; sourceTree = "<group>"; };
 		8890A325BFB95C7D5EBB013A /* DictationDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDictionary.swift; sourceTree = "<group>"; };
 		88A003741FACD62A63A8BADB /* DictationTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationTranscriber.swift; sourceTree = "<group>"; };
@@ -190,6 +195,7 @@
 		AC5DC4308AB30C81490BB451 /* NowPlayingExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingExpandedView.swift; sourceTree = "<group>"; };
 		AF42958151A8DABE21AEBCD9 /* StatsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsController.swift; sourceTree = "<group>"; };
 		B0A39DBA12D85AB052A38D94 /* MediaController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaController.swift; sourceTree = "<group>"; };
+		B0F062A26DB3BE4D77C98A8B /* TimerExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerExpandedView.swift; sourceTree = "<group>"; };
 		B5AE8532315C968275964F0D /* HistoryCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCipher.swift; sourceTree = "<group>"; };
 		B981ADF62D0E9492C32F5889 /* NotchShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchShape.swift; sourceTree = "<group>"; };
 		B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothService.swift; sourceTree = "<group>"; };
@@ -318,6 +324,15 @@
 			path = NotchWindow;
 			sourceTree = "<group>";
 		};
+		5B09CA3E53D6809A9A8E0E34 /* Timer */ = {
+			isa = PBXGroup;
+			children = (
+				868CD6F6B392D7DAEDA46B75 /* NotchTimerInfo.swift */,
+				32C9C1CD9837519373287975 /* TimerController.swift */,
+			);
+			path = Timer;
+			sourceTree = "<group>";
+		};
 		5CDDFE936712696CF23BA205 /* Brightness */ = {
 			isa = PBXGroup;
 			children = (
@@ -343,6 +358,7 @@
 				ECD0926BBFB1CF701F381A71 /* Power */,
 				C638B34D08B67E20D52871B7 /* Stats */,
 				7F990C62BEA9354F98156C14 /* System */,
+				5B09CA3E53D6809A9A8E0E34 /* Timer */,
 				A50E9CA1441588381C16108E /* Weather */,
 				E29A8D6C6C6B9D21FFB41843 /* NotificationsController.swift */,
 			);
@@ -373,6 +389,7 @@
 				F7BCB0085DDCAFEBADD7B266 /* NotificationView.swift */,
 				AC5DC4308AB30C81490BB451 /* NowPlayingExpandedView.swift */,
 				C77F601FB57BCBD1522886DE /* StatsExpandedView.swift */,
+				B0F062A26DB3BE4D77C98A8B /* TimerExpandedView.swift */,
 			);
 			path = States;
 			sourceTree = "<group>";
@@ -699,6 +716,7 @@
 				EA44623562604134EA00B633 /* NotchShape.swift in Sources */,
 				FE2C848DA16FC60DBC21C055 /* NotchSizing.swift in Sources */,
 				CCCF4DEB2080E98195343ADD /* NotchState.swift in Sources */,
+				B46FD381B540AEDE576A3B48 /* NotchTimerInfo.swift in Sources */,
 				8C8D761713B34CA8A4E29E0F /* NotchViewModel.swift in Sources */,
 				01F34F9436297606B950030C /* NotchlessApp.swift in Sources */,
 				2EFF1A4D493ABA3EA02ADB80 /* NotificationView.swift in Sources */,
@@ -730,6 +748,8 @@
 				BE32DA154376F5CA427AADB2 /* SystemAudioTap.swift in Sources */,
 				AAECAFF8632E84F68708D361 /* SystemStats.swift in Sources */,
 				3A639723CF59773C1D1C50D4 /* TextPolish.swift in Sources */,
+				2E4A4641AFFC46D0B67BF24C /* TimerController.swift in Sources */,
+				0029F1247A11AF71D23B083A /* TimerExpandedView.swift in Sources */,
 				B3681F4C8AB56CF252F8B855 /* TranscriptCleaner.swift in Sources */,
 				6FC9B8CBA32BA24790397380 /* TranscriptHygiene.swift in Sources */,
 				EAE8E3E4DBDE9B3FF93159E0 /* Uninstaller.swift in Sources */,

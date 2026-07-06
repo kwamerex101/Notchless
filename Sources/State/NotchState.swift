@@ -12,6 +12,7 @@ enum NotchActivity: String, CaseIterable, Codable {
     case dictation
     case battery
     case stats
+    case timer
 }
 
 /// The two hardware HUDs that replace the system OSD.

@@ -30,6 +30,8 @@ struct NotchSizing {
                 return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .stats:
                 return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .timer:
+                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
@@ -65,6 +67,8 @@ struct NotchSizing {
                 return NotchSizing(width: max(w + 40, 360), height: 128, topRadius: 10, bottomRadius: 24)
             case .stats:
                 return NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
+            case .timer:
+                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             }
         }
     }

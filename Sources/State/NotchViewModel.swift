@@ -17,6 +17,7 @@ final class NotchViewModel: ObservableObject {
     @Published var calendar: CalendarSnapshot?
     @Published var battery: BatteryInfo?
     @Published var stats: SystemStats?
+    @Published var notchTimer: NotchTimerInfo?
     /// Live audio-band levels (low→high) from the system-audio tap, driving the
     /// now-playing visualizer. Empty when not capturing.
     @Published var musicSpectrum: [CGFloat] = []
@@ -91,6 +92,7 @@ final class NotchViewModel: ObservableObject {
     /// Ordered Live-Activity providers for Auto mode; the first live one wins.
     /// New activities (timers, screen recording, AirDrop…) slot in here.
     private func autoIdleActivity() -> NotchActivity? {
+        if let notchTimer, notchTimer.isActive { return .timer }
         if nowPlaying != nil { return .playing }
         // Surface the battery when plugged in / charging — a meaningful moment.
         if let battery, battery.isPluggedIn || battery.isCharging { return .battery }
@@ -117,6 +119,7 @@ final class NotchViewModel: ObservableObject {
         case .dictation: return true  // the mic-ready cue always rests in the notch
         case .battery: return battery != nil
         case .stats: return stats != nil
+        case .timer: return true  // always rests so it can be started from the notch
         }
     }
 
