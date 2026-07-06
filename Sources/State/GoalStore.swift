@@ -117,3 +117,138 @@ func goalAbbreviate(_ amount: Decimal, symbol: String) -> String {
     else { body = String(Int(value.rounded())) }
     return "\(body) \(symbol)"
 }
+
+/// Owns the user's goals and archived (completed) goals. Persists as JSON in
+/// UserDefaults, mirrored to iCloud KVS when syncViaICloud is on — the same
+/// approach as SettingsStore. Mirrors the ClipboardStore/DictationHistory
+/// singleton shape; views observe `.shared` directly.
+@MainActor
+final class GoalStore: ObservableObject {
+    static let shared = GoalStore()
+
+    @Published private(set) var goals: [Goal] = []
+    @Published private(set) var completed: [Goal] = []
+    @Published var pinnedID: UUID? { didSet { if oldValue != pinnedID { save() } } }
+
+    private let defaults: UserDefaults
+    private let cloud = NSUbiquitousKeyValueStore.default
+    private let mirrorsICloud: Bool
+    private let key = "goals.store.v1"
+
+    init(defaults: UserDefaults = .standard, mirrorsICloud: Bool = true) {
+        self.defaults = defaults
+        self.mirrorsICloud = mirrorsICloud
+        load()
+        if mirrorsICloud {
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(cloudChanged),
+                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: cloud)
+        }
+    }
+
+    // MARK: Derived
+
+    var hasActiveGoals: Bool { !goals.isEmpty }
+
+    var pinned: Goal? {
+        if let pinnedID, let g = goals.first(where: { $0.id == pinnedID }) { return g }
+        return goals.first
+    }
+
+    // MARK: Mutations
+
+    @discardableResult
+    func addGoal(name: String, target: Decimal, deadline: Date, startDate: Date = Date()) -> Goal? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, target > 0, deadline > startDate else { return nil }
+        let goal = Goal(name: trimmed, target: target, startDate: startDate, deadline: deadline)
+        goals.append(goal)
+        if pinnedID == nil { pinnedID = goal.id }
+        save()
+        return goal
+    }
+
+    func updateGoal(_ goal: Goal) {
+        guard let i = goals.firstIndex(where: { $0.id == goal.id }) else { return }
+        goals[i] = goal
+        save()
+    }
+
+    func deleteGoal(_ id: UUID) {
+        goals.removeAll { $0.id == id }
+        completed.removeAll { $0.id == id }
+        if pinnedID == id { pinnedID = goals.first?.id }
+        save()
+    }
+
+    @discardableResult
+    func logContribution(goalID: UUID, amount: Decimal, label: String, date: Date = Date()) -> Bool {
+        let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard amount != 0, !trimmed.isEmpty,
+              let i = goals.firstIndex(where: { $0.id == goalID }) else { return false }
+        goals[i].contributions.append(Contribution(amount: amount, label: trimmed, date: date))
+        if goals[i].current >= goals[i].target { archive(index: i, at: date) }
+        save()
+        return true
+    }
+
+    func removeContribution(goalID: UUID, contributionID: UUID) {
+        guard let i = goals.firstIndex(where: { $0.id == goalID }) else { return }
+        goals[i].contributions.removeAll { $0.id == contributionID }
+        save()
+    }
+
+    func setPinned(_ id: UUID?) { pinnedID = id }
+
+    func restore(_ id: UUID) {
+        guard let i = completed.firstIndex(where: { $0.id == id }) else { return }
+        var g = completed.remove(at: i)
+        g.completedAt = nil
+        goals.append(g)
+        if pinnedID == nil { pinnedID = g.id }
+        save()
+    }
+
+    /// Moves the goal at `index` from active → completed and re-pins if it was
+    /// the pinned goal. Caller persists.
+    private func archive(index: Int, at date: Date) {
+        var g = goals.remove(at: index)
+        g.completedAt = date
+        completed.insert(g, at: 0)
+        if pinnedID == g.id { pinnedID = goals.first?.id }
+    }
+
+    // MARK: Persistence
+
+    private struct Payload: Codable { var goals: [Goal]; var completed: [Goal]; var pinnedID: UUID? }
+
+    private func load() {
+        let data = defaults.data(forKey: key)
+            ?? (mirrorsICloud && SettingsStore.shared.syncViaICloud ? cloud.data(forKey: key) : nil)
+        guard let data, let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
+            goals = []; completed = []; pinnedID = nil; return
+        }
+        goals = payload.goals
+        completed = payload.completed
+        pinnedID = payload.pinnedID
+    }
+
+    private func save() {
+        let payload = Payload(goals: goals, completed: completed, pinnedID: pinnedID)
+        guard let data = try? JSONEncoder().encode(payload) else { return }
+        defaults.set(data, forKey: key)
+        if mirrorsICloud && SettingsStore.shared.syncViaICloud {
+            cloud.set(data, forKey: key)
+            cloud.synchronize()
+        }
+    }
+
+    @objc private func cloudChanged() {
+        guard mirrorsICloud, SettingsStore.shared.syncViaICloud,
+              let data = cloud.data(forKey: key),
+              let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return }
+        Task { @MainActor in
+            goals = payload.goals; completed = payload.completed; pinnedID = payload.pinnedID
+        }
+    }
+}

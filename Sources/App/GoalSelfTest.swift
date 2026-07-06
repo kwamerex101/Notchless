@@ -24,7 +24,7 @@ enum GoalSelfTest {
         modelChecks()
         paceChecks()
         formatChecks()
-        // Later tasks append: storeChecks()
+        storeChecks()
 
         print(failures == 0 ? "SELFTEST OK" : "SELFTEST FAILED (\(failures))")
         exit(failures == 0 ? 0 : 1)
@@ -71,5 +71,47 @@ enum GoalSelfTest {
         check("abbrev k decimal", goalAbbreviate(1_500, symbol: "₵") == "1.5k ₵")
         check("abbrev under 1000", goalAbbreviate(250, symbol: "₵") == "250 ₵")
         check("abbrev millions", goalAbbreviate(1_200_000, symbol: "₵") == "1.2m ₵")
+    }
+
+    private static func storeChecks() {
+        let suite = "goal.selftest.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let store = GoalStore(defaults: defaults, mirrorsICloud: false)
+
+        // add validation
+        check("addGoal rejects empty name", store.addGoal(name: " ", target: 100, deadline: days(10), startDate: t0) == nil)
+        check("addGoal rejects non-positive target", store.addGoal(name: "x", target: 0, deadline: days(10), startDate: t0) == nil)
+        check("addGoal rejects bad deadline", store.addGoal(name: "x", target: 100, deadline: t0, startDate: t0) == nil)
+
+        guard let g = store.addGoal(name: "Save", target: 100, deadline: days(10), startDate: t0) else {
+            check("addGoal succeeds", false); return
+        }
+        check("addGoal succeeds", store.goals.count == 1)
+        check("first goal auto-pins", store.pinnedID == g.id)
+
+        // log validation + sum
+        check("log rejects zero", store.logContribution(goalID: g.id, amount: 0, label: "a", date: t0) == false)
+        check("log rejects blank label", store.logContribution(goalID: g.id, amount: 10, label: " ", date: t0) == false)
+        _ = store.logContribution(goalID: g.id, amount: 40, label: "MTN", date: t0)
+        check("log adds to current", store.goals.first?.current == 40)
+
+        // completion → archive + repin
+        let g2 = store.addGoal(name: "Second", target: 50, deadline: days(10), startDate: t0)!
+        _ = store.logContribution(goalID: g.id, amount: 60, label: "MTN", date: t0) // reaches 100
+        check("reaching target archives goal", store.completed.contains { $0.id == g.id })
+        check("completed goal leaves active list", store.goals.contains { $0.id == g.id } == false)
+        check("pin moves to next active goal", store.pinnedID == g2.id)
+
+        // persistence round-trip
+        let reloaded = GoalStore(defaults: defaults, mirrorsICloud: false)
+        check("goals persist across reload", reloaded.goals.contains { $0.id == g2.id })
+        check("completed persist across reload", reloaded.completed.contains { $0.id == g.id })
+
+        // corrupt data ⇒ empty, no crash
+        defaults.set(Data("nonsense".utf8), forKey: "goals.store.v1")
+        let corrupt = GoalStore(defaults: defaults, mirrorsICloud: false)
+        check("corrupt data falls back to empty", corrupt.goals.isEmpty && corrupt.completed.isEmpty)
     }
 }
