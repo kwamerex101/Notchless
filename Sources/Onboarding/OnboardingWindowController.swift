@@ -47,8 +47,9 @@ final class OnboardingWindowController: NSObject, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
-        window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = NSColor(red: 0.055, green: 0.06, blue: 0.078, alpha: 1)
+        // Native chrome: follow the system light/dark appearance and use the
+        // standard window background instead of a forced dark custom theme.
+        window.backgroundColor = .windowBackgroundColor
         window.setContentSize(NSSize(width: 420, height: 620))
         window.isReleasedWhenClosed = false
         window.delegate = self

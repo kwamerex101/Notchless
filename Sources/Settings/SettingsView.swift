@@ -107,10 +107,26 @@ struct SettingsView: View {
             }
         } icon: {
             Image(systemName: section.systemImage)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white)
-                .frame(width: 22, height: 22)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(section.tint))
+                .frame(width: 20, height: 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    section.tint.opacity(0.92),
+                                    section.tint,
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                        )
+                )
         }
         .tag(section)
     }

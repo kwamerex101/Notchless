@@ -7,6 +7,7 @@ struct IdleCompactView: View {
     let nowPlaying: NowPlayingInfo?
     let calendar: CalendarSnapshot?
     var battery: BatteryInfo? = nil
+    var stats: SystemStats? = nil
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -44,6 +45,10 @@ struct IdleCompactView: View {
             Image(systemName: battery?.systemImage ?? "battery.100")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(battery?.tint ?? .white)
+        case .stats:
+            Image(systemName: "cpu")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
         }
     }
 
@@ -62,6 +67,10 @@ struct IdleCompactView: View {
                 .frame(width: 20)
         case .battery:
             Text("\(battery?.level ?? 0)%")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+        case .stats:
+            Text("\(Int((stats?.cpu ?? 0) * 100))%")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
         }

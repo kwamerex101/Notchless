@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var media = MediaController(model: model)
     private lazy var hud = HUDController(model: model)
     private lazy var battery = BatteryController(model: model)
+    private lazy var stats = StatsController(model: model)
     private lazy var calendar = CalendarController(model: model)
     private lazy var notifications = NotificationsController(model: model)
     private(set) lazy var dictation = DictationController(model: model)
@@ -28,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Permission-free services start immediately.
         media.start()
         battery.start()
+        stats.start()
         effects = EffectsController(settings: model.settings, panel: panel)
         effects?.start()
 
