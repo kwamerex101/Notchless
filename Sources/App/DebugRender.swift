@@ -52,6 +52,9 @@ enum DebugRender {
         renderPlain(DictationPane().padding(20).frame(width: 560, height: 980)
             .background(Color(nsColor: .windowBackgroundColor)), name: "settings_dictation")
 
+        renderPlain(GoalsPane(settings: .shared).padding(20).frame(width: 560, height: 700)
+            .background(Color(nsColor: .windowBackgroundColor)), name: "settings_goals")
+
         renderOnboarding(startIndex: 1, name: "onboarding_calendar")
         renderOnboarding(startIndex: 6, name: "onboarding_dictation")
     }
