@@ -46,7 +46,15 @@ final class NotchHostingView: NSHostingView<NotchRootView> {
                 MainActor.assumeIsolated { openIt ? model?.tapped() : model?.collapse() }
             } else if abs(swipeX) > threshold {
                 swipeFired = true
-                MainActor.assumeIsolated { seek(forward: swipeX < 0) }
+                MainActor.assumeIsolated {
+                    // With multiple concurrent Live Activities, swipe switches
+                    // between them; otherwise it scrubs the current track.
+                    if SettingsStore.shared.idleActivity == .auto, (model?.liveActivities.count ?? 0) >= 2 {
+                        model?.cycleLiveActivity()
+                    } else {
+                        seek(forward: swipeX < 0)
+                    }
+                }
             }
         }
         if event.phase.contains(.ended) || event.phase.contains(.cancelled) {

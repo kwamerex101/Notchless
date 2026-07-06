@@ -12,6 +12,8 @@ struct IdleCompactView: View {
     var timer: NotchTimerInfo? = nil
     var privacy: PrivacyStatus? = nil
     var glow: Color? = nil
+    /// All concurrently-live activities (for the pager dots) and the order used.
+    var liveActivities: [NotchActivity] = []
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -29,6 +31,22 @@ struct IdleCompactView: View {
         .padding(.horizontal, edgeInset)
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .overlay(alignment: .bottom) { pager }
+    }
+
+    /// Tiny dots shown when several activities are live, hinting that a
+    /// horizontal swipe switches between them.
+    @ViewBuilder private var pager: some View {
+        if liveActivities.count >= 2 {
+            HStack(spacing: 3) {
+                ForEach(liveActivities, id: \.self) { item in
+                    Circle()
+                        .fill(Color.white.opacity(item == activity ? 0.9 : 0.3))
+                        .frame(width: 3, height: 3)
+                }
+            }
+            .padding(.bottom, 1)
+        }
     }
 
     @ViewBuilder private var leading: some View {
