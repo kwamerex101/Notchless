@@ -90,6 +90,16 @@ final class SettingsStore: ObservableObject {
     @Published var clipboardHistorySize: Int { didSet { persist(oldValue != clipboardHistorySize) } }
     @Published var privacyIndicatorEnabled: Bool { didSet { persist(oldValue != privacyIndicatorEnabled) } }
 
+    // Claude usage
+    @Published var claudeCompactStyle: ClaudeCompactStyle { didSet { persist(oldValue != claudeCompactStyle) } }
+    @Published var claudeShowSession: Bool { didSet { persist(oldValue != claudeShowSession) } }
+    @Published var claudeShowWeek: Bool { didSet { persist(oldValue != claudeShowWeek) } }
+    @Published var claudeShowSpend: Bool { didSet { persist(oldValue != claudeShowSpend) } }
+    @Published var claudeShowChart: Bool { didSet { persist(oldValue != claudeShowChart) } }
+    @Published var claudeShowLegend: Bool { didSet { persist(oldValue != claudeShowLegend) } }
+    @Published var claudeChartDays: Int { didSet { persist(oldValue != claudeChartDays) } }
+    @Published var claudeChartCost: Bool { didSet { persist(oldValue != claudeChartCost) } }
+
     private var loading = false
 
     private init() {
@@ -132,6 +142,14 @@ final class SettingsStore: ObservableObject {
             Keys.clipboardEnabled: true,
             Keys.clipboardHistorySize: 20,
             Keys.privacyIndicatorEnabled: true,
+            Keys.claudeCompactStyle: ClaudeCompactStyle.pie.rawValue,
+            Keys.claudeShowSession: true,
+            Keys.claudeShowWeek: true,
+            Keys.claudeShowSpend: true,
+            Keys.claudeShowChart: true,
+            Keys.claudeShowLegend: true,
+            Keys.claudeChartDays: 14,
+            Keys.claudeChartCost: false,
         ])
 
         fileTrayEnabled = defaults.bool(forKey: Keys.fileTrayEnabled)
@@ -171,6 +189,14 @@ final class SettingsStore: ObservableObject {
         clipboardEnabled = defaults.bool(forKey: Keys.clipboardEnabled)
         clipboardHistorySize = defaults.integer(forKey: Keys.clipboardHistorySize)
         privacyIndicatorEnabled = defaults.bool(forKey: Keys.privacyIndicatorEnabled)
+        claudeCompactStyle = ClaudeCompactStyle(rawValue: defaults.string(forKey: Keys.claudeCompactStyle) ?? "") ?? .pie
+        claudeShowSession = defaults.bool(forKey: Keys.claudeShowSession)
+        claudeShowWeek = defaults.bool(forKey: Keys.claudeShowWeek)
+        claudeShowSpend = defaults.bool(forKey: Keys.claudeShowSpend)
+        claudeShowChart = defaults.bool(forKey: Keys.claudeShowChart)
+        claudeShowLegend = defaults.bool(forKey: Keys.claudeShowLegend)
+        claudeChartDays = defaults.integer(forKey: Keys.claudeChartDays)
+        claudeChartCost = defaults.bool(forKey: Keys.claudeChartCost)
 
         NotificationCenter.default.addObserver(
             self, selector: #selector(cloudChanged(_:)),
@@ -219,6 +245,14 @@ final class SettingsStore: ObservableObject {
             (Keys.clipboardEnabled, clipboardEnabled),
             (Keys.clipboardHistorySize, clipboardHistorySize),
             (Keys.privacyIndicatorEnabled, privacyIndicatorEnabled),
+            (Keys.claudeCompactStyle, claudeCompactStyle.rawValue),
+            (Keys.claudeShowSession, claudeShowSession),
+            (Keys.claudeShowWeek, claudeShowWeek),
+            (Keys.claudeShowSpend, claudeShowSpend),
+            (Keys.claudeShowChart, claudeShowChart),
+            (Keys.claudeShowLegend, claudeShowLegend),
+            (Keys.claudeChartDays, claudeChartDays),
+            (Keys.claudeChartCost, claudeChartCost),
         ]
         for (k, v) in pairs {
             defaults.set(v, forKey: k)
@@ -280,5 +314,13 @@ final class SettingsStore: ObservableObject {
         static let clipboardEnabled = "clipboardEnabled"
         static let clipboardHistorySize = "clipboardHistorySize"
         static let privacyIndicatorEnabled = "privacyIndicatorEnabled"
+        static let claudeCompactStyle = "claudeCompactStyle"
+        static let claudeShowSession = "claudeShowSession"
+        static let claudeShowWeek = "claudeShowWeek"
+        static let claudeShowSpend = "claudeShowSpend"
+        static let claudeShowChart = "claudeShowChart"
+        static let claudeShowLegend = "claudeShowLegend"
+        static let claudeChartDays = "claudeChartDays"
+        static let claudeChartCost = "claudeChartCost"
     }
 }
