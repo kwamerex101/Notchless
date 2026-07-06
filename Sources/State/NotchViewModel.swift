@@ -17,6 +17,9 @@ final class NotchViewModel: ObservableObject {
     @Published var calendar: CalendarSnapshot?
     @Published var battery: BatteryInfo?
     @Published var stats: SystemStats?
+    /// Live audio-band levels (low→high) from the system-audio tap, driving the
+    /// now-playing visualizer. Empty when not capturing.
+    @Published var musicSpectrum: [CGFloat] = []
     /// Vibrant color sampled from the current artwork (album-art glow).
     @Published var artworkColor: Color?
 

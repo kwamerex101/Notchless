@@ -8,6 +8,7 @@ struct IdleCompactView: View {
     let calendar: CalendarSnapshot?
     var battery: BatteryInfo? = nil
     var stats: SystemStats? = nil
+    var musicSpectrum: [CGFloat] = []
     let metrics: NotchMetrics
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -55,7 +56,7 @@ struct IdleCompactView: View {
     @ViewBuilder private var trailing: some View {
         switch activity {
         case .playing, .duo, .none, .auto:
-            VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false, height: 12)
+            VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false, height: 12, spectrum: musicSpectrum)
                 .frame(width: 20)
         case .calendar:
             Image(systemName: "calendar")

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Combine
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -17,6 +18,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var hud = HUDController(model: model)
     private lazy var battery = BatteryController(model: model)
     private lazy var stats = StatsController(model: model)
+    private lazy var audioTap = SystemAudioTap(model: model)
+    private var playbackObserver: AnyCancellable?
     private lazy var calendar = CalendarController(model: model)
     private lazy var notifications = NotificationsController(model: model)
     private(set) lazy var dictation = DictationController(model: model)
@@ -30,6 +33,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         media.start()
         battery.start()
         stats.start()
+
+        // Only capture system audio while something is actually playing.
+        playbackObserver = model.$nowPlaying
+            .map { $0?.isPlaying == true }
+            .removeDuplicates()
+            .sink { [weak self] isPlaying in
+                if isPlaying { self?.audioTap.start() } else { self?.audioTap.stop() }
+            }
         effects = EffectsController(settings: model.settings, panel: panel)
         effects?.start()
 
