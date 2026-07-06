@@ -101,6 +101,13 @@ struct NotchRootView: View {
     /// Motion collapses both to a plain fade.
     private var contentTransition: AnyTransition {
         if reduceMotion { return .opacity }
+        // HUD and notifications bloom out of the notch and retract back into it.
+        switch model.content {
+        case .hud, .notification:
+            return .move(edge: .top).combined(with: .opacity)
+        default:
+            break
+        }
         switch model.lastMoveKind {
         case .page:
             let inEdge: Edge = model.lastMoveDirection > 0 ? .trailing : .leading
