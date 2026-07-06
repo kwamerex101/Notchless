@@ -32,22 +32,6 @@ struct IdleCompactView: View {
         .padding(.horizontal, edgeInset)
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .overlay(alignment: .bottom) { pager }
-    }
-
-    /// Tiny dots shown when several activities are live, hinting that a
-    /// horizontal swipe switches between them.
-    @ViewBuilder private var pager: some View {
-        if liveActivities.count >= 2 {
-            HStack(spacing: 3) {
-                ForEach(liveActivities, id: \.self) { item in
-                    Circle()
-                        .fill(Color.white.opacity(item == activity ? 0.9 : 0.3))
-                        .frame(width: 3, height: 3)
-                }
-            }
-            .padding(.bottom, 1)
-        }
     }
 
     @ViewBuilder private var leading: some View {
