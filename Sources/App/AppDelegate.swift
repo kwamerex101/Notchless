@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        GoalSelfTest.run()   // no-op unless DI_GOAL_SELFTEST is set
         NSApp.setActivationPolicy(.accessory)
         buildPanel()
 
