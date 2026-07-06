@@ -2,6 +2,17 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.2.1] — 2026-07-06
+
+### Fixed
+- **Launch-freeze deadlock when a Bluetooth device is connected.** IOBluetooth
+  delivers connect/disconnect notifications on a background queue as well as the
+  main run loop; the handlers touched `@MainActor` state (publishing a notch
+  notification) directly off-thread, which deadlocked Combine's publisher at
+  launch — the app opened Not Responding, with no hover. The handlers now marshal
+  all work onto the main queue. (Pre-existing bug, surfaced once a device was
+  connected at startup.)
+
 ## [1.2.0] — 2026-07-06
 
 A performance, battery, and polish release. No features were removed; test
