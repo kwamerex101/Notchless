@@ -9,6 +9,7 @@ struct NowPlayingExpandedView: View {
     var glow: Color? = nil
     var onCommand: (MediaCommand) -> Void = { _ in }
     var onActivateSource: () -> Void = {}
+    var artworkNamespace: Namespace.ID? = nil
 
     @State private var scrubbing = false
     @State private var scrubValue: Double = 0
@@ -57,6 +58,7 @@ struct NowPlayingExpandedView: View {
         }
         .frame(width: 44, height: 44)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .matchedArtwork(artworkNamespace)
         .overlay(alignment: .bottomTrailing) {
             if info?.bundleIdentifier != nil {
                 Image(systemName: "arrow.up.forward.app.fill")
