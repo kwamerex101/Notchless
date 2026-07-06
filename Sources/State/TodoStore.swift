@@ -15,10 +15,23 @@ struct Todo: Identifiable, Codable, Equatable {
     }
 }
 
+/// The slice of `NSUbiquitousKeyValueStore` that `TodoStore` depends on.
+/// Abstracted so tests can inject a fake cloud without touching real iCloud.
+protocol CloudKeyValueStore: AnyObject {
+    func data(forKey aKey: String) -> Data?
+    func set(_ aData: Data?, forKey aKey: String)
+    @discardableResult func synchronize() -> Bool
+}
+
+extension NSUbiquitousKeyValueStore: CloudKeyValueStore {}
+
 /// Holds the notch task list. Mirrors `FileTrayStore` (a dedicated store, not
-/// `SettingsStore`), but persists to `UserDefaults` as JSON and mirrors to
-/// iCloud when the user's sync pref is on. Both the Settings pane and the notch
-/// read/write the `.shared` instance, so edits stay in sync.
+/// `SettingsStore`), but persists to `UserDefaults` as JSON and syncs two-way
+/// with iCloud when the user's sync pref is on: `persist()` mirrors outbound,
+/// while inbound changes from another Mac (delivered via
+/// `NSUbiquitousKeyValueStore.didChangeExternallyNotification`) are pulled back
+/// into `defaults` and republished so the notch updates live. Both the Settings
+/// pane and the notch read/write the `.shared` instance, so edits stay in sync.
 @MainActor
 final class TodoStore: ObservableObject {
     static let shared = TodoStore()
@@ -33,13 +46,14 @@ final class TodoStore: ObservableObject {
     var openCount: Int { items.lazy.filter { !$0.isDone }.count }
 
     private let defaults: UserDefaults
-    private let cloud: NSUbiquitousKeyValueStore?
+    private let cloud: CloudKeyValueStore?
     private let removalDelay: TimeInterval
     private let schedule: (TimeInterval, @escaping () -> Void) -> Void
+    private var cloudObserver: NSObjectProtocol?
 
     init(
         defaults: UserDefaults = .standard,
-        cloud: NSUbiquitousKeyValueStore? = .default,
+        cloud: CloudKeyValueStore? = NSUbiquitousKeyValueStore.default,
         removalDelay: TimeInterval = 0.9,
         schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void = { delay, work in
             DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
@@ -49,7 +63,13 @@ final class TodoStore: ObservableObject {
         self.cloud = cloud
         self.removalDelay = removalDelay
         self.schedule = schedule
+        seedDefaultsFromCloud()
         load()
+        observeCloud()
+    }
+
+    deinit {
+        if let cloudObserver { NotificationCenter.default.removeObserver(cloudObserver) }
     }
 
     func add(_ title: String) {
@@ -116,5 +136,37 @@ final class TodoStore: ObservableObject {
             return
         }
         items = decoded
+    }
+
+    /// If iCloud sync is on and the cloud store already holds a task list, copy
+    /// it into `defaults` so the following `load()` picks it up. Lets a second
+    /// Mac inherit the list on first launch and after every external change.
+    private func seedDefaultsFromCloud() {
+        guard let cloud, SettingsStore.shared.syncViaICloud,
+              let data = cloud.data(forKey: Self.storageKey)
+        else { return }
+        defaults.set(data, forKey: Self.storageKey)
+    }
+
+    /// Register for inbound iCloud changes (writes from another Mac). The
+    /// notification is delivered off the main thread, and its block hops back
+    /// onto the main actor before touching published state.
+    private func observeCloud() {
+        guard let cloud else { return }
+        cloudObserver = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: cloud, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.cloudChanged() }
+        }
+    }
+
+    /// An external iCloud change arrived: pull the cloud's copy into `defaults`,
+    /// re-`load()`, and republish so the notch and Settings update live.
+    /// Mirrors `SettingsStore.cloudChanged`.
+    private func cloudChanged() {
+        guard SettingsStore.shared.syncViaICloud else { return }
+        seedDefaultsFromCloud()
+        load()
     }
 }
