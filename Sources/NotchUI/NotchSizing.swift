@@ -45,8 +45,9 @@ struct NotchSizing {
             case .claudeUsage:
                 return NotchSizing(width: w + 120, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .goals:
-                // Placeholder sizing until Task 6 ships the real compact view.
-                return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // Wide enough for the ring + percent on one wing and the full
+                // abbreviated amount on the other (w + 96 clipped the amount).
+                return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
