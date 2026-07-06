@@ -99,6 +99,20 @@ final class NotchViewModel: ObservableObject {
         }
     }
 
+    /// True when the now-playing music visualizer is actually on screen, so the
+    /// system-audio tap only needs to run then (it still also requires playback
+    /// and the setting). The dictation waveform is fed separately and isn't
+    /// gated by this.
+    var visualizerOnScreen: Bool {
+        switch content {
+        case .idle(.playing), .idle(.auto), .idle(.none), .idle(.duo),
+             .expanded(.playing), .expanded(.auto), .expanded(.none), .expanded(.duo):
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Every Live Activity that's currently live, in priority order. In Auto
     /// mode the user can cycle through these (e.g. media vs. the mic dot on a
     /// call); the first is the default shown.

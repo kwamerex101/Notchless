@@ -56,15 +56,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { on in ClipboardStore.shared.setEnabled(on) }
             .store(in: &settingsObservers)
 
-        // Only capture system audio while something is actually playing.
-        playbackObserver = model.$nowPlaying
-            .map { $0?.isPlaying == true }
-            .removeDuplicates()
-            .sink { [weak self] isPlaying in
-                guard let self else { return }
-                if isPlaying, self.model.settings.liveAudioVisualizer { self.audioTap.start() }
-                else { self.audioTap.stop() }
-            }
+        // Capture system audio only while music is playing AND its visualizer is
+        // actually on screen — swiping to another page stops the tap, swiping
+        // back restarts it. `objectWillChange` (debounced so it reads the
+        // settled state) covers content changes; the settings toggle covers the
+        // preference. start()/stop() are idempotent.
+        playbackObserver = model.objectWillChange
+            .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.updateAudioTap() }
+        model.settings.$liveAudioVisualizer.removeDuplicates()
+            .sink { [weak self] _ in self?.updateAudioTap() }
+            .store(in: &settingsObservers)
+        updateAudioTap()
         effects = EffectsController(settings: model.settings, panel: panel)
         effects?.start()
 
@@ -96,6 +99,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         followTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.repositionIfNeeded() }
         }
+    }
+
+    /// Starts the system-audio tap when music is playing, its visualizer is on
+    /// screen, and the setting is on; stops it otherwise. Idempotent.
+    private func updateAudioTap() {
+        let wanted = model.nowPlaying?.isPlaying == true
+            && model.settings.liveAudioVisualizer
+            && model.visualizerOnScreen
+        if wanted { audioTap.start() } else { audioTap.stop() }
     }
 
     private func startPermissionedServices() {
