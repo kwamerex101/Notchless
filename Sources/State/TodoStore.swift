@@ -91,7 +91,16 @@ final class TodoStore: ObservableObject {
     }
 
     private func persist() {
-        guard let data = try? JSONEncoder().encode(items) else { return }
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(items)
+        } catch {
+            // Codable Todo (UUID/String/Bool/Date) can't realistically fail to
+            // encode; if it somehow does, surface it rather than silently
+            // dropping the write.
+            assertionFailure("Failed to encode todos: \(error)")
+            return
+        }
         defaults.set(data, forKey: Self.storageKey)
         if let cloud, SettingsStore.shared.syncViaICloud {
             cloud.set(data, forKey: Self.storageKey)
