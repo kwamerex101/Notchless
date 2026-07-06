@@ -5,7 +5,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
     case nowPlaying, calendar, fileTray, dictation, lockScreen
-    case license, about
+    case about
 
     var id: String { rawValue }
 
@@ -22,7 +22,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return "File Tray"
         case .dictation: return "Dictation"
         case .lockScreen: return "Lock Screen"
-        case .license: return "License"
         case .about: return "About"
         }
     }
@@ -40,7 +39,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return "tray.fill"
         case .dictation: return "mic.fill"
         case .lockScreen: return "lock.fill"
-        case .license: return "checkmark.seal.fill"
         case .about: return "info.circle.fill"
         }
     }
@@ -58,7 +56,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return .gray
         case .dictation: return .teal
         case .lockScreen: return .black
-        case .license: return .teal
         case .about: return .gray
         }
     }
@@ -80,8 +77,8 @@ struct SettingsView: View {
                 Section("Live Activities") {
                     ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation, .lockScreen]) { row($0) }
                 }
-                Section("Alcove") {
-                    ForEach([SettingsSection.license, .about]) { row($0) }
+                Section("Notchless") {
+                    ForEach([SettingsSection.about]) { row($0) }
                 }
             }
             .navigationSplitViewColumnWidth(220)
@@ -143,8 +140,6 @@ struct PlaceholderPane: View {
                 ToggleCard(title: "File Tray", isOn: $settings.fileTrayEnabled)
                 Text("Drag files onto the notch to hold them, then drag them back out anywhere.")
                     .font(.callout).foregroundStyle(.secondary)
-            case .license:
-                LicensePane()
             case .about:
                 AboutPane()
             default:

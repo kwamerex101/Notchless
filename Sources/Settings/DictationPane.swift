@@ -86,9 +86,55 @@ struct DictationPane: View {
                         ForEach(DictationCleanup.allCases) { Text($0.title).tag($0) }
                     }.labelsHidden().frame(width: 150)
                 }
-                Text("When on, transcripts are tidied via the local Claude CLI (uses your Claude Code sign-in). Falls back to the raw text if it's not installed.")
+                Text("Smart cleans only longer transcripts that look like they need it; the raw text always stands if cleanup fails or times out.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                if settings.cleanup != .off {
+                    Divider()
+                    HStack {
+                        Text("Backend")
+                        Spacer()
+                        Picker("", selection: $settings.cleanupBackend) {
+                            ForEach(DictationCleanupBackend.allCases) { Text($0.title).tag($0) }
+                        }.labelsHidden().frame(width: 190)
+                    }
+                    Divider()
+                    HStack {
+                        Text("Intensity")
+                        Spacer()
+                        Picker("", selection: $settings.cleanupIntensity) {
+                            ForEach(DictationCleanupIntensity.allCases) { Text($0.title).tag($0) }
+                        }.labelsHidden().frame(width: 190)
+                    }
+                    Divider()
+                    HStack {
+                        Text("Timeout")
+                        Spacer()
+                        Slider(value: Binding(
+                            get: { Double(settings.cleanupTimeoutSeconds) },
+                            set: { settings.cleanupTimeoutSeconds = Int($0) }
+                        ), in: 5...60, step: 5).frame(width: 150)
+                        Text("\(settings.cleanupTimeoutSeconds)s").frame(width: 40, alignment: .trailing)
+                    }
+                    if settings.cleanupBackend == .api || settings.cleanupBackend == .auto {
+                        Divider()
+                        HStack {
+                            Text("Anthropic API key")
+                            Spacer()
+                            SecureField("sk-ant-…", text: apiKeyBinding)
+                                .textFieldStyle(.roundedBorder).frame(width: 220)
+                        }
+                        Text("Stored in your Keychain. Used by the API and Automatic backends; Automatic falls back to the Claude CLI when empty.")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if settings.cleanupBackend == .onDevice {
+                        Divider()
+                        Text("On-device Gemma runs locally with no network. Download the model in the Models section below.")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
                 Divider()
                 ToggleRow(title: "Voice commands", isOn: $settings.voiceCommands)
                 Text("Say “new line”, “new paragraph”, or “scratch that” to format as you speak. Formatting only — never runs shell or file actions.")
@@ -181,6 +227,15 @@ struct DictationPane: View {
                 }
             }
         }
+    }
+
+    /// The Anthropic key lives in the Keychain, so bridge it through a manual
+    /// binding rather than `$settings.…`.
+    private var apiKeyBinding: Binding<String> {
+        Binding(
+            get: { settings.anthropicAPIKey },
+            set: { settings.anthropicAPIKey = $0 }
+        )
     }
 
     private func addTerm() {
