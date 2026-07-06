@@ -16,7 +16,17 @@ final class StatsController {
         self.model = model
     }
 
-    func start() {
+    func start() { setEnabled(model.settings.statsEnabled) }
+
+    /// Starts or stops sampling. Idempotent — driven from the `statsEnabled`
+    /// toggle so the mach/BSD sampling loop never runs while stats are off.
+    func setEnabled(_ on: Bool) {
+        guard on else {
+            timer?.invalidate(); timer = nil
+            if model.stats != nil { model.stats = nil }
+            return
+        }
+        guard timer == nil else { return }
         sample()
         // Tick every second but only sample once the user's refresh interval
         // has elapsed, so the slider applies live without rescheduling.
