@@ -12,10 +12,20 @@ struct NowPlayingInfo: Equatable {
     var bundleIdentifier: String?
     var appName: String?
     var canShuffle: Bool = true
+    /// Wall-clock instant `elapsed` was reported, so the view can extrapolate a
+    /// smooth position without the model publishing every half-second.
+    var elapsedAt: Date = Date()
 
-    var progress: Double {
+    /// Position extrapolated to `now` while playing (clamped to `duration`);
+    /// the reported `elapsed` verbatim while paused.
+    func elapsed(at now: Date) -> TimeInterval {
+        guard isPlaying, duration > 0 else { return elapsed }
+        return min(duration, elapsed + now.timeIntervalSince(elapsedAt))
+    }
+
+    func progress(at now: Date) -> Double {
         guard duration > 0 else { return 0 }
-        return min(1, max(0, elapsed / duration))
+        return min(1, max(0, elapsed(at: now) / duration))
     }
 
     static func time(_ t: TimeInterval) -> String {
@@ -25,8 +35,8 @@ struct NowPlayingInfo: Equatable {
         return String(format: "%d:%02d", m, s)
     }
 
-    var elapsedText: String { Self.time(elapsed) }
-    var remainingText: String { "-" + Self.time(max(0, duration - elapsed)) }
+    func elapsedText(at now: Date) -> String { Self.time(elapsed(at: now)) }
+    func remainingText(at now: Date) -> String { "-" + Self.time(max(0, duration - elapsed(at: now))) }
 
     static func == (lhs: NowPlayingInfo, rhs: NowPlayingInfo) -> Bool {
         lhs.title == rhs.title &&

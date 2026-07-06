@@ -71,9 +71,21 @@ struct NowPlayingExpandedView: View {
     }
 
     private var scrubber: some View {
-        let progress = scrubbing ? scrubValue : (info?.progress ?? 0)
+        // Drive the position from a local 2 Hz clock while playing, so the
+        // fill and time labels advance smoothly without the model republishing.
+        Group {
+            if info?.isPlaying == true {
+                TimelineView(.periodic(from: .now, by: 0.5)) { ctx in scrubberRow(now: ctx.date) }
+            } else {
+                scrubberRow(now: Date())
+            }
+        }
+    }
+
+    private func scrubberRow(now: Date) -> some View {
+        let progress = scrubbing ? scrubValue : (info?.progress(at: now) ?? 0)
         return HStack(spacing: 8) {
-            Text(info?.elapsedText ?? "0:00")
+            Text(info?.elapsedText(at: now) ?? "0:00")
                 .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 34, alignment: .leading)
             GeometryReader { geo in
@@ -95,7 +107,7 @@ struct NowPlayingExpandedView: View {
                 )
             }
             .frame(height: 6)
-            Text(info?.remainingText ?? "-0:00")
+            Text(info?.remainingText(at: now) ?? "-0:00")
                 .font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.6))
                 .frame(width: 40, alignment: .trailing)
         }
