@@ -89,6 +89,28 @@ extension Goal {
         if abs(delta) <= band { return .onTrack }
         return delta > 0 ? .ahead(delta) : .behind(-delta)
     }
+
+    /// Months left until the deadline (fractional, ~30.44-day months; ≥ 0).
+    func monthsRemaining(now: Date) -> Double {
+        max(0, deadline.timeIntervalSince(now) / (30.44 * 86_400))
+    }
+
+    /// The catch-up rate: how much to save each month FROM NOW to still hit the
+    /// target by the deadline. nil once the target is reached. Uses at least one
+    /// month so a near/passed deadline doesn't explode the figure.
+    func neededPerMonth(now: Date) -> Decimal? {
+        let remaining = target - current
+        guard remaining > 0 else { return nil }
+        return remaining / Decimal(max(1.0, monthsRemaining(now: now)))
+    }
+}
+
+/// Medium date for goal start/deadline display, e.g. "31 Dec 2026".
+func goalFormatDate(_ date: Date) -> String {
+    let f = DateFormatter()
+    f.dateStyle = .medium
+    f.timeStyle = .none
+    return f.string(from: date)
 }
 
 /// Full grouped amount with the currency symbol suffixed, no decimals.
