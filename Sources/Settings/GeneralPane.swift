@@ -164,16 +164,20 @@ struct SegmentedCards<Option: Hashable>: View {
     let systemImage: (Option) -> String
 
     var body: some View {
-        HStack(spacing: 8) {
+        // A wrapping grid so many options (e.g. the idle activities) flow into
+        // even rows instead of cramming into one line.
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 74), spacing: 8)], spacing: 8) {
             ForEach(options, id: \.self) { option in
                 let selected = option == selection
                 VStack(spacing: 6) {
                     Image(systemName: systemImage(option))
                         .font(.system(size: 16))
-                        .foregroundStyle(selected ? .primary : .secondary)
+                        .foregroundStyle(selected ? Color.accentColor : .secondary)
                     Text(title(option))
                         .font(.caption)
                         .foregroundStyle(selected ? .primary : .secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)

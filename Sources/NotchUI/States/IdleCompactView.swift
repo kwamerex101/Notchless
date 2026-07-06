@@ -75,8 +75,8 @@ struct IdleCompactView: View {
     @ViewBuilder private var trailing: some View {
         switch activity {
         case .playing, .duo, .none, .auto:
-            VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false, height: 12, spectrum: musicSpectrum)
-                .frame(width: 20)
+            VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false, height: 13, spectrum: musicSpectrum)
+                .frame(width: 30)
         case .calendar:
             Image(systemName: "calendar")
                 .font(.system(size: 13, weight: .semibold))

@@ -180,7 +180,6 @@ final class DictationSettings: ObservableObject {
     @Published var voiceCommands: Bool { didSet { persist(Keys.voiceCommands, voiceCommands) } }
     @Published var smartFormatting: Bool { didSet { persist(Keys.smartFormatting, smartFormatting) } }
     @Published var contextAwareCleanup: Bool { didSet { persist(Keys.contextAware, contextAwareCleanup) } }
-    @Published var userName: String { didSet { persist(Keys.userName, userName) } }
     @Published var encryptHistory: Bool { didSet { persist(Keys.encrypt, encryptHistory); DictationHistory.shared.reencrypt(encrypted: encryptHistory) } }
 
     init() {
@@ -202,7 +201,6 @@ final class DictationSettings: ObservableObject {
             Keys.voiceCommands: false,
             Keys.smartFormatting: true,
             Keys.contextAware: false,
-            Keys.userName: "",
             Keys.encrypt: false,
         ])
         enabled = defaults.bool(forKey: Keys.enabled)
@@ -222,7 +220,6 @@ final class DictationSettings: ObservableObject {
         voiceCommands = defaults.bool(forKey: Keys.voiceCommands)
         smartFormatting = defaults.bool(forKey: Keys.smartFormatting)
         contextAwareCleanup = defaults.bool(forKey: Keys.contextAware)
-        userName = defaults.string(forKey: Keys.userName) ?? ""
         encryptHistory = defaults.bool(forKey: Keys.encrypt)
     }
 
@@ -249,7 +246,6 @@ final class DictationSettings: ObservableObject {
         static let voiceCommands = "dictation.voiceCommands"
         static let smartFormatting = "dictation.smartFormatting"
         static let contextAware = "dictation.contextAwareCleanup"
-        static let userName = "dictation.userName"
         static let encrypt = "dictation.encryptHistory"
     }
 }
