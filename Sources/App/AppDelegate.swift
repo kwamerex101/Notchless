@@ -79,8 +79,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
 
-        // Follow the screen the user is using (Active-display mode) — reposition
-        // only when the target screen actually changes, so it's cheap when idle.
+        // Follow the screen the user is using — but only in Active-display mode,
+        // where the target screen depends on the live cursor position. The other
+        // modes reposition via didChangeScreenParametersNotification, so their
+        // 0.35s timer would just burn wakeups. Track the mode live.
+        model.settings.$simulatedDisplay.removeDuplicates()
+            .sink { [weak self] mode in self?.updateFollowTimer(for: mode) }
+            .store(in: &settingsObservers)
+    }
+
+    private func updateFollowTimer(for mode: SimulatedDisplay) {
+        followTimer?.invalidate()
+        followTimer = nil
+        guard mode == .active else { return }
+        repositionIfNeeded()   // snap to the current screen on entering Active mode
         followTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.repositionIfNeeded() }
         }
