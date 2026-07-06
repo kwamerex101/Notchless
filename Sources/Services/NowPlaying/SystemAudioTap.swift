@@ -4,7 +4,7 @@ import AudioToolbox
 
 /// Captures system audio output via a CoreAudio process tap (macOS 14.2+),
 /// runs it through the FFT analyzer, and publishes band levels to
-/// `model.musicSpectrum` so the now-playing visualizer reacts to real audio.
+/// `model.audio.musicSpectrum` so the now-playing visualizer reacts to real audio.
 ///
 /// Everything is best-effort: if the tap can't be created (older macOS, denied,
 /// unsupported), it silently no-ops and the visualizer falls back to its
@@ -16,6 +16,12 @@ final class SystemAudioTap {
     private var aggregateID: AudioObjectID = 0
     private var procID: AudioDeviceIOProcID?
     private var running = false
+
+    /// Latest FFT bands from the realtime IO thread, drained to the UI at ~30 Hz
+    /// (the IO callback fires far faster). Guarded by `bandsLock`.
+    private let bandsLock = NSLock()
+    private var latestBands: [CGFloat] = []
+    private var drainTimer: DispatchSourceTimer?
 
     init(model: NotchViewModel) {
         self.model = model
@@ -52,35 +58,65 @@ final class SystemAudioTap {
         }
         aggregateID = aggregate
 
-        // The IO block runs on a realtime thread; the analyzer + publish closure
-        // are the only state it touches, both thread-safe / hop to main.
+        // The IO block runs on a realtime thread and only stashes the newest
+        // bands under a lock — no per-callback main-thread hop. A 30 Hz timer
+        // drains that slot into the UI, so the visualizer updates smoothly
+        // without invalidating views ~90+ times a second.
         let analyzer = SpectrumAnalyzer(bandCount: 4)
-        let publish: @Sendable ([CGFloat]) -> Void = { [weak model] bands in
-            DispatchQueue.main.async { model?.musicSpectrum = bands }
-        }
+        let lock = bandsLock
         var proc: AudioDeviceIOProcID?
-        let status = AudioDeviceCreateIOProcIDWithBlock(&proc, aggregate, nil) { _, inInputData, _, _, _ in
+        let status = AudioDeviceCreateIOProcIDWithBlock(&proc, aggregate, nil) { [weak self] _, inInputData, _, _, _ in
             let list = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: inInputData))
             guard let buffer = list.first, let raw = buffer.mData else { return }
             let count = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size
-            guard count > 0 else { return }
+            guard count > 0, let self else { return }
             let samples = raw.assumingMemoryBound(to: Float.self)
             let bands = analyzer.bands(from: samples, count: min(count, 2048))
-            publish(bands)
+            lock.lock(); self.latestBands = bands; lock.unlock()
         }
         guard status == noErr, let proc else { teardown(); return }
         procID = proc
 
         guard AudioDeviceStart(aggregate, proc) == noErr else { teardown(); return }
+        startDrain()
         running = true
     }
 
     func stop() {
         teardown()
-        model.musicSpectrum = []
+        model.audio.musicSpectrum = []
+    }
+
+    /// Drains the latest bands to the UI at ~30 Hz, skipping publishes when the
+    /// levels barely moved so a steady tone doesn't churn the view.
+    private func startDrain() {
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now(), repeating: 1.0 / 30.0)
+        timer.setEventHandler { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.bandsLock.lock()
+                let bands = self.latestBands
+                self.bandsLock.unlock()
+                let current = self.model.audio.musicSpectrum
+                guard Self.changed(bands, current) else { return }
+                self.model.audio.musicSpectrum = bands
+            }
+        }
+        timer.resume()
+        drainTimer = timer
+    }
+
+    /// True when the band set differs enough to be worth republishing.
+    private static func changed(_ new: [CGFloat], _ old: [CGFloat]) -> Bool {
+        guard new.count == old.count else { return true }
+        for i in new.indices where abs(new[i] - old[i]) >= 0.01 { return true }
+        return false
     }
 
     private func teardown() {
+        drainTimer?.cancel()
+        drainTimer = nil
         if let procID {
             if aggregateID != 0 { AudioDeviceStop(aggregateID, procID); AudioDeviceDestroyIOProcID(aggregateID, procID) }
             self.procID = nil

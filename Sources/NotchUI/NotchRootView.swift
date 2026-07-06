@@ -74,7 +74,7 @@ struct NotchRootView: View {
         case let .idle(activity):
             IdleCompactView(activity: activity, nowPlaying: model.nowPlaying,
                             calendar: model.calendar, battery: model.battery,
-                            stats: model.stats, musicSpectrum: model.musicSpectrum,
+                            stats: model.stats, audio: model.audio,
                             timer: model.notchTimer, privacy: model.privacy,
                             claudeStats: model.claudeStats, glow: glowColor,
                             liveActivities: model.carouselActivities, metrics: metrics)
@@ -105,7 +105,7 @@ struct NotchRootView: View {
         case .mirror:
             MirrorView(metrics: metrics, onClose: { model.showMirror = false })
         case let .dictation(phase):
-            DictationView(phase: phase, metrics: metrics, level: model.dictationLevel, spectrum: model.dictationSpectrum)
+            DictationView(phase: phase, metrics: metrics, audio: model.audio)
         }
     }
 
@@ -113,7 +113,7 @@ struct NotchRootView: View {
     private func expandedBody(_ activity: NotchActivity) -> some View {
         switch activity {
         case .playing, .none, .auto:
-            NowPlayingExpandedView(info: model.nowPlaying, musicSpectrum: model.musicSpectrum,
+            NowPlayingExpandedView(info: model.nowPlaying, audio: model.audio,
                                    metrics: metrics, glow: glowColor, onCommand: onCommand,
                                    onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
         case .calendar:
