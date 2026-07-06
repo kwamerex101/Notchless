@@ -81,16 +81,17 @@ final class ClaudeStatsParserTests: XCTestCase {
         XCTAssertEqual(second.stats?.input, (first.stats?.input ?? 0) + 1000)
     }
 
-    func test_sessionBlockSumsWithinFiveHours() {
-        // Two messages 1h apart → same 5-hour block; one 6h ago falls outside.
+    func test_sessionBlockIsActiveForRecentEntries() {
+        // Two recent messages a few minutes apart fall in the same active
+        // 5-hour block. (Kept recent so hour-flooring can't push the block's
+        // window out of range — the block-expiry path is exercised elsewhere.)
         writeTranscript("s.jsonl", lines: [
-            ("claude-sonnet-4", 1000, 0, 6 * 3600),   // old block, expired
-            ("claude-sonnet-4", 1000, 0, 30 * 60),    // current block
-            ("claude-sonnet-4", 1000, 0, 5 * 60),     // current block
+            ("claude-sonnet-4", 1000, 0, 3 * 60),
+            ("claude-sonnet-4", 1000, 0, 1 * 60),
         ])
         let result = ClaudeStatsController.parse(base: dir, cache: [:])
         let stats = try! XCTUnwrap(result.stats)
-        // The active block should have a positive cost and a reset countdown.
+        // An active block: positive cost and a live reset countdown.
         XCTAssertGreaterThan(stats.sessionCost, 0)
         XCTAssertNotNil(stats.sessionResetIn)
     }

@@ -8,6 +8,7 @@ struct TodoExpandedView: View {
 
     @State private var newTitle = ""
     @FocusState private var addFocused: Bool
+    @Environment(\.notchKeyFocus) private var keyFocus
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -48,7 +49,8 @@ struct TodoExpandedView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear { addFocused = true }
+        .onAppear { keyFocus(true); addFocused = true }
+        .onDisappear { keyFocus(false) }
     }
 
     private func row(_ todo: Todo) -> some View {

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import OSLog
 
 /// One logged deposit toward a goal. Amount is normally positive; a correction
 /// is an explicit negative entry. `label` groups deposits in the breakdown.
@@ -245,24 +246,39 @@ final class GoalStore: ObservableObject {
 
     private struct Payload: Codable { var goals: [Goal]; var completed: [Goal]; var pinnedID: UUID? }
 
+    private static let log = Logger(subsystem: "com.rexdanquah.Notchless", category: "GoalStore")
+
     private func load() {
-        let data = defaults.data(forKey: key)
+        guard let data = defaults.data(forKey: key)
             ?? (mirrorsICloud && SettingsStore.shared.syncViaICloud ? cloud.data(forKey: key) : nil)
-        guard let data, let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
+        else {
             goals = []; completed = []; pinnedID = nil; return
         }
-        goals = payload.goals
-        completed = payload.completed
-        pinnedID = payload.pinnedID
+        do {
+            let payload = try JSONDecoder().decode(Payload.self, from: data)
+            goals = payload.goals
+            completed = payload.completed
+            pinnedID = payload.pinnedID
+        } catch {
+            // Don't silently destroy user data on a decode failure — stash the
+            // unreadable blob under a timestamped backup key, then start empty.
+            Self.log.error("Goal decode failed, backing up: \(error.localizedDescription)")
+            defaults.set(data, forKey: "\(key).backup.\(Int(Date().timeIntervalSince1970))")
+            goals = []; completed = []; pinnedID = nil
+        }
     }
 
     private func save() {
         let payload = Payload(goals: goals, completed: completed, pinnedID: pinnedID)
-        guard let data = try? JSONEncoder().encode(payload) else { return }
-        defaults.set(data, forKey: key)
-        if mirrorsICloud && SettingsStore.shared.syncViaICloud {
-            cloud.set(data, forKey: key)
-            cloud.synchronize()
+        do {
+            let data = try JSONEncoder().encode(payload)
+            defaults.set(data, forKey: key)
+            if mirrorsICloud && SettingsStore.shared.syncViaICloud {
+                cloud.set(data, forKey: key)
+                cloud.synchronize()
+            }
+        } catch {
+            Self.log.error("Goal encode failed, not persisting: \(error.localizedDescription)")
         }
     }
 

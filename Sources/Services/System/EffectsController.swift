@@ -27,13 +27,21 @@ final class EffectsController {
             }
             .store(in: &cancellables)
 
-        // Hide while a fullscreen app is frontmost
-        if settings.hideInFullscreen {
-            NSWorkspace.shared.notificationCenter.addObserver(
-                self, selector: #selector(activeSpaceChanged),
-                name: NSWorkspace.activeSpaceDidChangeNotification, object: nil
-            )
-        }
+        // Hide while a fullscreen app is frontmost. Register unconditionally —
+        // the handler gates on the live setting — so toggling the pref at
+        // runtime takes effect without a relaunch.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(activeSpaceChanged),
+            name: NSWorkspace.activeSpaceDidChangeNotification, object: nil
+        )
+        // When the user turns the pref off while the panel is hidden, bring it
+        // back immediately (and re-evaluate when turned on).
+        settings.$hideInFullscreen
+            .sink { [weak self] on in
+                guard let self, let panel = self.panel else { return }
+                if on { self.activeSpaceChanged() } else { panel.animator().alphaValue = 1 }
+            }
+            .store(in: &cancellables)
     }
 
     @objc private func activeSpaceChanged() {

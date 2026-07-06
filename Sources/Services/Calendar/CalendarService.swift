@@ -6,6 +6,9 @@ import SwiftUI
 @MainActor
 final class CalendarService {
     var onChange: (([NotchEvent]) -> Void)?
+    /// Reports whether calendar access is currently denied/restricted, so the
+    /// UI can distinguish "no events" from "no permission".
+    var onAuthDenied: ((Bool) -> Void)?
 
     private let store = EKEventStore()
     private var observing = false
@@ -19,9 +22,13 @@ final class CalendarService {
     }
 
     private func requestAccessAndLoad() {
+        // Surface the current status immediately, then refine after the prompt.
+        let status = EKEventStore.authorizationStatus(for: .event)
+        onAuthDenied?(status == .denied || status == .restricted)
         store.requestFullAccessToEvents { [weak self] granted, _ in
             Task { @MainActor in
                 guard let self else { return }
+                self.onAuthDenied?(!granted)
                 if granted { self.reload() } else { self.onChange?([]) }
             }
         }

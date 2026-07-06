@@ -10,6 +10,7 @@ final class CalendarController {
 
     private var events: [NotchEvent] = []
     private var currentWeather: WeatherSnapshot?
+    private var authDenied = false
     private var refreshTimer: Timer?
 
     init(model: NotchViewModel) {
@@ -19,6 +20,10 @@ final class CalendarController {
     func start() {
         calendar.onChange = { [weak self] events in
             self?.events = events
+            self?.rebuild()
+        }
+        calendar.onAuthDenied = { [weak self] denied in
+            self?.authDenied = denied
             self?.rebuild()
         }
         weather.onChange = { [weak self] snap in
@@ -44,7 +49,8 @@ final class CalendarController {
             events: events,
             weatherText: currentWeather?.text,
             weatherSymbol: currentWeather?.symbol,
-            temperature: currentWeather?.temperature
+            temperature: currentWeather?.temperature,
+            authDenied: authDenied
         )
     }
 }

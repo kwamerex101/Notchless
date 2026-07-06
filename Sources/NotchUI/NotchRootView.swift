@@ -1,5 +1,18 @@
 import SwiftUI
 
+/// Passes a "request/release keyboard focus for the notch panel" callback down
+/// to in-notch text fields. Defaults to a no-op so previews/DebugRender work.
+private struct NotchKeyFocusKey: EnvironmentKey {
+    static let defaultValue: (Bool) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    var notchKeyFocus: (Bool) -> Void {
+        get { self[NotchKeyFocusKey.self] }
+        set { self[NotchKeyFocusKey.self] = newValue }
+    }
+}
+
 /// Root content hosted in the notch panel. Renders the resolved `NotchContent`
 /// inside the morphing black shape, and routes hover / tap / right-click.
 struct NotchRootView: View {
@@ -64,6 +77,7 @@ struct NotchRootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(NotchViewModel.morph, value: sizing.width)
         .animation(NotchViewModel.morph, value: panelHeight)
+        .environment(\.notchKeyFocus, { [weak model] want in model?.requestKeyFocus?(want) })
     }
 
     @ViewBuilder
@@ -81,7 +95,10 @@ struct NotchRootView: View {
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
+            // Key on the note id so a replacement note re-runs the entrance
+            // animation instead of reusing the previous view's `appeared` state.
             NotificationView(note: note, metrics: metrics)
+                .id(note.id)
         case let .expanded(activity):
             // Tab strip lives in the wings beside the physical notch — 3 glyphs to
             // the left of the camera, battery to the right, the notch in the empty

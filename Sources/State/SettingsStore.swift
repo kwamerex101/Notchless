@@ -263,54 +263,72 @@ final class SettingsStore: ObservableObject {
             // Nothing has synced yet if even the sentinel key is absent.
             guard cloud.object(forKey: Keys.launchAtLogin) != nil else { return }
 
-            launchAtLogin = cloud.bool(forKey: Keys.launchAtLogin)
-            syncViaICloud = cloud.bool(forKey: Keys.syncViaICloud)
-            hideInFullscreen = cloud.bool(forKey: Keys.hideInFullscreen)
-            hideInMissionControl = cloud.bool(forKey: Keys.hideInMissionControl)
-            hideFromScreenCapture = cloud.bool(forKey: Keys.hideFromScreenCapture)
-            forceSimulatedNotch = cloud.bool(forKey: Keys.forceSimulatedNotch)
-            simulatedDisplay = SimulatedDisplay(rawValue: cloud.string(forKey: Keys.simulatedDisplay) ?? "") ?? simulatedDisplay
-            idleActivity = NotchActivity(rawValue: cloud.string(forKey: Keys.idleActivity) ?? "") ?? idleActivity
-            glassStyle = GlassStyle(rawValue: cloud.string(forKey: Keys.glassStyle) ?? "") ?? glassStyle
-            glassIntensity = cloud.double(forKey: Keys.glassIntensity)
-            idleMostRecent = cloud.bool(forKey: Keys.idleMostRecent)
-            forceEnableActivity = cloud.bool(forKey: Keys.forceEnableActivity)
-            progressiveBlur = cloud.bool(forKey: Keys.progressiveBlur)
-            hapticFeedback = cloud.bool(forKey: Keys.hapticFeedback)
-            albumArtGlow = cloud.bool(forKey: Keys.albumArtGlow)
-            batteryEnabled = cloud.bool(forKey: Keys.batteryEnabled)
-            connectivityEnabled = cloud.bool(forKey: Keys.connectivityEnabled)
-            focusEnabled = cloud.bool(forKey: Keys.focusEnabled)
-            displayHUDEnabled = cloud.bool(forKey: Keys.displayHUDEnabled)
-            soundHUDEnabled = cloud.bool(forKey: Keys.soundHUDEnabled)
-            fileTrayEnabled = cloud.bool(forKey: Keys.fileTrayEnabled)
-            todosEnabled = cloud.bool(forKey: Keys.todosEnabled)
-            batteryShowPercentage = cloud.bool(forKey: Keys.batteryShowPercentage)
-            batteryLowThreshold = Int(cloud.longLong(forKey: Keys.batteryLowThreshold))
-            batteryNotifyCharged = cloud.bool(forKey: Keys.batteryNotifyCharged)
-            liveAudioVisualizer = cloud.bool(forKey: Keys.liveAudioVisualizer)
-            swipeToSeek = cloud.bool(forKey: Keys.swipeToSeek)
-            swipeGesturesEnabled = cloud.bool(forKey: Keys.swipeGesturesEnabled)
-            showTabBar = cloud.bool(forKey: Keys.showTabBar)
-            calendarShowWeather = cloud.bool(forKey: Keys.calendarShowWeather)
-            calendarShowEvents = cloud.bool(forKey: Keys.calendarShowEvents)
-            statsRefreshSeconds = cloud.double(forKey: Keys.statsRefreshSeconds)
-            statsShowCPU = cloud.bool(forKey: Keys.statsShowCPU)
-            statsShowMemory = cloud.bool(forKey: Keys.statsShowMemory)
-            statsShowNetwork = cloud.bool(forKey: Keys.statsShowNetwork)
-            timerSoundOnFinish = cloud.bool(forKey: Keys.timerSoundOnFinish)
-            clipboardEnabled = cloud.bool(forKey: Keys.clipboardEnabled)
-            clipboardHistorySize = Int(cloud.longLong(forKey: Keys.clipboardHistorySize))
-            privacyIndicatorEnabled = cloud.bool(forKey: Keys.privacyIndicatorEnabled)
-            claudeCompactStyle = ClaudeCompactStyle(rawValue: cloud.string(forKey: Keys.claudeCompactStyle) ?? "") ?? claudeCompactStyle
-            claudeShowSession = cloud.bool(forKey: Keys.claudeShowSession)
-            claudeShowWeek = cloud.bool(forKey: Keys.claudeShowWeek)
-            claudeShowSpend = cloud.bool(forKey: Keys.claudeShowSpend)
-            claudeShowChart = cloud.bool(forKey: Keys.claudeShowChart)
-            claudeShowLegend = cloud.bool(forKey: Keys.claudeShowLegend)
-            claudeChartDays = Int(cloud.longLong(forKey: Keys.claudeChartDays))
-            claudeChartCost = cloud.bool(forKey: Keys.claudeChartCost)
+            // Only apply keys that actually exist in iCloud — a store that was
+            // written by an older/newer build (or mid-migration) can be missing
+            // keys, and reading an absent key returns 0/false, which would
+            // silently flip toggles off on every external change.
+            pullBool(Keys.launchAtLogin) { launchAtLogin = $0 }
+            pullBool(Keys.syncViaICloud) { syncViaICloud = $0 }
+            pullBool(Keys.hideInFullscreen) { hideInFullscreen = $0 }
+            pullBool(Keys.hideInMissionControl) { hideInMissionControl = $0 }
+            pullBool(Keys.hideFromScreenCapture) { hideFromScreenCapture = $0 }
+            pullBool(Keys.forceSimulatedNotch) { forceSimulatedNotch = $0 }
+            pullString(Keys.simulatedDisplay) { simulatedDisplay = SimulatedDisplay(rawValue: $0) ?? simulatedDisplay }
+            pullString(Keys.idleActivity) { idleActivity = NotchActivity(rawValue: $0) ?? idleActivity }
+            pullString(Keys.glassStyle) { glassStyle = GlassStyle(rawValue: $0) ?? glassStyle }
+            pullDouble(Keys.glassIntensity) { glassIntensity = $0 }
+            pullBool(Keys.idleMostRecent) { idleMostRecent = $0 }
+            pullBool(Keys.forceEnableActivity) { forceEnableActivity = $0 }
+            pullBool(Keys.progressiveBlur) { progressiveBlur = $0 }
+            pullBool(Keys.hapticFeedback) { hapticFeedback = $0 }
+            pullBool(Keys.albumArtGlow) { albumArtGlow = $0 }
+            pullBool(Keys.batteryEnabled) { batteryEnabled = $0 }
+            pullBool(Keys.connectivityEnabled) { connectivityEnabled = $0 }
+            pullBool(Keys.focusEnabled) { focusEnabled = $0 }
+            pullBool(Keys.displayHUDEnabled) { displayHUDEnabled = $0 }
+            pullBool(Keys.soundHUDEnabled) { soundHUDEnabled = $0 }
+            pullBool(Keys.fileTrayEnabled) { fileTrayEnabled = $0 }
+            pullBool(Keys.todosEnabled) { todosEnabled = $0 }
+            pullBool(Keys.batteryShowPercentage) { batteryShowPercentage = $0 }
+            pullInt(Keys.batteryLowThreshold) { batteryLowThreshold = $0 }
+            pullBool(Keys.batteryNotifyCharged) { batteryNotifyCharged = $0 }
+            pullBool(Keys.liveAudioVisualizer) { liveAudioVisualizer = $0 }
+            pullBool(Keys.swipeToSeek) { swipeToSeek = $0 }
+            pullBool(Keys.swipeGesturesEnabled) { swipeGesturesEnabled = $0 }
+            pullBool(Keys.showTabBar) { showTabBar = $0 }
+            pullBool(Keys.calendarShowWeather) { calendarShowWeather = $0 }
+            pullBool(Keys.calendarShowEvents) { calendarShowEvents = $0 }
+            pullDouble(Keys.statsRefreshSeconds) { statsRefreshSeconds = $0 }
+            pullBool(Keys.statsShowCPU) { statsShowCPU = $0 }
+            pullBool(Keys.statsShowMemory) { statsShowMemory = $0 }
+            pullBool(Keys.statsShowNetwork) { statsShowNetwork = $0 }
+            pullBool(Keys.timerSoundOnFinish) { timerSoundOnFinish = $0 }
+            pullBool(Keys.clipboardEnabled) { clipboardEnabled = $0 }
+            pullInt(Keys.clipboardHistorySize) { clipboardHistorySize = $0 }
+            pullBool(Keys.privacyIndicatorEnabled) { privacyIndicatorEnabled = $0 }
+            pullString(Keys.claudeCompactStyle) { claudeCompactStyle = ClaudeCompactStyle(rawValue: $0) ?? claudeCompactStyle }
+            pullBool(Keys.claudeShowSession) { claudeShowSession = $0 }
+            pullBool(Keys.claudeShowWeek) { claudeShowWeek = $0 }
+            pullBool(Keys.claudeShowSpend) { claudeShowSpend = $0 }
+            pullBool(Keys.claudeShowChart) { claudeShowChart = $0 }
+            pullBool(Keys.claudeShowLegend) { claudeShowLegend = $0 }
+            pullInt(Keys.claudeChartDays) { claudeChartDays = $0 }
+            pullBool(Keys.claudeChartCost) { claudeChartCost = $0 }
         }
+    }
+
+    // Per-key pulls that no-op when the key is absent from iCloud.
+    private func pullBool(_ key: String, _ apply: (Bool) -> Void) {
+        if cloud.object(forKey: key) != nil { apply(cloud.bool(forKey: key)) }
+    }
+    private func pullInt(_ key: String, _ apply: (Int) -> Void) {
+        if cloud.object(forKey: key) != nil { apply(Int(cloud.longLong(forKey: key))) }
+    }
+    private func pullDouble(_ key: String, _ apply: (Double) -> Void) {
+        if cloud.object(forKey: key) != nil { apply(cloud.double(forKey: key)) }
+    }
+    private func pullString(_ key: String, _ apply: (String) -> Void) {
+        if let s = cloud.string(forKey: key) { apply(s) }
     }
 
     private enum Keys {

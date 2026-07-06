@@ -26,6 +26,12 @@ final class NotchPanel: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
     }
 
-    override var canBecomeKey: Bool { false }
+    /// Whether the panel may currently become key. False by default (pure
+    /// pass-through overlay); flipped true only while an in-notch text field is
+    /// being edited, so quick-add/quick-log can receive keystrokes without the
+    /// panel ever stealing input while collapsed.
+    var wantsKey = false
+
+    override var canBecomeKey: Bool { wantsKey }
     override var canBecomeMain: Bool { false }
 }
