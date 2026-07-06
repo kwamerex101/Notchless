@@ -45,7 +45,7 @@ struct TodoExpandedView: View {
             quickAdd
         }
         .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { addFocused = true }

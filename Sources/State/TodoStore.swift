@@ -64,6 +64,17 @@ struct Todo: Identifiable, Codable, Equatable {
     var allSubtasksDone: Bool {
         !subtasks.isEmpty && subtasks.allSatisfy(\.isDone)
     }
+
+    /// A compact monogram for the tight notch cue — the first letter of each
+    /// word (e.g. "MXN Wallet KYC Integration" → "MWKI"), capped at 4. A
+    /// single-word title falls back to its first three letters.
+    var initials: String {
+        let words = title.split(whereSeparator: { " -_".contains($0) })
+        if words.count >= 2 {
+            return words.prefix(4).compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(title.prefix(3)).uppercased()
+    }
 }
 
 /// The slice of `NSUbiquitousKeyValueStore` that `TodoStore` depends on.

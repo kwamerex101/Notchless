@@ -37,7 +37,7 @@ struct GoalExpandedView: View {
             }
         }
         .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -55,10 +55,16 @@ struct GoalExpandedView: View {
                         .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
                 }.buttonStyle(.plain)
             }
-            ProgressView(value: goal.fraction).tint(goal.percent >= 100 ? .green : .white)
-            HStack {
+            ProgressView(value: goal.fraction)
+                .tint(.green)
+                .animation(.easeInOut(duration: 0.5), value: goal.fraction)
+            HStack(spacing: 6) {
                 Text("\(goalFormatAmount(goal.current, symbol: symbol)) / \(goalFormatAmount(goal.target, symbol: symbol))")
                     .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1).minimumScaleFactor(0.75)
+                Text("\(goal.percent)%")
+                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(GoalCompactView.lightGreen)
                 Spacer()
                 Text(paceLabel(goal)).font(.system(size: 10, weight: .medium)).foregroundStyle(paceColor(goal))
             }

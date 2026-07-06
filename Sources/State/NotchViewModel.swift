@@ -100,16 +100,20 @@ final class NotchViewModel: ObservableObject {
         if notchTimer?.isActive ?? false { result.append(.timer) }
         if nowPlaying != nil { result.append(.playing) }
         if settings.todosEnabled, !todos.isEmpty { result.append(.todos) }
+        if settings.goalsEnabled, goals.hasActiveGoals { result.append(.goals) }
         if let battery, battery.isPluggedIn || battery.isCharging { result.append(.battery) }
         return result
     }
 
-    /// Everything the user can swipe through: the live activities plus the
-    /// always-available info pages (calendar, stats). Only browsable while at
-    /// least one activity is live — the notch stays bare when nothing is.
+    /// Everything the user can swipe through: the live activities (incl. Goals
+    /// when enabled) plus the info pages — Calendar always, System Stats and
+    /// Claude Usage only when their toggles are on.
     var carouselActivities: [NotchActivity] {
         var result = liveActivities
-        for page in [NotchActivity.calendar, .stats, .claudeUsage] where !result.contains(page) {
+        var pages: [NotchActivity] = [.calendar]
+        if settings.statsEnabled { pages.append(.stats) }
+        if settings.claudeUsageEnabled { pages.append(.claudeUsage) }
+        for page in pages where !result.contains(page) {
             result.append(page)
         }
         return result
@@ -141,13 +145,14 @@ final class NotchViewModel: ObservableObject {
         return liveActivities.first
     }
 
-    /// Advances the Auto carousel to the next page (horizontal swipe) — through
-    /// the live activities and the calendar/stats pages.
+    /// Advances the carousel to the next page (horizontal swipe) — through the
+    /// live activities and the calendar/stats/claude pages. Works in every idle
+    /// mode as long as there's more than one page to move between.
     func cycleLiveActivity() {
-        guard !liveActivities.isEmpty else { return }
         let carousel = carouselActivities
         guard carousel.count >= 2 else { return }
-        let current = manualActivity.flatMap { carousel.contains($0) ? $0 : nil } ?? liveActivities[0]
+        let current = (manualActivity.flatMap { carousel.contains($0) ? $0 : nil })
+            ?? liveActivities.first ?? carousel[0]
         let index = carousel.firstIndex(of: current) ?? 0
         manualActivity = carousel[(index + 1) % carousel.count]
     }
@@ -190,12 +195,12 @@ final class NotchViewModel: ObservableObject {
         case .duo: return nowPlaying != nil || (calendar?.hasEvents ?? false) || settings.forceEnableActivity
         case .dictation: return true  // the mic-ready cue always rests in the notch
         case .battery: return battery != nil
-        case .stats: return stats != nil
+        case .stats: return settings.statsEnabled && stats != nil
         case .timer: return true  // always rests so it can be started from the notch
         case .clipboard: return true
         case .todos: return settings.todosEnabled && !todos.isEmpty
         case .privacy: return privacy?.isActive ?? false
-        case .claudeUsage: return claudeStats != nil
+        case .claudeUsage: return settings.claudeUsageEnabled && claudeStats != nil
         case .goals: return settings.goalsEnabled && goals.hasActiveGoals
         }
     }

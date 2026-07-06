@@ -3,6 +3,30 @@ import XCTest
 
 @MainActor
 final class NotchTabBarModelTests: XCTestCase {
+    /// These tests exercise the carousel with `.stats`/`.claudeUsage` present, so
+    /// they need those pages enabled regardless of the machine's saved settings.
+    /// Snapshot + restore the real values so running tests never mutates the
+    /// user's config.
+    private var saved: (idle: NotchActivity, stats: Bool, claude: Bool)?
+
+    override func setUp() {
+        super.setUp()
+        let s = SettingsStore.shared
+        saved = (s.idleActivity, s.statsEnabled, s.claudeUsageEnabled)
+        s.statsEnabled = true
+        s.claudeUsageEnabled = true
+    }
+
+    override func tearDown() {
+        if let saved {
+            let s = SettingsStore.shared
+            s.idleActivity = saved.idle
+            s.statsEnabled = saved.stats
+            s.claudeUsageEnabled = saved.claude
+        }
+        super.tearDown()
+    }
+
     /// A model with one live activity (media) so the carousel has ≥2 pages:
     /// [.playing, .calendar, .stats, .claudeUsage].
     private func makeModel() -> NotchViewModel {

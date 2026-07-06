@@ -11,8 +11,9 @@ struct NotchRootView: View {
     var body: some View {
         let content = model.content
         let sizing = NotchSizing.size(for: content, metrics: metrics)
-        let barExtra = tabBarVisible ? NotchTabBar.height : 0
-        let panelHeight = sizing.height + barExtra
+        // The tab strip lives in the notch band (in the wings beside the camera),
+        // which the body already reserves — so the panel needs no extra height.
+        let panelHeight = sizing.height
 
         let expanded = { if case .expanded = content { return true } else { return false } }()
 
@@ -82,23 +83,22 @@ struct NotchRootView: View {
         case let .notification(note):
             NotificationView(note: note, metrics: metrics)
         case let .expanded(activity):
-            if tabBarVisible {
-                // Strip pinned to the top (in the notch's band); only 3 glyphs on
-                // the left + battery on the right, so the hardware notch sits in
-                // the empty gap. Body is pushed down by the strip's height.
-                ZStack(alignment: .top) {
-                    expandedBody(activity)
-                        .padding(.top, NotchTabBar.height)
+            // Tab strip lives in the wings beside the physical notch — 3 glyphs to
+            // the left of the camera, battery to the right, the notch in the empty
+            // middle — vertically centred in the notch band. The body keeps its own
+            // notch-clearing top padding, so the strip overlays the otherwise-empty
+            // band above the content (the panel sits at .statusBar level, above the
+            // menu bar, so the wings render).
+            ZStack(alignment: .top) {
+                expandedBody(activity)
+                if tabBarVisible {
                     NotchTabBar(activities: model.carouselActivities,
                                 active: activity,
                                 battery: model.battery,
-                                onSelect: { model.select($0) })
-                        // Just below the notch — the highest it renders visibly,
-                        // since the menu bar + hardware notch own the top strip.
-                        .padding(.top, metrics.notchHeight + 4)
+                                onSelect: { model.select($0) },
+                                notchWidth: metrics.notchWidth)
+                        .padding(.top, max(2, (metrics.notchHeight - NotchTabBar.height) / 2))
                 }
-            } else {
-                expandedBody(activity)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)

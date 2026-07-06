@@ -56,7 +56,7 @@ struct ClaudeStatsExpandedView: View {
             }
         }
         .padding(.top, metrics.notchHeight + 8)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
