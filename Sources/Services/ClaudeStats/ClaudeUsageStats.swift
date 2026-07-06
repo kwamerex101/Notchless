@@ -53,8 +53,20 @@ struct ClaudeUsageStats: Equatable {
         return "\(n)"
     }
 
+    /// Full amount with thousands separators, e.g. "$2,150.55".
     static func money(_ v: Double) -> String {
-        String(format: "$%.2f", v)
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.minimumFractionDigits = 2
+        f.maximumFractionDigits = 2
+        return "$" + (f.string(from: NSNumber(value: v)) ?? String(format: "%.2f", v))
+    }
+
+    /// Compact amount for the tiny notch cue, e.g. "$2.2K", "$8.30".
+    static func moneyCompact(_ v: Double) -> String {
+        if v >= 10_000 { return String(format: "$%.0fK", v / 1_000) }
+        if v >= 1_000 { return String(format: "$%.1fK", v / 1_000) }
+        return String(format: "$%.2f", v)
     }
 
     /// "5h", "1d 3h", "12m" — a short reset countdown.
