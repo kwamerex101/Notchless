@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         battery.start()
         stats.start()
         timerController.start()
+        ClipboardStore.shared.start()
 
         // Only capture system audio while something is actually playing.
         playbackObserver = model.$nowPlaying

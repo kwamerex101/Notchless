@@ -100,6 +100,7 @@ enum DebugRender {
                     case .battery: BatteryExpandedView(battery: nil, metrics: metrics)
                     case .stats: StatsExpandedView(stats: nil, metrics: metrics)
                     case .timer: TimerExpandedView(timer: nil, metrics: metrics)
+                    case .clipboard: ClipboardExpandedView(metrics: metrics)
                     }
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)

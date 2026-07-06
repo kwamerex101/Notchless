@@ -10,6 +10,7 @@
 		0029F1247A11AF71D23B083A /* TimerExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F062A26DB3BE4D77C98A8B /* TimerExpandedView.swift */; };
 		01F34F9436297606B950030C /* NotchlessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CFE1E4F2676C86CECCB7EE /* NotchlessApp.swift */; };
 		02136F25211397AFCB03D436 /* LLMModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1407D22EF1BD7E525E7BDD3A /* LLMModelStore.swift */; };
+		02390C26BAD19225C8D883F6 /* ClipboardExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */; };
 		0250D3AC1DF27F1CDA1EB52A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8612F3D7D4F7BD6C51E6033C /* SettingsStore.swift */; };
 		09238B763606DC8B03079D11 /* DuoExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF82551C4728C8BB952619D /* DuoExpandedView.swift */; };
 		0F3843A5336852BB88FE143D /* ColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5520E1FE9DC33332F0C2 /* ColorExtractor.swift */; };
@@ -55,6 +56,7 @@
 		72DEE317B05A1C697A6E5FEC /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = E306D38308F488634521A017 /* LLM */; };
 		742A0CDFB94FCFB8F30B5FDC /* NowPlayingInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0792D249EAFCEC1EEF403D61 /* NowPlayingInfo.swift */; };
 		74BCDFEFB26C88D0C152E17B /* NotchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90F95E41E2E1BBC18897287 /* NotchRootView.swift */; };
+		74FA0B8FCD9CC770D53365C0 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C649AE3C7BD6745FB69D96 /* ClipboardStore.swift */; };
 		7BE3B919A50B22D15AA965F9 /* DictationPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE525E793DDE3B7457DDD256 /* DictationPane.swift */; };
 		80A4687395BA0CBA2D28F23D /* LocalLLMEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ACF761DCA999E2FFDA1503F /* LocalLLMEngine.swift */; };
 		8216F256E7F31B5D6C227BF2 /* PermissionsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BDE62C222102C328F32CB4 /* PermissionsPane.swift */; };
@@ -176,6 +178,7 @@
 		88A003741FACD62A63A8BADB /* DictationTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationTranscriber.swift; sourceTree = "<group>"; };
 		8A97033A82195EFA72F28A1F /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		8E0748A812F9F42C421EF0CA /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
+		8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardExpandedView.swift; sourceTree = "<group>"; };
 		8FFB73DAD95884D3AF747F72 /* DictationHotkey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHotkey.swift; sourceTree = "<group>"; };
 		917DCFC4978B80FC1CFE4028 /* VisualizerBars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualizerBars.swift; sourceTree = "<group>"; };
 		92DA3597A1503D887F3BBC8F /* PermissionRequester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionRequester.swift; sourceTree = "<group>"; };
@@ -219,6 +222,7 @@
 		E1CF41BD0F0A551BFA2E6FE3 /* SystemAudioTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioTap.swift; sourceTree = "<group>"; };
 		E27C8C2FB9CEA532C502AF7E /* MonthGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGrid.swift; sourceTree = "<group>"; };
 		E29A8D6C6C6B9D21FFB41843 /* NotificationsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsController.swift; sourceTree = "<group>"; };
+		E4C649AE3C7BD6745FB69D96 /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryExpandedView.swift; sourceTree = "<group>"; };
 		E98779ED36B57471977EF2DE /* OSDSuppressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSDSuppressor.swift; sourceTree = "<group>"; };
 		EE7C371A4406389B266AA7E2 /* GeneralPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralPane.swift; sourceTree = "<group>"; };
@@ -277,6 +281,14 @@
 				00CFE1E4F2676C86CECCB7EE /* NotchlessApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		298627692F8BE2FB064606A5 /* Clipboard */ = {
+			isa = PBXGroup;
+			children = (
+				E4C649AE3C7BD6745FB69D96 /* ClipboardStore.swift */,
+			);
+			path = Clipboard;
 			sourceTree = "<group>";
 		};
 		2F2F3CC58070A1A42B7A9231 /* NowPlaying */ = {
@@ -351,6 +363,7 @@
 				5CDDFE936712696CF23BA205 /* Brightness */,
 				CBAABD5BB7FECE92A731638E /* Calendar */,
 				EF1F1DB89E808C8888725AFB /* Camera */,
+				298627692F8BE2FB064606A5 /* Clipboard */,
 				D6D56621ABB4867F8B1E7B79 /* Dictation */,
 				966EE50E9A92880E74C4A510 /* Focus */,
 				F41C21119427E2FA50029398 /* HUD */,
@@ -380,6 +393,7 @@
 			children = (
 				E6C656CD084D52CB3E45C0B9 /* BatteryExpandedView.swift */,
 				2F033CA4C5E864BE6FB31026 /* CalendarExpandedView.swift */,
+				8F2AA2E4B0C0CD0CA2AA5DB6 /* ClipboardExpandedView.swift */,
 				8E0748A812F9F42C421EF0CA /* DictationView.swift */,
 				9BF82551C4728C8BB952619D /* DuoExpandedView.swift */,
 				C644C5BAAD160A9D15B01F3A /* FileTrayView.swift */,
@@ -669,6 +683,8 @@
 				A255E19EC1757AA78FAC8CE0 /* CameraSession.swift in Sources */,
 				F38318C30E19B3B195254FC3 /* ClaudeAPIClient.swift in Sources */,
 				F5BD047F0397AC7FA41653B6 /* CleanupGate.swift in Sources */,
+				02390C26BAD19225C8D883F6 /* ClipboardExpandedView.swift in Sources */,
+				74FA0B8FCD9CC770D53365C0 /* ClipboardStore.swift in Sources */,
 				0F3843A5336852BB88FE143D /* ColorExtractor.swift in Sources */,
 				A6C7EA405EB343EF243EBF57 /* CorrectionMiner.swift in Sources */,
 				BDBAE5608769B6C96CFF5749 /* DebugRender.swift in Sources */,
