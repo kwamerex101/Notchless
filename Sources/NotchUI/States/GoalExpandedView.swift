@@ -68,6 +68,15 @@ struct GoalExpandedView: View {
                 Spacer()
                 Text(paceLabel(goal)).font(.system(size: 10, weight: .medium)).foregroundStyle(paceColor(goal))
             }
+            HStack {
+                Text("Ends \(goalFormatDate(goal.deadline))")
+                    .font(.system(size: 9)).foregroundStyle(.white.opacity(0.45))
+                Spacer()
+                if let need = goal.neededPerMonth(now: Date()) {
+                    Text("Need \(goalFormatAmount(need, symbol: symbol))/mo")
+                        .font(.system(size: 9, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                }
+            }
             if !goal.breakdown.isEmpty {
                 ForEach(goal.breakdown, id: \.label) { item in
                     HStack {

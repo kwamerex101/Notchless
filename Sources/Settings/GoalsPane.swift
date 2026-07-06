@@ -109,6 +109,22 @@ private struct GoalSettingsCard: View {
             Text("\(goalFormatAmount(live.current, symbol: symbol)) / \(goalFormatAmount(live.target, symbol: symbol)) · \(live.percent)%")
                 .font(.callout).foregroundStyle(.secondary)
 
+            // Timeline: editable start + end, months left, and the catch-up rate.
+            HStack(spacing: 10) {
+                DatePicker("", selection: dateBinding(\.startDate), displayedComponents: .date)
+                    .labelsHidden()
+                Text("→").foregroundStyle(.secondary)
+                DatePicker("", selection: dateBinding(\.deadline), displayedComponents: .date)
+                    .labelsHidden()
+                Spacer()
+                Text("\(Int(live.monthsRemaining(now: Date()).rounded())) mo left")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let need = live.neededPerMonth(now: Date()) {
+                Text("Save \(goalFormatAmount(need, symbol: symbol))/mo to finish on time")
+                    .font(.caption.weight(.medium)).foregroundStyle(.orange)
+            }
+
             // Quick-log: add a contribution (amount + label) right here.
             HStack(spacing: 6) {
                 TextField("Amount", text: $amountText).frame(width: 90)
@@ -138,5 +154,17 @@ private struct GoalSettingsCard: View {
               !labelText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         _ = store.logContribution(goalID: live.id, amount: amount, label: labelText)
         amountText = ""; labelText = ""
+    }
+
+    /// Edits a date field on the goal and persists via `updateGoal`.
+    private func dateBinding(_ keyPath: WritableKeyPath<Goal, Date>) -> Binding<Date> {
+        Binding(
+            get: { live[keyPath: keyPath] },
+            set: {
+                var g = store.goals.first { $0.id == goal.id } ?? goal
+                g[keyPath: keyPath] = $0
+                store.updateGoal(g)
+            }
+        )
     }
 }
