@@ -47,6 +47,10 @@ final class SettingsStore: ObservableObject {
     @Published var idleMostRecent: Bool { didSet { persist(oldValue != idleMostRecent) } }
     @Published var forceEnableActivity: Bool { didSet { persist(oldValue != forceEnableActivity) } }
 
+    // Appearance
+    @Published var glassStyle: GlassStyle { didSet { persist(oldValue != glassStyle) } }
+    @Published var glassIntensity: Double { didSet { persist(oldValue != glassIntensity) } }
+
     // Behaviour
     @Published var progressiveBlur: Bool { didSet { persist(oldValue != progressiveBlur) } }
     @Published var hapticFeedback: Bool { didSet { persist(oldValue != hapticFeedback) } }
@@ -73,6 +77,8 @@ final class SettingsStore: ObservableObject {
             Keys.forceSimulatedNotch: false,
             Keys.simulatedDisplay: SimulatedDisplay.main.rawValue,
             Keys.idleActivity: NotchActivity.auto.rawValue,
+            Keys.glassStyle: GlassStyle.clear.rawValue,
+            Keys.glassIntensity: 0.5,
             Keys.idleMostRecent: false,
             Keys.forceEnableActivity: true,
             Keys.progressiveBlur: true,
@@ -95,6 +101,8 @@ final class SettingsStore: ObservableObject {
         forceSimulatedNotch = defaults.bool(forKey: Keys.forceSimulatedNotch)
         simulatedDisplay = SimulatedDisplay(rawValue: defaults.string(forKey: Keys.simulatedDisplay) ?? "") ?? .main
         idleActivity = NotchActivity(rawValue: defaults.string(forKey: Keys.idleActivity) ?? "") ?? .playing
+        glassStyle = GlassStyle(rawValue: defaults.string(forKey: Keys.glassStyle) ?? "") ?? .clear
+        glassIntensity = defaults.double(forKey: Keys.glassIntensity)
         idleMostRecent = defaults.bool(forKey: Keys.idleMostRecent)
         forceEnableActivity = defaults.bool(forKey: Keys.forceEnableActivity)
         progressiveBlur = defaults.bool(forKey: Keys.progressiveBlur)
@@ -124,6 +132,8 @@ final class SettingsStore: ObservableObject {
             (Keys.forceSimulatedNotch, forceSimulatedNotch),
             (Keys.simulatedDisplay, simulatedDisplay.rawValue),
             (Keys.idleActivity, idleActivity.rawValue),
+            (Keys.glassStyle, glassStyle.rawValue),
+            (Keys.glassIntensity, glassIntensity),
             (Keys.idleMostRecent, idleMostRecent),
             (Keys.forceEnableActivity, forceEnableActivity),
             (Keys.progressiveBlur, progressiveBlur),
@@ -167,6 +177,8 @@ final class SettingsStore: ObservableObject {
         static let forceSimulatedNotch = "forceSimulatedNotch"
         static let simulatedDisplay = "simulatedDisplay"
         static let idleActivity = "idleActivity"
+        static let glassStyle = "glassStyle"
+        static let glassIntensity = "glassIntensity"
         static let idleMostRecent = "idleMostRecent"
         static let forceEnableActivity = "forceEnableActivity"
         static let progressiveBlur = "progressiveBlur"
