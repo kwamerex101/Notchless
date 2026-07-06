@@ -118,6 +118,7 @@
 		EFB78AA22EB956491E9E0FD2 /* CalendarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7436C1E71C7C818FEBB90CF8 /* CalendarController.swift */; };
 		F14D81FF71DAC194762E6FF0 /* BluetoothService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */; };
 		F38318C30E19B3B195254FC3 /* ClaudeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DBEFD958A6F2DC1B51F3CE /* ClaudeAPIClient.swift */; };
+		F3C587D842C9F0737A3D54A5 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C4A9953526249991C127E3 /* NetworkService.swift */; };
 		F44E514A7B4FA994205C18A8 /* ParakeetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */; };
 		F5BD047F0397AC7FA41653B6 /* CleanupGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D9737225F607B50F06D595 /* CleanupGate.swift */; };
 		F721B62A4AE944C7CF5BC17A /* PermissionRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92DA3597A1503D887F3BBC8F /* PermissionRequester.swift */; };
@@ -216,6 +217,7 @@
 		B0A39DBA12D85AB052A38D94 /* MediaController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaController.swift; sourceTree = "<group>"; };
 		B0F062A26DB3BE4D77C98A8B /* TimerExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerExpandedView.swift; sourceTree = "<group>"; };
 		B5AE8532315C968275964F0D /* HistoryCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCipher.swift; sourceTree = "<group>"; };
+		B7C4A9953526249991C127E3 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		B981ADF62D0E9492C32F5889 /* NotchShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchShape.swift; sourceTree = "<group>"; };
 		B9DADDD961F4A1E39AB7B936 /* BluetoothService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothService.swift; sourceTree = "<group>"; };
 		BB0E639D039BCAD8A483DA77 /* BatteryInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInfo.swift; sourceTree = "<group>"; };
@@ -398,6 +400,7 @@
 				D6D56621ABB4867F8B1E7B79 /* Dictation */,
 				966EE50E9A92880E74C4A510 /* Focus */,
 				F41C21119427E2FA50029398 /* HUD */,
+				E321E580B4465863194D1151 /* Network */,
 				2F2F3CC58070A1A42B7A9231 /* NowPlaying */,
 				ECD0926BBFB1CF701F381A71 /* Power */,
 				F30F7E1F42E81EE29DB587C2 /* Privacy */,
@@ -587,6 +590,14 @@
 			path = Battery;
 			sourceTree = "<group>";
 		};
+		E321E580B4465863194D1151 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				B7C4A9953526249991C127E3 /* NetworkService.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
 		ECD0926BBFB1CF701F381A71 /* Power */ = {
 			isa = PBXGroup;
 			children = (
@@ -773,6 +784,7 @@
 				0E3C15B2B033685CAC9F54C5 /* MiniCharts.swift in Sources */,
 				5814005032654FD0891558A7 /* MirrorView.swift in Sources */,
 				29591514593BEC3CA130C411 /* MonthGrid.swift in Sources */,
+				F3C587D842C9F0737A3D54A5 /* NetworkService.swift in Sources */,
 				5EFBF404F651C37E94C68F53 /* NotchGeometry.swift in Sources */,
 				645101E6DBF58D1CCEB31F8A /* NotchHostingView.swift in Sources */,
 				ABEE83840B0CE61706AF8C1F /* NotchMouseTracker.swift in Sources */,
