@@ -5,7 +5,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
     case nowPlaying, calendar, fileTray, dictation, lockScreen
-    case about
+    case permissions, about
 
     var id: String { rawValue }
 
@@ -22,6 +22,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return "File Tray"
         case .dictation: return "Dictation"
         case .lockScreen: return "Lock Screen"
+        case .permissions: return "Permissions"
         case .about: return "About"
         }
     }
@@ -39,6 +40,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return "tray.fill"
         case .dictation: return "mic.fill"
         case .lockScreen: return "lock.fill"
+        case .permissions: return "hand.raised.fill"
         case .about: return "info.circle.fill"
         }
     }
@@ -56,6 +58,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .fileTray: return .gray
         case .dictation: return .teal
         case .lockScreen: return .black
+        case .permissions: return .blue
         case .about: return .gray
         }
     }
@@ -78,7 +81,7 @@ struct SettingsView: View {
                     ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation, .lockScreen]) { row($0) }
                 }
                 Section("Notchless") {
-                    ForEach([SettingsSection.about]) { row($0) }
+                    ForEach([SettingsSection.permissions, .about]) { row($0) }
                 }
             }
             .navigationSplitViewColumnWidth(220)
@@ -116,6 +119,7 @@ struct SettingsView: View {
         switch selection {
         case .general: GeneralPane(settings: settings)
         case .dictation: DictationPane()
+        case .permissions: PermissionsPane()
         default: PlaceholderPane(section: selection, settings: settings)
         }
     }
