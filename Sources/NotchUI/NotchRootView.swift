@@ -21,6 +21,11 @@ struct NotchRootView: View {
     var onCommand: (MediaCommand) -> Void = { _ in }
     var onOpenSettings: () -> Void = {}
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Shared namespace so album art morphs between the compact sliver and the
+    /// expanded tile instead of cross-fading.
+    @Namespace private var artworkNamespace
+
     var body: some View {
         let content = model.content
         let sizing = NotchSizing.size(for: content, metrics: metrics)
@@ -70,7 +75,7 @@ struct NotchRootView: View {
                         // inserts/removes the view — otherwise the transition below
                         // never fires and swaps fall back to a plain crossfade.
                         .id(contentKey(content))
-                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+                        .transition(contentTransition)
                 }
                 .contentShape(NotchShape(topCornerRadius: sizing.topRadius,
                                          bottomCornerRadius: sizing.bottomRadius))
@@ -87,6 +92,22 @@ struct NotchRootView: View {
         // continuous object instead of the radii snapping.
         .animation(NotchMotion.morph, value: sizing)
         .environment(\.notchKeyFocus, { [weak model] want in model?.requestKeyFocus?(want) })
+    }
+
+    /// A carousel page move slides horizontally toward the new page; every other
+    /// change (expand/collapse, transients) scales out of the notch. Reduce
+    /// Motion collapses both to a plain fade.
+    private var contentTransition: AnyTransition {
+        if reduceMotion { return .opacity }
+        switch model.lastMoveKind {
+        case .page:
+            let inEdge: Edge = model.lastMoveDirection > 0 ? .trailing : .leading
+            let outEdge: Edge = model.lastMoveDirection > 0 ? .leading : .trailing
+            return .asymmetric(insertion: .move(edge: inEdge).combined(with: .opacity),
+                               removal: .move(edge: outEdge).combined(with: .opacity))
+        case .state:
+            return .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+        }
     }
 
     /// Stable identity per content state so SwiftUI runs insert/remove
@@ -115,7 +136,8 @@ struct NotchRootView: View {
                             stats: model.stats, audio: model.audio,
                             timer: model.notchTimer, privacy: model.privacy,
                             claudeStats: model.claudeStats, glow: glowColor,
-                            liveActivities: model.carouselActivities, metrics: metrics)
+                            liveActivities: model.carouselActivities, metrics: metrics,
+                            artworkNamespace: artworkNamespace)
         case let .hud(kind):
             HUDView(kind: kind, metrics: metrics)
         case let .notification(note):
@@ -156,7 +178,8 @@ struct NotchRootView: View {
         case .playing, .none, .auto:
             NowPlayingExpandedView(info: model.nowPlaying, audio: model.audio,
                                    metrics: metrics, glow: glowColor, onCommand: onCommand,
-                                   onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) })
+                                   onActivateSource: { activateSource(model.nowPlaying?.bundleIdentifier) },
+                                   artworkNamespace: artworkNamespace)
         case .calendar:
             CalendarExpandedView(snapshot: model.calendar, metrics: metrics)
         case .duo:

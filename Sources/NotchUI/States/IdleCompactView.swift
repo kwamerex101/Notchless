@@ -16,6 +16,8 @@ struct IdleCompactView: View {
     /// All concurrently-live activities (for the pager dots) and the order used.
     var liveActivities: [NotchActivity] = []
     let metrics: NotchMetrics
+    /// Shared namespace so the artwork sliver morphs into the expanded tile.
+    var artworkNamespace: Namespace.ID? = nil
     @ObservedObject private var todos = TodoStore.shared
 
     /// Horizontal inset for edge content. The bottom corner curve reaches
@@ -158,17 +160,20 @@ struct IdleCompactView: View {
     }
 
     @ViewBuilder private var artwork: some View {
-        if let art = nowPlaying?.artwork {
-            Image(nsImage: art)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 20, height: 20)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-        } else {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color.white.opacity(0.15))
-                .frame(width: 20, height: 20)
-                .overlay(Image(systemName: "music.note").font(.system(size: 10)).foregroundStyle(.white.opacity(0.7)))
+        Group {
+            if let art = nowPlaying?.artwork {
+                Image(nsImage: art)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 20, height: 20)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.white.opacity(0.15))
+                    .frame(width: 20, height: 20)
+                    .overlay(Image(systemName: "music.note").font(.system(size: 10)).foregroundStyle(.white.opacity(0.7)))
+            }
         }
+        .matchedArtwork(artworkNamespace)
     }
 }

@@ -185,6 +185,7 @@ final class NotchViewModel: ObservableObject {
         // Same motion + haptic as a tab tap, so a swipe animates identically
         // instead of jump-cutting.
         lastMoveDirection = 1
+        lastMoveKind = .page
         withAnimation(Self.morph) { manualActivity = carousel[(index + 1) % carousel.count] }
         if settings.hapticFeedback { HapticService.tap() }
     }
@@ -192,6 +193,11 @@ final class NotchViewModel: ObservableObject {
     /// Direction of the most recent carousel move (+1 forward, -1 back), so the
     /// view can slide page content the right way. Read by NotchRootView.
     private(set) var lastMoveDirection = 1
+
+    /// Whether the last content change was a carousel page move (slide) or a
+    /// state change like expand/collapse (scale from the notch).
+    enum MoveKind { case state, page }
+    private(set) var lastMoveKind: MoveKind = .state
 
     /// Jumps the carousel straight to `activity` (a tab tap). Mirrors what a
     /// swipe does for one step: sets the manual pick and gives haptic feedback.
@@ -201,6 +207,13 @@ final class NotchViewModel: ObservableObject {
     /// tappable even when nothing is live.
     func select(_ activity: NotchActivity) {
         guard carouselActivities.contains(activity) else { return }
+        // Slide toward the tapped page: derive direction from the index delta.
+        let carousel = carouselActivities
+        if let from = (manualActivity ?? liveActivities.first).flatMap({ carousel.firstIndex(of: $0) }),
+           let to = carousel.firstIndex(of: activity) {
+            lastMoveDirection = to >= from ? 1 : -1
+        }
+        lastMoveKind = .page
         withAnimation(Self.morph) { manualActivity = activity }
         if settings.hapticFeedback { HapticService.tap() }
     }
@@ -245,6 +258,7 @@ final class NotchViewModel: ObservableObject {
 
     func hoverChanged(_ hovering: Bool) {
         collapseWork?.cancel()
+        lastMoveKind = .state
         if hovering {
             // Expand directly on hover — no click required.
             if interaction != .expanded {
@@ -255,6 +269,7 @@ final class NotchViewModel: ObservableObject {
             // Grace delay before collapsing so brief exits don't flicker.
             let work = DispatchWorkItem { [weak self] in
                 guard let self else { return }
+                self.lastMoveKind = .state
                 withAnimation(Self.morph) {
                     self.interaction = .collapsed
                     if self.settings.idleActivity != .auto { self.manualActivity = nil }
@@ -266,6 +281,7 @@ final class NotchViewModel: ObservableObject {
     }
 
     func toggleMirror() {
+        lastMoveKind = .state
         withAnimation(Self.morph) { showMirror.toggle() }
     }
 
@@ -273,6 +289,7 @@ final class NotchViewModel: ObservableObject {
     /// auto-dismiss after a beat; pass nil to clear immediately.
     func setDictation(_ phase: DictationPhase?) {
         dictationDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { dictation = phase }
         if let phase, !phase.isActive {
             let work = DispatchWorkItem { [weak self] in
@@ -286,11 +303,13 @@ final class NotchViewModel: ObservableObject {
     /// A click keeps the notch open (buttons handle their own taps); it never
     /// collapses, so clicking inside the expanded panel is safe.
     func tapped() {
+        lastMoveKind = .state
         withAnimation(Self.morph) { interaction = .expanded }
     }
 
     func collapse() {
         collapseWork?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.morph) {
             interaction = .collapsed
             if settings.idleActivity != .auto { manualActivity = nil }
@@ -301,6 +320,7 @@ final class NotchViewModel: ObservableObject {
 
     func showHUD(_ kind: HUDKind) {
         hudDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { hud = kind }
         let work = DispatchWorkItem { [weak self] in
             withAnimation(Self.morph) { self?.hud = nil }
@@ -313,6 +333,7 @@ final class NotchViewModel: ObservableObject {
 
     func show(_ note: TransientNotification) {
         notifDismiss?.cancel()
+        lastMoveKind = .state
         withAnimation(Self.quickMorph) { notification = note }
         let work = DispatchWorkItem { [weak self] in
             withAnimation(Self.morph) { self?.notification = nil }

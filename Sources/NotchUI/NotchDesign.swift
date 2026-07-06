@@ -19,4 +19,14 @@ extension View {
     func notchSectionHeader() -> some View {
         font(NotchDesign.headerFont).foregroundStyle(.white.opacity(NotchDesign.headerOpacity))
     }
+
+    /// Tags album artwork so it morphs between the compact sliver and the
+    /// expanded tile. No-op when no namespace is supplied (previews/DebugRender).
+    @ViewBuilder func matchedArtwork(_ namespace: Namespace.ID?) -> some View {
+        if let namespace {
+            matchedGeometryEffect(id: "artwork", in: namespace)
+        } else {
+            self
+        }
+    }
 }
