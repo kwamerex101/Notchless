@@ -8,7 +8,7 @@ struct IdleCompactView: View {
     let calendar: CalendarSnapshot?
     var battery: BatteryInfo? = nil
     var stats: SystemStats? = nil
-    var musicSpectrum: [CGFloat] = []
+    @ObservedObject var audio: AudioLevelsModel
     var timer: NotchTimerInfo? = nil
     var privacy: PrivacyStatus? = nil
     var claudeStats: ClaudeUsageStats? = nil
@@ -104,7 +104,7 @@ struct IdleCompactView: View {
         switch activity {
         case .playing, .duo, .none, .auto:
             VisualizerBars(isPlaying: nowPlaying?.isPlaying ?? false,
-                           color: glow ?? .white, height: 15, spectrum: musicSpectrum)
+                           color: glow ?? .white, height: 15, spectrum: audio.musicSpectrum)
                 .frame(width: 38)
         case .calendar:
             Image(systemName: "calendar")

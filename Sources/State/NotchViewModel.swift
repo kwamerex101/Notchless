@@ -22,9 +22,9 @@ final class NotchViewModel: ObservableObject {
     @Published var claudeStats: ClaudeUsageStats?
     /// The activity the user cycled to in the Auto carousel (nil = default top).
     @Published private var manualActivity: NotchActivity?
-    /// Live audio-band levels (low→high) from the system-audio tap, driving the
-    /// now-playing visualizer. Empty when not capturing.
-    @Published var musicSpectrum: [CGFloat] = []
+    /// High-frequency audio levels live here, off the god model, so the ~30 Hz
+    /// visualizer stream only invalidates the visualizer subtree.
+    let audio = AudioLevelsModel()
     /// Vibrant color sampled from the current artwork (album-art glow).
     @Published var artworkColor: Color?
 
@@ -44,8 +44,6 @@ final class NotchViewModel: ObservableObject {
 
     // Dictation (ListenToMe)
     @Published var dictation: DictationPhase?
-    @Published var dictationLevel: CGFloat = 0.5
-    @Published var dictationSpectrum: [CGFloat] = []
     let dictationSettings = DictationSettings.shared
     let dictationDictionary = DictationDictionary.shared
     let dictationHistory = DictationHistory.shared

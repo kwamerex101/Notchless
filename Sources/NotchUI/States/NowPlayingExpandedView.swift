@@ -4,7 +4,7 @@ import SwiftUI
 /// draggable scrubber, and the transport row (see PLAN.md §1.1).
 struct NowPlayingExpandedView: View {
     let info: NowPlayingInfo?
-    var musicSpectrum: [CGFloat] = []
+    @ObservedObject var audio: AudioLevelsModel
     let metrics: NotchMetrics
     var glow: Color? = nil
     var onCommand: (MediaCommand) -> Void = { _ in }
@@ -41,7 +41,7 @@ struct NowPlayingExpandedView: View {
             }
             Spacer(minLength: 6)
             VisualizerBars(isPlaying: info?.isPlaying ?? false, color: glow ?? .white,
-                           barCount: 7, height: 18, spectrum: musicSpectrum)
+                           barCount: 7, height: 18, spectrum: audio.musicSpectrum)
                 .frame(width: 44)
         }
     }

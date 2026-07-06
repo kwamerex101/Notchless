@@ -6,10 +6,7 @@ import SwiftUI
 struct DictationView: View {
     let phase: DictationPhase
     let metrics: NotchMetrics
-    /// Live audio level 0…1 for the recording waveform.
-    var level: CGFloat = 0.5
-    /// Live frequency-band levels (low→high) driving the waveform.
-    var spectrum: [CGFloat] = []
+    @ObservedObject var audio: AudioLevelsModel
 
     var body: some View {
         HStack(spacing: 12) {
@@ -65,7 +62,7 @@ struct DictationView: View {
     @ViewBuilder private var trailing: some View {
         switch phase {
         case .recording:
-            RecordingWaveform(spectrum: spectrum)
+            RecordingWaveform(spectrum: audio.dictationSpectrum)
                 .frame(width: 96, height: 26)
         case .transcribing, .cleaning:
             ProgressView()

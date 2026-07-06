@@ -51,10 +51,10 @@ final class DictationController {
         hotkey.requiredFlags = settings.hotkey.requiredFlags
         transcriber = makeTranscriber()
         transcriber.onLevel = { [weak self] level in
-            self?.model.dictationLevel = level
+            self?.model.audio.dictationLevel = level
         }
         transcriber.onSpectrum = { [weak self] spectrum in
-            self?.model.dictationSpectrum = spectrum
+            self?.model.audio.dictationSpectrum = spectrum
         }
         model.setDictation(.recording)
         if settings.soundCues { SoundCue.recordingStarted() }
