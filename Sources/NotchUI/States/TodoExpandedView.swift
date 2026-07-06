@@ -13,9 +13,7 @@ struct TodoExpandedView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Tasks")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                Text("Tasks").notchSectionHeader()
                 Spacer()
                 if store.openCount > 0 {
                     Text("\(store.openCount) left")
@@ -40,7 +38,7 @@ struct TodoExpandedView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .animation(.easeInOut(duration: 0.25), value: store.items)
+                .animation(NotchMotion.quick, value: store.items)
             }
 
             quickAdd

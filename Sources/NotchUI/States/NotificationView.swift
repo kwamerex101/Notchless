@@ -34,7 +34,7 @@ struct NotificationView: View {
         .padding(.bottom, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .onAppear {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { appeared = true }
+            withAnimation(NotchMotion.quick) { appeared = true }
         }
     }
 

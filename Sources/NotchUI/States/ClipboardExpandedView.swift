@@ -9,9 +9,7 @@ struct ClipboardExpandedView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Clipboard")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                Text("Clipboard").notchSectionHeader()
                 Spacer()
                 Button { store.pickColor() } label: {
                     Label("Pick colour", systemImage: "eyedropper")

@@ -42,6 +42,6 @@ struct HUDBar: View {
                     .frame(width: max(6, geo.size.width * CGFloat(min(1, max(0, level)))))
             }
         }
-        .animation(.spring(response: 0.28, dampingFraction: 0.8), value: level)
+        .animation(NotchMotion.fill, value: level)
     }
 }

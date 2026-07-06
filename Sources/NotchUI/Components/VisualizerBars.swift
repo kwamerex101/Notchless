@@ -26,7 +26,7 @@ struct VisualizerBars: View {
             DancingBars(color: color, barCount: barCount, height: height)
         } else {
             BarStack(levels: staticLevels, color: color, isPlaying: isPlaying, height: height)
-                .animation(reduceMotion ? nil : .spring(response: 0.16, dampingFraction: 0.6), value: spectrum)
+                .animation(reduceMotion ? nil : NotchMotion.spectrum, value: spectrum)
         }
     }
 
