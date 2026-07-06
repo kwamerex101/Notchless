@@ -63,6 +63,7 @@ final class SettingsStore: ObservableObject {
     @Published var displayHUDEnabled: Bool { didSet { persist(oldValue != displayHUDEnabled) } }
     @Published var soundHUDEnabled: Bool { didSet { persist(oldValue != soundHUDEnabled) } }
     @Published var fileTrayEnabled: Bool { didSet { persist(oldValue != fileTrayEnabled) } }
+    @Published var todosEnabled: Bool { didSet { persist(oldValue != todosEnabled) } }
 
     // Goals
     @Published var goalsEnabled: Bool { didSet { persist(oldValue != goalsEnabled) } }
@@ -131,6 +132,7 @@ final class SettingsStore: ObservableObject {
             Keys.displayHUDEnabled: true,
             Keys.soundHUDEnabled: true,
             Keys.fileTrayEnabled: true,
+            Keys.todosEnabled: true,
             Keys.batteryShowPercentage: true,
             Keys.batteryLowThreshold: 20,
             Keys.batteryNotifyCharged: true,
@@ -161,6 +163,7 @@ final class SettingsStore: ObservableObject {
         ])
 
         fileTrayEnabled = defaults.bool(forKey: Keys.fileTrayEnabled)
+        todosEnabled = defaults.bool(forKey: Keys.todosEnabled)
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         syncViaICloud = defaults.bool(forKey: Keys.syncViaICloud)
         hideInFullscreen = defaults.bool(forKey: Keys.hideInFullscreen)
@@ -240,6 +243,7 @@ final class SettingsStore: ObservableObject {
             (Keys.displayHUDEnabled, displayHUDEnabled),
             (Keys.soundHUDEnabled, soundHUDEnabled),
             (Keys.fileTrayEnabled, fileTrayEnabled),
+            (Keys.todosEnabled, todosEnabled),
             (Keys.batteryShowPercentage, batteryShowPercentage),
             (Keys.batteryLowThreshold, batteryLowThreshold),
             (Keys.batteryNotifyCharged, batteryNotifyCharged),
@@ -275,18 +279,63 @@ final class SettingsStore: ObservableObject {
         if syncViaICloud { cloud.synchronize() }
     }
 
+    /// Inbound iCloud change (a write from another Mac): mirror every key back
+    /// into the published properties — the inverse of `persist`. `loading` is
+    /// held so the `didSet` observers don't echo the values straight back out.
     @objc private func cloudChanged(_ note: Notification) {
         guard syncViaICloud else { return }
         Task { @MainActor in
             loading = true
             defer { loading = false }
-            if cloud.object(forKey: Keys.launchAtLogin) != nil {
-                launchAtLogin = cloud.bool(forKey: Keys.launchAtLogin)
-                hideInFullscreen = cloud.bool(forKey: Keys.hideInFullscreen)
-                progressiveBlur = cloud.bool(forKey: Keys.progressiveBlur)
-                idleActivity = NotchActivity(rawValue: cloud.string(forKey: Keys.idleActivity) ?? "") ?? idleActivity
-                // (Remaining keys mirror the same pattern; kept brief.)
-            }
+            // Nothing has synced yet if even the sentinel key is absent.
+            guard cloud.object(forKey: Keys.launchAtLogin) != nil else { return }
+
+            launchAtLogin = cloud.bool(forKey: Keys.launchAtLogin)
+            syncViaICloud = cloud.bool(forKey: Keys.syncViaICloud)
+            hideInFullscreen = cloud.bool(forKey: Keys.hideInFullscreen)
+            hideInMissionControl = cloud.bool(forKey: Keys.hideInMissionControl)
+            hideFromScreenCapture = cloud.bool(forKey: Keys.hideFromScreenCapture)
+            forceSimulatedNotch = cloud.bool(forKey: Keys.forceSimulatedNotch)
+            simulatedDisplay = SimulatedDisplay(rawValue: cloud.string(forKey: Keys.simulatedDisplay) ?? "") ?? simulatedDisplay
+            idleActivity = NotchActivity(rawValue: cloud.string(forKey: Keys.idleActivity) ?? "") ?? idleActivity
+            glassStyle = GlassStyle(rawValue: cloud.string(forKey: Keys.glassStyle) ?? "") ?? glassStyle
+            glassIntensity = cloud.double(forKey: Keys.glassIntensity)
+            idleMostRecent = cloud.bool(forKey: Keys.idleMostRecent)
+            forceEnableActivity = cloud.bool(forKey: Keys.forceEnableActivity)
+            progressiveBlur = cloud.bool(forKey: Keys.progressiveBlur)
+            hapticFeedback = cloud.bool(forKey: Keys.hapticFeedback)
+            albumArtGlow = cloud.bool(forKey: Keys.albumArtGlow)
+            batteryEnabled = cloud.bool(forKey: Keys.batteryEnabled)
+            connectivityEnabled = cloud.bool(forKey: Keys.connectivityEnabled)
+            focusEnabled = cloud.bool(forKey: Keys.focusEnabled)
+            displayHUDEnabled = cloud.bool(forKey: Keys.displayHUDEnabled)
+            soundHUDEnabled = cloud.bool(forKey: Keys.soundHUDEnabled)
+            fileTrayEnabled = cloud.bool(forKey: Keys.fileTrayEnabled)
+            todosEnabled = cloud.bool(forKey: Keys.todosEnabled)
+            batteryShowPercentage = cloud.bool(forKey: Keys.batteryShowPercentage)
+            batteryLowThreshold = Int(cloud.longLong(forKey: Keys.batteryLowThreshold))
+            batteryNotifyCharged = cloud.bool(forKey: Keys.batteryNotifyCharged)
+            liveAudioVisualizer = cloud.bool(forKey: Keys.liveAudioVisualizer)
+            swipeToSeek = cloud.bool(forKey: Keys.swipeToSeek)
+            swipeGesturesEnabled = cloud.bool(forKey: Keys.swipeGesturesEnabled)
+            calendarShowWeather = cloud.bool(forKey: Keys.calendarShowWeather)
+            calendarShowEvents = cloud.bool(forKey: Keys.calendarShowEvents)
+            statsRefreshSeconds = cloud.double(forKey: Keys.statsRefreshSeconds)
+            statsShowCPU = cloud.bool(forKey: Keys.statsShowCPU)
+            statsShowMemory = cloud.bool(forKey: Keys.statsShowMemory)
+            statsShowNetwork = cloud.bool(forKey: Keys.statsShowNetwork)
+            timerSoundOnFinish = cloud.bool(forKey: Keys.timerSoundOnFinish)
+            clipboardEnabled = cloud.bool(forKey: Keys.clipboardEnabled)
+            clipboardHistorySize = Int(cloud.longLong(forKey: Keys.clipboardHistorySize))
+            privacyIndicatorEnabled = cloud.bool(forKey: Keys.privacyIndicatorEnabled)
+            claudeCompactStyle = ClaudeCompactStyle(rawValue: cloud.string(forKey: Keys.claudeCompactStyle) ?? "") ?? claudeCompactStyle
+            claudeShowSession = cloud.bool(forKey: Keys.claudeShowSession)
+            claudeShowWeek = cloud.bool(forKey: Keys.claudeShowWeek)
+            claudeShowSpend = cloud.bool(forKey: Keys.claudeShowSpend)
+            claudeShowChart = cloud.bool(forKey: Keys.claudeShowChart)
+            claudeShowLegend = cloud.bool(forKey: Keys.claudeShowLegend)
+            claudeChartDays = Int(cloud.longLong(forKey: Keys.claudeChartDays))
+            claudeChartCost = cloud.bool(forKey: Keys.claudeChartCost)
         }
     }
 
@@ -312,6 +361,7 @@ final class SettingsStore: ObservableObject {
         static let displayHUDEnabled = "displayHUDEnabled"
         static let soundHUDEnabled = "soundHUDEnabled"
         static let fileTrayEnabled = "fileTrayEnabled"
+        static let todosEnabled = "todosEnabled"
         static let batteryShowPercentage = "batteryShowPercentage"
         static let batteryLowThreshold = "batteryLowThreshold"
         static let batteryNotifyCharged = "batteryNotifyCharged"

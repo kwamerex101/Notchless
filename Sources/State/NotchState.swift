@@ -14,6 +14,7 @@ enum NotchActivity: String, CaseIterable, Codable {
     case stats
     case timer
     case clipboard
+    case todos
     case privacy
     case claudeUsage
     case goals
