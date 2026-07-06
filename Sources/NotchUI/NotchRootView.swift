@@ -85,6 +85,8 @@ struct NotchRootView: View {
                 TimerExpandedView(timer: model.notchTimer, metrics: metrics)
             case .clipboard:
                 ClipboardExpandedView(metrics: metrics)
+            case .todos:
+                TodoExpandedView(metrics: metrics)
             case .privacy:
                 PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
             case .claudeUsage:

@@ -107,6 +107,7 @@ enum DebugRender {
                     case .stats: StatsExpandedView(stats: nil, metrics: metrics)
                     case .timer: TimerExpandedView(timer: nil, metrics: metrics)
                     case .clipboard: ClipboardExpandedView(metrics: metrics)
+                    case .todos: TodoExpandedView(metrics: metrics)
                     case .privacy: PrivacyExpandedView(privacy: nil, metrics: metrics)
                     case .claudeUsage: ClaudeStatsExpandedView(stats: nil, metrics: metrics)
                     }
