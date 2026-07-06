@@ -8,6 +8,7 @@ final class NotificationsController {
     private let power = PowerService()
     private let bluetooth = BluetoothService()
     private let focus = FocusService()
+    private let network = NetworkService()
 
     private var settings: SettingsStore { model.settings }
 
@@ -56,12 +57,27 @@ final class NotificationsController {
         bluetooth.start()
 
         focus.onChange = { [weak self] mode in
-            guard let self, self.settings.focusEnabled, let mode else { return }
+            guard let self, self.settings.focusEnabled else { return }
             self.model.show(TransientNotification(
-                systemImage: "moon.fill",
-                tint: .indigo, title: mode, subtitle: "Focus On", trailingText: nil
+                systemImage: mode == nil ? "moon.zzz" : "moon.fill",
+                tint: mode == nil ? .secondary : .indigo,
+                title: mode ?? "Focus",
+                subtitle: mode == nil ? "Focus Off" : "Focus On",
+                trailingText: nil
             ))
         }
         focus.start()
+
+        network.onChange = { [weak self] connected in
+            guard let self, self.settings.connectivityEnabled else { return }
+            self.model.show(TransientNotification(
+                systemImage: connected ? "wifi" : "wifi.slash",
+                tint: connected ? .green : .orange,
+                title: connected ? "Back online" : "No Internet",
+                subtitle: connected ? nil : "Check your connection",
+                trailingText: nil
+            ))
+        }
+        network.start()
     }
 }
