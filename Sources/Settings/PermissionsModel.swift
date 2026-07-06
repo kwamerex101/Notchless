@@ -99,13 +99,29 @@ final class PermissionsModel: ObservableObject {
     @Published private(set) var states: [AppPermission: PermissionState] = [:]
 
     private let locationManager = CLLocationManager()
+    private var pollTimer: Timer?
 
     func refresh() {
         var next: [AppPermission: PermissionState] = [:]
         for permission in AppPermission.allCases {
             next[permission] = state(for: permission)
         }
-        states = next
+        if next != states { states = next }
+    }
+
+    /// Permissions change out-of-band (the system prompt, or the user toggling
+    /// them in System Settings), so poll while the pane is on screen.
+    func startAutoRefresh() {
+        refresh()
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refresh() }
+        }
+    }
+
+    func stopAutoRefresh() {
+        pollTimer?.invalidate()
+        pollTimer = nil
     }
 
     /// Not-set permissions trigger the system prompt; already-decided ones open
