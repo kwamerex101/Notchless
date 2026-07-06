@@ -58,6 +58,7 @@
 		A255E19EC1757AA78FAC8CE0 /* CameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC397D6C160FFC91B2F0170 /* CameraSession.swift */; };
 		A45798FB77A2E72B4A146CBC /* HUDController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36139405A50DAF64C3F68515 /* HUDController.swift */; };
 		A6C703DC0B5AB321F8142904 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A97033A82195EFA72F28A1F /* CalendarService.swift */; };
+		A6C7EA405EB343EF243EBF57 /* CorrectionMiner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8927724EE3BBFF1AAD6647 /* CorrectionMiner.swift */; };
 		A96837C303AAD0EDAAD55B6C /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151C8E7AD60BAECB8D6E7140 /* MarqueeText.swift */; };
 		ABEE83840B0CE61706AF8C1F /* NotchMouseTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FDFDF0B69DFBD7FACAF09B /* NotchMouseTracker.swift */; };
 		AFA6D894EB27F9923358892D /* DictationDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8890A325BFB95C7D5EBB013A /* DictationDictionary.swift */; };
@@ -92,6 +93,7 @@
 		F44E514A7B4FA994205C18A8 /* ParakeetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCA187A53D74C7DF87831CC /* ParakeetEngine.swift */; };
 		F5BD047F0397AC7FA41653B6 /* CleanupGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D9737225F607B50F06D595 /* CleanupGate.swift */; };
 		F721B62A4AE944C7CF5BC17A /* PermissionRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92DA3597A1503D887F3BBC8F /* PermissionRequester.swift */; };
+		FACCDF8CD83FD1FAC4CF9726 /* BuiltinTransforms.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF30250EEC9B100BCF2CEA2 /* BuiltinTransforms.swift */; };
 		FBA068FD6CD736D9363A94A6 /* FocusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAD4D4508381A1837D0D5D9 /* FocusService.swift */; };
 		FE2C848DA16FC60DBC21C055 /* NotchSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B63A9BE0757848CDAE7E12 /* NotchSizing.swift */; };
 		FF3ABAFCE31E45113F6479AA /* MediaController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A39DBA12D85AB052A38D94 /* MediaController.swift */; };
@@ -123,6 +125,7 @@
 		32124AF7D00009638CC6909B /* Notchless.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Notchless.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32471DD16AC835C67E00A57B /* DisplayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayService.swift; sourceTree = "<group>"; };
 		36139405A50DAF64C3F68515 /* HUDController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDController.swift; sourceTree = "<group>"; };
+		3D8927724EE3BBFF1AAD6647 /* CorrectionMiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionMiner.swift; sourceTree = "<group>"; };
 		4110D43A0E5299DE82CD0C35 /* PowerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerService.swift; sourceTree = "<group>"; };
 		48E573782811B2DD439B0166 /* FileTrayStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTrayStore.swift; sourceTree = "<group>"; };
 		49143FC7028CA29D3CDFEF8B /* LoginItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItem.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 		9B6BBAD773824BF21BB4ADD6 /* DictationOutputRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationOutputRouter.swift; sourceTree = "<group>"; };
 		9BF82551C4728C8BB952619D /* DuoExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoExpandedView.swift; sourceTree = "<group>"; };
 		9CB6CF685F8336B22B5518E4 /* TranscriptCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptCleaner.swift; sourceTree = "<group>"; };
+		9DF30250EEC9B100BCF2CEA2 /* BuiltinTransforms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltinTransforms.swift; sourceTree = "<group>"; };
 		9EFACF17C1DB906E087EF580 /* Adapter */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Adapter; path = Resources/Adapter; sourceTree = SOURCE_ROOT; };
 		A50E5AE6B902488140207BE5 /* TextPolish.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextPolish.swift; sourceTree = "<group>"; };
 		A7D9737225F607B50F06D595 /* CleanupGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupGate.swift; sourceTree = "<group>"; };
@@ -428,8 +432,10 @@
 		D6D56621ABB4867F8B1E7B79 /* Dictation */ = {
 			isa = PBXGroup;
 			children = (
+				9DF30250EEC9B100BCF2CEA2 /* BuiltinTransforms.swift */,
 				D9DBEFD958A6F2DC1B51F3CE /* ClaudeAPIClient.swift */,
 				A7D9737225F607B50F06D595 /* CleanupGate.swift */,
+				3D8927724EE3BBFF1AAD6647 /* CorrectionMiner.swift */,
 				4FDBBDD6E214B7C5F9781A96 /* DictationController.swift */,
 				8890A325BFB95C7D5EBB013A /* DictationDictionary.swift */,
 				6F2C0E36633C2C8884414928 /* DictationHistory.swift */,
@@ -571,6 +577,7 @@
 				D796BED27ED47C828BD3A16B /* AudioOutputService.swift in Sources */,
 				920804F844DDE74B24333D9E /* AudioService.swift in Sources */,
 				F14D81FF71DAC194762E6FF0 /* BluetoothService.swift in Sources */,
+				FACCDF8CD83FD1FAC4CF9726 /* BuiltinTransforms.swift in Sources */,
 				EFB78AA22EB956491E9E0FD2 /* CalendarController.swift in Sources */,
 				13A14B5DC2D7B723AB88D9C2 /* CalendarExpandedView.swift in Sources */,
 				A6C703DC0B5AB321F8142904 /* CalendarService.swift in Sources */,
@@ -579,6 +586,7 @@
 				F38318C30E19B3B195254FC3 /* ClaudeAPIClient.swift in Sources */,
 				F5BD047F0397AC7FA41653B6 /* CleanupGate.swift in Sources */,
 				0F3843A5336852BB88FE143D /* ColorExtractor.swift in Sources */,
+				A6C7EA405EB343EF243EBF57 /* CorrectionMiner.swift in Sources */,
 				BDBAE5608769B6C96CFF5749 /* DebugRender.swift in Sources */,
 				C21A8BA5FF3F3B4A81A917B2 /* DictationController.swift in Sources */,
 				AFA6D894EB27F9923358892D /* DictationDictionary.swift in Sources */,

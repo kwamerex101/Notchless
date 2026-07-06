@@ -12,6 +12,8 @@ struct DictationPane: View {
     @State private var newTerm = ""
     @State private var newTrigger = ""
     @State private var newExpansion = ""
+    @State private var editingRecord: DictationRecord?
+    @State private var editingText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -140,6 +142,11 @@ struct DictationPane: View {
                 Text("Say “new line”, “new paragraph”, or “scratch that” to format as you speak. Formatting only — never runs shell or file actions.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                Divider()
+                ToggleRow(title: "Smart formatting", isOn: $settings.smartFormatting)
+                Text("Turns spoken operators into symbols (“C plus plus” → C++), joins version numbers, and collapses accidental repeats.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             SectionLabel("Snippets")
@@ -217,16 +224,44 @@ struct DictationPane: View {
                         HStack {
                             Text(record.text).lineLimit(1)
                             Spacer()
+                            Button { beginEditing(record) } label: {
+                                Image(systemName: "pencil").foregroundStyle(.secondary)
+                            }.buttonStyle(.plain)
                             Button { history.remove(record) } label: {
                                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                             }.buttonStyle(.plain)
                         }
                     }
+                    Text("Edit a dictation to fix a word — correct the same word three times and it's added to your custom words automatically.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     Button("Clear history", role: .destructive) { history.clear() }
                         .buttonStyle(.link)
                 }
             }
         }
+        .sheet(item: $editingRecord) { record in
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Edit dictation").font(.headline)
+                TextEditor(text: $editingText)
+                    .font(.body).frame(width: 360, height: 120)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.3)))
+                HStack {
+                    Spacer()
+                    Button("Cancel") { editingRecord = nil }
+                    Button("Save") {
+                        history.update(record, newText: editingText)
+                        editingRecord = nil
+                    }.keyboardShortcut(.defaultAction)
+                }
+            }
+            .padding(20)
+        }
+    }
+
+    private func beginEditing(_ record: DictationRecord) {
+        editingText = record.text
+        editingRecord = record
     }
 
     /// The Anthropic key lives in the Keychain, so bridge it through a manual

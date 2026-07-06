@@ -178,6 +178,7 @@ final class DictationSettings: ObservableObject {
     @Published var maxRecordingSeconds: Int { didSet { persist(Keys.maxDuration, maxRecordingSeconds) } }
     @Published var soundCues: Bool { didSet { persist(Keys.soundCues, soundCues) } }
     @Published var voiceCommands: Bool { didSet { persist(Keys.voiceCommands, voiceCommands) } }
+    @Published var smartFormatting: Bool { didSet { persist(Keys.smartFormatting, smartFormatting) } }
     @Published var encryptHistory: Bool { didSet { persist(Keys.encrypt, encryptHistory); DictationHistory.shared.reencrypt(encrypted: encryptHistory) } }
 
     init() {
@@ -197,6 +198,7 @@ final class DictationSettings: ObservableObject {
             Keys.maxDuration: 120,
             Keys.soundCues: true,
             Keys.voiceCommands: false,
+            Keys.smartFormatting: true,
             Keys.encrypt: false,
         ])
         enabled = defaults.bool(forKey: Keys.enabled)
@@ -214,6 +216,7 @@ final class DictationSettings: ObservableObject {
         maxRecordingSeconds = defaults.integer(forKey: Keys.maxDuration)
         soundCues = defaults.bool(forKey: Keys.soundCues)
         voiceCommands = defaults.bool(forKey: Keys.voiceCommands)
+        smartFormatting = defaults.bool(forKey: Keys.smartFormatting)
         encryptHistory = defaults.bool(forKey: Keys.encrypt)
     }
 
@@ -238,6 +241,7 @@ final class DictationSettings: ObservableObject {
         static let maxDuration = "dictation.maxDurationSeconds"
         static let soundCues = "dictation.soundCues"
         static let voiceCommands = "dictation.voiceCommands"
+        static let smartFormatting = "dictation.smartFormatting"
         static let encrypt = "dictation.encryptHistory"
     }
 }

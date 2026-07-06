@@ -105,6 +105,7 @@ final class DictationController {
             }
             var text = TranscriptHygiene.clean(raw)
             if settings.voiceCommands { text = SpokenCommands.apply(text) }
+            if settings.smartFormatting { text = BuiltinTransforms.apply(text) }
             text = DictationSnippets.shared.expand(text)
             text = TextPolish.apply(
                 text,
