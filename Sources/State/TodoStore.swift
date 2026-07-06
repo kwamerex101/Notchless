@@ -101,6 +101,9 @@ final class TodoStore: ObservableObject {
     private let removalDelay: TimeInterval
     private let schedule: (TimeInterval, @escaping () -> Void) -> Void
     private var cloudObserver: NSObjectProtocol?
+    /// Parents whose delayed post-completion removal is still pending. Lets an
+    /// un-check within the strike-through window cancel the removal.
+    private var pendingRemoval: Set<UUID> = []
 
     init(
         defaults: UserDefaults = .standard,
@@ -131,15 +134,33 @@ final class TodoStore: ObservableObject {
     }
 
     /// Marks a task done (drives the strike-through), then removes it after
-    /// `removalDelay` so it briefly shows completed before vanishing.
+    /// `removalDelay` — unless the completion is cancelled first (e.g. a subtask
+    /// is un-checked within the window).
     func complete(_ id: UUID) {
         guard let i = items.firstIndex(where: { $0.id == id }), !items[i].isDone else { return }
         items[i].isDone = true
+        pendingRemoval.insert(id)
         persist()
-        schedule(removalDelay) { [weak self] in self?.remove(id) }
+        schedule(removalDelay) { [weak self] in self?.finalizeRemoval(id) }
+    }
+
+    /// Fires after `removalDelay`. Removes the task only if its completion is
+    /// still pending (not cancelled by an un-check in the meantime).
+    private func finalizeRemoval(_ id: UUID) {
+        guard pendingRemoval.contains(id) else { return }
+        remove(id)
+    }
+
+    /// Cancels a pending post-completion removal and un-marks the parent, so a
+    /// task rescued within the strike-through window stays put.
+    private func cancelCompletion(_ id: UUID) {
+        guard pendingRemoval.remove(id) != nil else { return }
+        if let i = items.firstIndex(where: { $0.id == id }) { items[i].isDone = false }
+        persist()
     }
 
     func remove(_ id: UUID) {
+        pendingRemoval.remove(id)
         items.removeAll { $0.id == id }
         persist()
     }
@@ -172,7 +193,11 @@ final class TodoStore: ObservableObject {
               let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
         items[i].subtasks[j].isDone.toggle()
         persist()
-        if items[i].allSubtasksDone { complete(parentID) }
+        if items[i].allSubtasksDone {
+            complete(parentID)
+        } else {
+            cancelCompletion(parentID)   // no-op unless a completion was pending
+        }
     }
 
     func updateSubtaskTitle(_ subtaskID: UUID, in parentID: UUID, to title: String) {

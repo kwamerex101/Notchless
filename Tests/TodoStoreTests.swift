@@ -248,4 +248,39 @@ final class TodoStoreTests: XCTestCase {
         store.updateNotes(of: pid, to: "ping https://x.com")
         XCTAssertEqual(store.items[0].notes, "ping https://x.com")
     }
+
+    func test_uncheckDuringCompletionWindow_cancelsRemoval() {
+        // A scheduler that CAPTURES the work instead of running it, so we control
+        // when the deferred removal fires — simulating the ~0.9s window.
+        var pending: [() -> Void] = []
+        let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
+        let store = TodoStore(defaults: suite, cloud: nil, removalDelay: 0,
+                              schedule: { _, work in pending.append(work) })
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.addSubtask(to: pid, title: "b")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid) // all done → completion scheduled
+        XCTAssertEqual(store.items.count, 1)      // not removed yet (scheduler captured)
+        XCTAssertTrue(store.items[0].isDone)      // struck through
+
+        // Un-check within the window:
+        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
+        XCTAssertFalse(store.items[0].isDone)     // completion cancelled
+
+        // The deferred removal now fires — and must be a no-op:
+        pending.forEach { $0() }
+        XCTAssertEqual(store.items.count, 1)      // survived
+    }
+
+    func test_autoComplete_stillRemovesWhenNotCancelled() {
+        // Regression: normal auto-complete still removes (immediate scheduler).
+        let store = makeStore()
+        store.add("P")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid) // all done
+        XCTAssertTrue(store.items.isEmpty)
+    }
 }
