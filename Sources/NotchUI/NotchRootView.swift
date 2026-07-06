@@ -29,6 +29,21 @@ struct NotchRootView: View {
                             .allowsHitTesting(false)
                     }
                 }
+                // Panel-level tint, drawn behind BOTH the tab strip and the
+                // expanded body so they read as one surface. Black stays black;
+                // a tinted view (e.g. Now Playing's album glow) carries the same
+                // tint up through the strip.
+                .overlay {
+                    if let tint = expandedTint {
+                        RadialGradient(colors: [tint.opacity(0.38), .clear],
+                                       center: .topLeading, startRadius: 0, endRadius: 320)
+                            .blendMode(.screen)
+                            .frame(width: sizing.width, height: panelHeight)
+                            .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
+                                                  bottomCornerRadius: sizing.bottomRadius))
+                            .allowsHitTesting(false)
+                    }
+                }
                 .overlay {
                     contentView(content)
                         .frame(width: sizing.width, height: panelHeight)
@@ -68,12 +83,19 @@ struct NotchRootView: View {
             NotificationView(note: note, metrics: metrics)
         case let .expanded(activity):
             if tabBarVisible {
-                VStack(spacing: 0) {
+                // Strip pinned to the top (in the notch's band); only 3 glyphs on
+                // the left + battery on the right, so the hardware notch sits in
+                // the empty gap. Body is pushed down by the strip's height.
+                ZStack(alignment: .top) {
+                    expandedBody(activity)
+                        .padding(.top, NotchTabBar.height)
                     NotchTabBar(activities: model.carouselActivities,
                                 active: activity,
                                 battery: model.battery,
                                 onSelect: { model.select($0) })
-                    expandedBody(activity)
+                        // Just below the notch — the highest it renders visibly,
+                        // since the menu bar + hardware notch own the top strip.
+                        .padding(.top, metrics.notchHeight + 4)
                 }
             } else {
                 expandedBody(activity)
@@ -129,6 +151,17 @@ struct NotchRootView: View {
 
     private var glowColor: Color? {
         model.settings.albumArtGlow ? model.artworkColor : nil
+    }
+
+    /// The tint painted behind the whole expanded panel (strip + body) so they
+    /// share one background. Only the media views carry the album-art glow; every
+    /// other expanded view stays on the panel's black.
+    private var expandedTint: Color? {
+        guard case let .expanded(activity) = model.content else { return nil }
+        switch activity {
+        case .playing, .auto, .none, .duo: return glowColor
+        default: return nil
+        }
     }
 
     /// Brings the app that's currently playing (Music, Spotify, a browser tab
