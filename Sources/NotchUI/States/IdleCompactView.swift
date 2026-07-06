@@ -63,12 +63,8 @@ struct IdleCompactView: View {
                 .foregroundStyle(.white)
         case .privacy:
             HStack(spacing: 4) {
-                if privacy?.cameraActive ?? false {
-                    Circle().fill(Color.green).frame(width: 8, height: 8)
-                }
-                if privacy?.micActive ?? false {
-                    Circle().fill(Color.orange).frame(width: 8, height: 8)
-                }
+                if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
+                if privacy?.micActive ?? false { PulsingDot(color: .orange) }
             }
         }
     }
@@ -102,9 +98,15 @@ struct IdleCompactView: View {
         case .clipboard:
             ClipboardBadge()
         case .privacy:
-            Text(privacy?.label ?? "")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
+            HStack(spacing: 6) {
+                if privacy?.cameraActive ?? false {
+                    Image(systemName: "camera.fill").foregroundStyle(.green)
+                }
+                if privacy?.micActive ?? false {
+                    Image(systemName: "mic.fill").foregroundStyle(.orange)
+                }
+            }
+            .font(.system(size: 13, weight: .semibold))
         }
     }
 
