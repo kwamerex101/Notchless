@@ -90,7 +90,7 @@ struct NotchRootView: View {
             case .claudeUsage:
                 ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
             case .goals:
-                EmptyView()
+                GoalExpandedView(metrics: metrics)
             }
         case let .fileTray(expanded):
             FileTrayView(store: model.fileTray, expanded: expanded, metrics: metrics)
