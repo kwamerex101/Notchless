@@ -32,6 +32,9 @@ final class NotchViewModel: ObservableObject {
     let fileTray = FileTrayStore()
     @Published var isDropTargeted = false
 
+    // Goals
+    let goals = GoalStore.shared
+
     // Camera mirror
     @Published var showMirror = false
 
@@ -49,12 +52,16 @@ final class NotchViewModel: ObservableObject {
     private var hudDismiss: DispatchWorkItem?
     private var notifDismiss: DispatchWorkItem?
     private var collapseWork: DispatchWorkItem?
+    private var goalObserver: AnyCancellable?
 
     static let morph = Animation.spring(response: 0.42, dampingFraction: 0.78)
     static let quickMorph = Animation.spring(response: 0.3, dampingFraction: 0.82)
 
     init(settings: SettingsStore? = nil) {
         self.settings = settings ?? .shared
+        goalObserver = goals.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
     }
 
     // MARK: - Resolved presentation
@@ -165,6 +172,7 @@ final class NotchViewModel: ObservableObject {
         case .clipboard: return true
         case .privacy: return privacy?.isActive ?? false
         case .claudeUsage: return claudeStats != nil
+        case .goals: return settings.goalsEnabled && goals.hasActiveGoals
         }
     }
 

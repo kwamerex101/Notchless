@@ -109,6 +109,7 @@ enum DebugRender {
                     case .clipboard: ClipboardExpandedView(metrics: metrics)
                     case .privacy: PrivacyExpandedView(privacy: nil, metrics: metrics)
                     case .claudeUsage: ClaudeStatsExpandedView(stats: nil, metrics: metrics)
+                    case .goals: EmptyView()
                     }
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)
