@@ -25,6 +25,8 @@ A native macOS menu-bar app that puts live activities, HUDs, and on-device dicta
 - **Privacy indicator** — a pulsing dot when the camera/mic is in use (green/orange), like macOS's own.
 - **Calendar** — upcoming events and weather.
 - **File Tray** — drag files onto the notch to hold them, drag them back out anywhere.
+- **Todos** — a notch checklist with subtasks and free-text (URL-aware) notes; edits stay in sync between the notch and Settings.
+- **Goals** — savings goals with a target and deadline, logged contributions, a required monthly-pace calculation, and a progress ring; pin one to the notch.
 
 ### Dictation (ported from a standalone app, fully integrated)
 - Hold-to-talk anywhere; types into the focused app.
