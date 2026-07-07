@@ -1,14 +1,20 @@
 import Foundation
 import CoreAudio
 import AudioToolbox
+import OSLog
 
 /// Captures system audio output via a CoreAudio process tap (macOS 14.2+),
 /// runs it through the FFT analyzer, and publishes band levels to
 /// `model.audio.musicSpectrum` so the now-playing visualizer reacts to real audio.
 ///
-/// Everything is best-effort: if the tap can't be created (older macOS, denied,
-/// unsupported), it silently no-ops and the visualizer falls back to its
-/// decorative animation.
+/// Capturing system audio needs the `NSAudioCaptureUsageDescription` TCC grant
+/// (separate from the microphone one) — without it the OS hands the tap buffers
+/// full of silence rather than failing, so there's nothing to catch at creation.
+/// Worse, a tap created *before* that grant (or one that spontaneously goes
+/// dormant) stays silent forever and can only be revived by a full teardown +
+/// recreate. The `startDrain` silence watchdog does exactly that. If the tap
+/// genuinely can't be created (older macOS, denied), we log and no-op, and the
+/// visualizer falls back to its decorative animation.
 @MainActor
 final class SystemAudioTap {
     private let model: NotchViewModel
@@ -17,11 +23,28 @@ final class SystemAudioTap {
     private var procID: AudioDeviceIOProcID?
     private var running = false
 
-    /// Latest FFT bands from the realtime IO thread, drained to the UI at ~30 Hz
-    /// (the IO callback fires far faster). Guarded by `bandsLock`.
+    /// Latest FFT bands and the raw peak amplitude from the realtime IO thread,
+    /// drained to the UI at ~30 Hz (the IO callback fires far faster). Guarded by
+    /// `bandsLock`. `latestPeak` is the true "is audio flowing" signal — unlike
+    /// the auto-normalized/slow-release bands, it reads 0 the instant the tap
+    /// goes silent, which the watchdog relies on.
     private let bandsLock = NSLock()
     private var latestBands: [CGFloat] = []
+    private var latestPeak: Float = 0
     private var drainTimer: DispatchSourceTimer?
+
+    /// Silence-watchdog bookkeeping (monotonic `systemUptime` seconds).
+    private var lastSignalAt: TimeInterval = 0
+    private var lastRecreateAt: TimeInterval = 0
+    /// Raw peak below this counts as digital silence. Real audio — even quiet
+    /// passages — sits well above it; a dormant tap delivers exactly 0.
+    nonisolated static let silenceFloor: Float = 1e-4
+    /// How long the tap may be silent while music plays before we recreate it.
+    nonisolated static let silenceGrace: TimeInterval = 2.5
+    /// Minimum gap between recreates, so a still-silent tap doesn't thrash.
+    nonisolated static let recreateCooldown: TimeInterval = 5
+
+    private static let log = Logger(subsystem: "com.rexdanquah.Notchless", category: "SystemAudioTap")
 
     init(model: NotchViewModel) {
         self.model = model
@@ -36,10 +59,16 @@ final class SystemAudioTap {
         description.muteBehavior = .unmuted
 
         var tap: AudioObjectID = 0
-        guard AudioHardwareCreateProcessTap(description, &tap) == noErr, tap != 0 else { return }
+        guard AudioHardwareCreateProcessTap(description, &tap) == noErr, tap != 0 else {
+            Self.log.error("AudioHardwareCreateProcessTap failed — no live visualizer")
+            return
+        }
         tapID = tap
 
-        guard let uid = tapUID(tap) else { teardown(); return }
+        guard let uid = tapUID(tap) else {
+            Self.log.error("tap UID unavailable")
+            teardown(); return
+        }
 
         let aggUID = "com.rexdanquah.Notchless.visualizer.\(UInt(bitPattern: ObjectIdentifier(self).hashValue))"
         let dict: [String: Any] = [
@@ -54,13 +83,14 @@ final class SystemAudioTap {
         ]
         var aggregate: AudioObjectID = 0
         guard AudioHardwareCreateAggregateDevice(dict as CFDictionary, &aggregate) == noErr, aggregate != 0 else {
+            Self.log.error("AudioHardwareCreateAggregateDevice failed")
             teardown(); return
         }
         aggregateID = aggregate
 
         // The IO block runs on a realtime thread and only stashes the newest
-        // bands under a lock — no per-callback main-thread hop. A 30 Hz timer
-        // drains that slot into the UI, so the visualizer updates smoothly
+        // bands + raw peak under a lock — no per-callback main-thread hop. A 30 Hz
+        // timer drains that slot into the UI, so the visualizer updates smoothly
         // without invalidating views ~90+ times a second.
         let analyzer = SpectrumAnalyzer(bandCount: 4)
         let lock = bandsLock
@@ -71,13 +101,27 @@ final class SystemAudioTap {
             let count = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size
             guard count > 0, let self else { return }
             let samples = raw.assumingMemoryBound(to: Float.self)
-            let bands = analyzer.bands(from: samples, count: min(count, 2048))
-            lock.lock(); self.latestBands = bands; lock.unlock()
+            let n = min(count, 2048)
+            let bands = analyzer.bands(from: samples, count: n)
+            var peak: Float = 0
+            for i in 0..<n { let a = abs(samples[i]); if a > peak { peak = a } }
+            lock.lock(); self.latestBands = bands; self.latestPeak = peak; lock.unlock()
         }
-        guard status == noErr, let proc else { teardown(); return }
+        guard status == noErr, let proc else {
+            Self.log.error("AudioDeviceCreateIOProcIDWithBlock failed (status \(status))")
+            teardown(); return
+        }
         procID = proc
 
-        guard AudioDeviceStart(aggregate, proc) == noErr else { teardown(); return }
+        guard AudioDeviceStart(aggregate, proc) == noErr else {
+            Self.log.error("AudioDeviceStart failed")
+            teardown(); return
+        }
+        // Grace the fresh tap: give it time to warm up (and, on first launch, for
+        // the user to grant the audio-capture prompt) before the watchdog judges
+        // it silent.
+        latestPeak = 0
+        lastSignalAt = ProcessInfo.processInfo.systemUptime
         startDrain()
         running = true
     }
@@ -88,7 +132,8 @@ final class SystemAudioTap {
     }
 
     /// Drains the latest bands to the UI at ~30 Hz, skipping publishes when the
-    /// levels barely moved so a steady tone doesn't churn the view.
+    /// levels barely moved so a steady tone doesn't churn the view. Also runs the
+    /// silence watchdog on the raw peak.
     private func startDrain() {
         let timer = DispatchSource.makeTimerSource(queue: .main)
         timer.schedule(deadline: .now(), repeating: 1.0 / 30.0)
@@ -97,7 +142,25 @@ final class SystemAudioTap {
                 guard let self else { return }
                 self.bandsLock.lock()
                 let bands = self.latestBands
+                let peak = self.latestPeak
                 self.bandsLock.unlock()
+
+                // Silence watchdog: if music is playing yet the raw peak has read
+                // silence past the grace window, the tap has gone dormant (or was
+                // created before authorization). Recreate it from scratch — the
+                // only reliable recovery — rate-limited by the cooldown.
+                let now = ProcessInfo.processInfo.systemUptime
+                if peak > Self.silenceFloor { self.lastSignalAt = now }
+                let silentFor = now - self.lastSignalAt
+                if Self.shouldRecreate(isPlaying: self.model.nowPlaying?.isPlaying == true,
+                                       silentFor: silentFor,
+                                       sinceLastRecreate: now - self.lastRecreateAt) {
+                    self.lastRecreateAt = now
+                    Self.log.notice("tap silent \(silentFor, format: .fixed(precision: 1))s while playing — recreating")
+                    DispatchQueue.main.async { [weak self] in self?.recreate() }
+                    return
+                }
+
                 let current = self.model.audio.musicSpectrum
                 guard Self.changed(bands, current) else { return }
                 self.model.audio.musicSpectrum = bands
@@ -105,6 +168,23 @@ final class SystemAudioTap {
         }
         timer.resume()
         drainTimer = timer
+    }
+
+    /// Whether the watchdog should recreate the tap: music is playing, we've had
+    /// only silence past the grace window, and we're outside the recreate
+    /// cooldown. Pure so the policy can be unit-tested without CoreAudio.
+    nonisolated static func shouldRecreate(isPlaying: Bool,
+                                           silentFor: TimeInterval,
+                                           sinceLastRecreate: TimeInterval) -> Bool {
+        isPlaying && silentFor > silenceGrace && sinceLastRecreate > recreateCooldown
+    }
+
+    /// Tear down and rebuild the tap + aggregate from scratch. A dormant or
+    /// pre-authorization tap can't be revived in place — see the watchdog.
+    private func recreate() {
+        guard running else { return }
+        teardown()
+        start()
     }
 
     /// True when the band set differs enough to be worth republishing.
