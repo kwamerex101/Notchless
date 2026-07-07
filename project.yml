@@ -49,6 +49,9 @@ targets:
         # (Accessibility, Camera, …) across rebuilds instead of re-prompting.
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
+        # Team ID comes from the DEVELOPMENT_TEAM env var (kept out of the public
+        # repo). Set `export DEVELOPMENT_TEAM=<teamid>` in your shell before
+        # `xcodegen generate` for signed local builds; CI builds unsigned.
         DEVELOPMENT_TEAM: "${DEVELOPMENT_TEAM}"
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
