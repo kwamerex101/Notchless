@@ -36,6 +36,10 @@ final class SystemAudioTap {
     /// Silence-watchdog bookkeeping (monotonic `systemUptime` seconds).
     private var lastSignalAt: TimeInterval = 0
     private var lastRecreateAt: TimeInterval = 0
+    /// Recreates attempted in the current silence episode, and whether we've
+    /// given up on it. Reset when audio flows again or the gate restarts the tap.
+    private var recreateAttempts = 0
+    private var gaveUp = false
     /// Raw peak below this counts as digital silence. Real audio — even quiet
     /// passages — sits well above it; a dormant tap delivers exactly 0.
     nonisolated static let silenceFloor: Float = 1e-4
@@ -43,6 +47,11 @@ final class SystemAudioTap {
     nonisolated static let silenceGrace: TimeInterval = 2.5
     /// Minimum gap between recreates, so a still-silent tap doesn't thrash.
     nonisolated static let recreateCooldown: TimeInterval = 5
+    /// Recreates to try before giving up. A genuinely dormant tap recovers in
+    /// one or two; beyond that the silence is real (paused, denied permission,
+    /// wedged CoreAudio) and recreating only churns the audio engine — so we
+    /// stop and let the visualizer fall back to its decorative animation.
+    nonisolated static let maxRecreateAttempts = 2
 
     private static let log = Logger(subsystem: "com.rexdanquah.Notchless", category: "SystemAudioTap")
 
@@ -128,6 +137,10 @@ final class SystemAudioTap {
 
     func stop() {
         teardown()
+        // Fresh gate start should begin a clean silence episode. recreate()
+        // deliberately does not reset these, so its attempt count survives.
+        recreateAttempts = 0
+        gaveUp = false
         model.audio.musicSpectrum = []
     }
 
@@ -147,17 +160,35 @@ final class SystemAudioTap {
 
                 // Silence watchdog: if music is playing yet the raw peak has read
                 // silence past the grace window, the tap has gone dormant (or was
-                // created before authorization). Recreate it from scratch — the
-                // only reliable recovery — rate-limited by the cooldown.
+                // created before authorization). Recreating from scratch is the
+                // only reliable recovery — but bounded: after a couple of failed
+                // attempts the silence is real (paused, denied, wedged CoreAudio),
+                // so we stop churning and fall back to the decorative animation.
                 let now = ProcessInfo.processInfo.systemUptime
-                if peak > Self.silenceFloor { self.lastSignalAt = now }
+                if peak > Self.silenceFloor {
+                    self.lastSignalAt = now
+                    self.recreateAttempts = 0
+                    self.gaveUp = false
+                }
                 let silentFor = now - self.lastSignalAt
-                if Self.shouldRecreate(isPlaying: self.model.nowPlaying?.isPlaying == true,
+                if !self.gaveUp,
+                   Self.shouldRecreate(isPlaying: self.model.nowPlaying?.isPlaying == true,
                                        silentFor: silentFor,
                                        sinceLastRecreate: now - self.lastRecreateAt) {
                     self.lastRecreateAt = now
-                    Self.log.notice("tap silent \(silentFor, format: .fixed(precision: 1))s while playing — recreating")
-                    DispatchQueue.main.async { [weak self] in self?.recreate() }
+                    if self.recreateAttempts < Self.maxRecreateAttempts {
+                        self.recreateAttempts += 1
+                        Self.log.notice("tap silent \(silentFor, format: .fixed(precision: 1))s while playing — recreating (\(self.recreateAttempts)/\(Self.maxRecreateAttempts))")
+                        DispatchQueue.main.async { [weak self] in self?.recreate() }
+                    } else {
+                        // Give up: stop churning CoreAudio and let the view fall
+                        // back to its decorative animation (empty spectrum). The
+                        // still-running tap can self-recover if audio returns, and
+                        // the gate resets us on the next play/visibility change.
+                        self.gaveUp = true
+                        self.model.audio.musicSpectrum = []
+                        Self.log.notice("tap still silent after \(Self.maxRecreateAttempts) recreates — giving up (decorative fallback)")
+                    }
                     return
                 }
 
