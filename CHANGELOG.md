@@ -2,6 +2,19 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.2.2] — 2026-07-07
+
+### Fixed
+- **The now-playing audio visualizer stayed flat and never reacted to music.**
+  Capturing system audio needs the `NSAudioCaptureUsageDescription` permission —
+  a separate grant from the microphone — which the app never declared, so macOS
+  handed the audio tap buffers full of silence instead of the real signal. The
+  key is now present, so the visualizer reacts to whatever you're playing (you'll
+  be asked once to allow audio recording). A tap created before that permission
+  is granted — or one that spontaneously goes dormant mid-playback — used to stay
+  silent forever; a watchdog now detects the silence and rebuilds the tap so it
+  recovers on its own.
+
 ## [1.2.1] — 2026-07-06
 
 ### Fixed

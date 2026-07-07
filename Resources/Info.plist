@@ -40,6 +40,8 @@
 	<string>Notchless shows a camera mirror in the notch so you can check yourself before a call.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Notchless needs the microphone to transcribe your dictation.</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>Notchless reads system audio so the now-playing visualizer reacts to what you're listening to.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Notchless transcribes your speech on-device to type for you.</string>
 	<key>NSAppleEventsUsageDescription</key>
