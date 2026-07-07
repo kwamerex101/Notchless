@@ -2,6 +2,18 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.2.3] — 2026-07-07
+
+### Fixed
+- **The audio-visualizer recovery could churn the system audio engine.** The
+  silence watchdog added in 1.2.2 recreated the audio tap whenever music was
+  playing but no sound was captured — but it never stopped, so a *legitimately*
+  silent stream (paused-but-reported-playing, denied permission, or a quiet
+  passage) made it rebuild the tap every few seconds indefinitely. That rapid
+  churn could wedge macOS's audio daemon. The watchdog now retries a bounded
+  number of times, then gives up gracefully and falls back to the decorative
+  animation until real audio returns.
+
 ## [1.2.2] — 2026-07-07
 
 ### Fixed

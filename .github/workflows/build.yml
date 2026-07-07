@@ -7,7 +7,9 @@ on:
 
 jobs:
   build-test:
-    runs-on: macos-15
+    # macOS 26 image: the app compiles against the macOS 26 SDK (Liquid Glass
+    # `Glass`/`glassEffect`), which older runner images (macos-15/Xcode 16) lack.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
