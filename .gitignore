@@ -29,3 +29,8 @@ dmg_staging/
 dist/
 scripts/release.sh
 CLAUDE.md
+
+# Local-only planning/status notes (not for the public repo)
+PLAN.md
+STATUS.md
+docs/superpowers/
