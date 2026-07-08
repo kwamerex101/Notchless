@@ -40,11 +40,23 @@ final class RemoteStreamRecorder {
     private let url: URL
     private var writer: WAVWriter?
     private var mono: [Float] = []
+    private var gaveUp = false
+    private let lock = NSLock()
     init(url: URL) { self.url = url }
 
     func append(_ ptr: UnsafePointer<Float>, frameCount: Int, channels: Int, sampleRate: Double) {
         guard frameCount > 0 else { return }
-        if writer == nil { writer = try? WAVWriter(url: url, sampleRate: sampleRate) }
+        lock.lock()
+        defer { lock.unlock() }
+        if writer == nil {
+            guard !gaveUp else { return }
+            if let w = try? WAVWriter(url: url, sampleRate: sampleRate) {
+                writer = w
+            } else {
+                gaveUp = true
+                return
+            }
+        }
         guard let writer else { return }
         if channels <= 1 {
             writer.append(ptr, count: frameCount)
@@ -59,7 +71,11 @@ final class RemoteStreamRecorder {
         }
     }
 
-    func close() { writer?.close() }
+    func close() {
+        lock.lock()
+        defer { lock.unlock() }
+        writer?.close()
+    }
 }
 
 @MainActor
@@ -83,24 +99,35 @@ final class MeetingCaptureService {
         let remote = workDir.appendingPathComponent("remote.wav")
         micURL = mic; remoteURL = remote
 
-        // Remote: interleaved PCM from the existing system tap → mono WAV at the tap's rate.
-        let recorder = RemoteStreamRecorder(url: remote)
-        remoteRecorder = recorder
-        systemTap.onPCM = { [weak recorder] ptr, frames, channels, rate in
-            recorder?.append(ptr, frameCount: frames, channels: channels, sampleRate: rate)
-        }
+        // Remote + mic setup can each throw partway through; if anything fails, unwind
+        // everything wired so far (sink, tap, writers) rather than leaving a half-started
+        // capture running in the background.
+        do {
+            // Remote: interleaved PCM from the existing system tap → mono WAV at the tap's rate.
+            let recorder = RemoteStreamRecorder(url: remote)
+            remoteRecorder = recorder
+            systemTap.onPCM = { [weak recorder] ptr, frames, channels, rate in
+                recorder?.append(ptr, frameCount: frames, channels: channels, sampleRate: rate)
+            }
 
-        // Mic: AVAudioEngine input tap. Write channel 0 (mono) at the input's native rate;
-        // the pipeline (Task 6) resamples to 16 kHz for ASR.
-        let input = engine.inputNode
-        let inFormat = input.inputFormat(forBus: 0)
-        let mWriter = try WAVWriter(url: mic, sampleRate: inFormat.sampleRate)
-        micWriter = mWriter
-        input.installTap(onBus: 0, bufferSize: 2048, format: inFormat) { [weak mWriter] buffer, _ in
-            guard let ch = buffer.floatChannelData?[0] else { return }
-            mWriter?.append(ch, count: Int(buffer.frameLength))
+            // Mic: AVAudioEngine input tap. Write channel 0 (mono) at the input's native rate;
+            // the pipeline (Task 6) resamples to 16 kHz for ASR.
+            let input = engine.inputNode
+            let inFormat = input.inputFormat(forBus: 0)
+            let mWriter = try WAVWriter(url: mic, sampleRate: inFormat.sampleRate)
+            micWriter = mWriter
+            input.installTap(onBus: 0, bufferSize: 2048, format: inFormat) { [weak mWriter] buffer, _ in
+                guard let ch = buffer.floatChannelData?[0] else { return }
+                mWriter?.append(ch, count: Int(buffer.frameLength))
+            }
+            try engine.start()
+        } catch {
+            systemTap.onPCM = nil
+            remoteRecorder?.close(); remoteRecorder = nil
+            micWriter?.close(); micWriter = nil
+            engine.inputNode.removeTap(onBus: 0)
+            throw error
         }
-        try engine.start()
 
         startDate = Date()
         isRecording = true
