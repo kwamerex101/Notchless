@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var calendar = CalendarController(model: model)
     private lazy var notifications = NotificationsController(model: model)
     private(set) lazy var dictation = DictationController(model: model)
-    private lazy var meeting = MeetingController(
+    private(set) lazy var meeting = MeetingController(
         capture: MeetingCaptureService(systemTap: audioTap),
         pipeline: MeetingTranscriptionPipeline(),
         summarizer: MeetingSummarizer(
@@ -136,7 +136,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model: model,
             metrics: metrics,
             onCommand: { [weak self] cmd in self?.media.send(cmd) },
-            onOpenSettings: { SettingsWindowController.shared.show() }
+            onOpenSettings: { [weak self] in
+                guard let self else { return }
+                SettingsWindowController.shared.show(meeting: self.meeting)
+            }
         )
     }
 

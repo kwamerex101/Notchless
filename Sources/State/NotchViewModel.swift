@@ -143,9 +143,10 @@ final class NotchViewModel: ObservableObject {
         if settings.todosEnabled, !todos.isEmpty { result.append(.todos) }
         if settings.goalsEnabled, goals.hasActiveGoals { result.append(.goals) }
         if let battery, battery.isPluggedIn || battery.isCharging { result.append(.battery) }
-        // Surface the meeting page whenever the controller exists so the record
-        // control is reachable; a capture in progress jumps it to the front.
-        if let meeting {
+        // Surface the meeting page whenever the controller exists AND the user has
+        // enabled meeting capture (Settings > Meetings); a capture in progress
+        // jumps it to the front.
+        if let meeting, UserDefaults.standard.bool(forKey: "meeting.enabled") {
             if meeting.phase == .idle { result.append(.meeting) }
             else { result.insert(.meeting, at: 0) }
         }
@@ -270,7 +271,7 @@ final class NotchViewModel: ObservableObject {
         case .privacy: return privacy?.isActive ?? false
         case .claudeUsage: return settings.claudeUsageEnabled && claudeStats != nil
         case .goals: return settings.goalsEnabled && goals.hasActiveGoals
-        case .meeting: return meeting != nil
+        case .meeting: return meeting != nil && UserDefaults.standard.bool(forKey: "meeting.enabled")
         }
     }
 

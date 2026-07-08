@@ -5,6 +5,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case battery, connectivity, focus, display, sound
     case nowPlaying, calendar, fileTray, dictation, stats, claudeStats, timer, clipboard, tasks, privacyDot, goals
+    case meetings
     case permissions, about
 
     var id: String { rawValue }
@@ -28,6 +29,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .tasks: return "Tasks"
         case .privacyDot: return "Privacy"
         case .goals: return "Goals"
+        case .meetings: return "Meetings"
         case .permissions: return "Permissions"
         case .about: return "About"
         }
@@ -52,6 +54,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .tasks: return "checklist"
         case .privacyDot: return "checkmark.shield.fill"
         case .goals: return "target"
+        case .meetings: return "person.2.wave.2.fill"
         case .permissions: return "hand.raised.fill"
         case .about: return "info.circle.fill"
         }
@@ -76,6 +79,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .tasks: return .yellow
         case .privacyDot: return .green
         case .goals: return .pink
+        case .meetings: return .cyan
         case .permissions: return .blue
         case .about: return .gray
         }
@@ -86,6 +90,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
+    @ObservedObject var meeting: MeetingController
     @State private var selection: SettingsSection = .general
 
     var body: some View {
@@ -97,7 +102,8 @@ struct SettingsView: View {
                 }
                 Section("Live Activities") {
                     ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
-                             .stats, .claudeStats, .timer, .clipboard, .tasks, .privacyDot, .goals]) { row($0) }
+                             .stats, .claudeStats, .timer, .clipboard, .tasks, .privacyDot, .goals,
+                             .meetings]) { row($0) }
                 }
                 Section("Notchless") {
                     ForEach([SettingsSection.permissions, .about]) { row($0) }
@@ -168,6 +174,7 @@ struct SettingsView: View {
         case .privacyDot: PrivacyPane(settings: settings)
         case .goals: GoalsPane(settings: settings)
         case .dictation: DictationPane()
+        case .meetings: MeetingsPane(meeting: meeting)
         case .permissions: PermissionsPane()
         default: PlaceholderPane(section: selection, settings: settings)
         }
