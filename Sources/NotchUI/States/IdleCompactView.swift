@@ -12,6 +12,7 @@ struct IdleCompactView: View {
     var timer: NotchTimerInfo? = nil
     var privacy: PrivacyStatus? = nil
     var claudeStats: ClaudeUsageStats? = nil
+    var meetingPhase: MeetingPhase? = nil
     var glow: Color? = nil
     /// All concurrently-live activities (for the pager dots) and the order used.
     var liveActivities: [NotchActivity] = []
@@ -100,6 +101,14 @@ struct IdleCompactView: View {
             }
         case .goals:
             GoalCompactView().leading
+        case .meeting:
+            if meetingPhase == .recording {
+                PulsingDot(color: .red)
+            } else {
+                Image(systemName: "record.circle")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
         }
     }
 
@@ -165,6 +174,19 @@ struct IdleCompactView: View {
             .font(.system(size: 13, weight: .semibold))
         case .goals:
             GoalCompactView().trailing
+        case .meeting:
+            switch meetingPhase {
+            case .transcribing, .summarizing:
+                ProgressView().controlSize(.small).tint(.white)
+            case .some(.ready):
+                Image(systemName: "checkmark.circle").foregroundStyle(.green)
+                    .font(.system(size: 13, weight: .semibold))
+            case .some(.failed):
+                Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                    .font(.system(size: 13, weight: .semibold))
+            default:
+                EmptyView()
+            }
         }
     }
 

@@ -63,6 +63,8 @@ struct NotchSizing: Equatable {
                 // edge — at (width − w)/2 — has to sit beyond that. +190 keeps a
                 // 3-digit percent fully visible; w + 150 clipped it into the notch.
                 return NotchSizing(width: w + 190, height: h + 2, topRadius: 8, bottomRadius: 11)
+            case .meeting:
+                return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case .hud:
@@ -111,6 +113,8 @@ struct NotchSizing: Equatable {
             case .goals:
                 // Placeholder sizing until Task 7 ships the real expanded view.
                 return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+            case .meeting:
+                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             }
         }
     }

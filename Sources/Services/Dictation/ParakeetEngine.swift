@@ -23,6 +23,8 @@ final class ParakeetModelStore: ObservableObject {
 
     @Published private(set) var status: Status = .notLoaded
 
+    var isReady: Bool { status == .ready }
+
     private var manager: AsrManager?
     private var loadTask: Task<AsrManager, Error>?
 

@@ -8,14 +8,14 @@ final class SettingsWindowController {
 
     private var window: NSWindow?
 
-    func show() {
+    func show(meeting: MeetingController) {
         if let window {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
 
-        let hosting = NSHostingController(rootView: SettingsView(settings: .shared))
+        let hosting = NSHostingController(rootView: SettingsView(settings: .shared, meeting: meeting))
         let window = NSWindow(contentViewController: hosting)
         window.title = "Notchless Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]

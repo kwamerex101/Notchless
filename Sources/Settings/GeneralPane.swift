@@ -34,7 +34,7 @@ struct GeneralPane: View {
             CardGroup {
                 ToggleRow(title: "Most Recent", isOn: $settings.idleMostRecent, systemImage: "clock")
                 SegmentedCards(
-                    options: NotchActivity.allCases.filter { $0 != .privacy },
+                    options: NotchActivity.allCases.filter { $0 != .privacy && $0 != .meeting },
                     selection: $settings.idleActivity,
                     title: { $0.pickerTitle },
                     systemImage: { $0.pickerImage }
@@ -95,6 +95,7 @@ extension NotchActivity {
         case .privacy: return "Privacy"
         case .claudeUsage: return "Claude"
         case .goals: return "Goals"
+        case .meeting: return "Meeting"
         }
     }
     var pickerImage: String {
@@ -113,6 +114,7 @@ extension NotchActivity {
         case .privacy: return "checkmark.shield"
         case .claudeUsage: return "chart.pie.fill"
         case .goals: return "target"
+        case .meeting: return "record.circle"
         }
     }
 }

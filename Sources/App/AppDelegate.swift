@@ -27,6 +27,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var calendar = CalendarController(model: model)
     private lazy var notifications = NotificationsController(model: model)
     private(set) lazy var dictation = DictationController(model: model)
+    private(set) lazy var meeting = MeetingController(
+        capture: MeetingCaptureService(systemTap: audioTap),
+        pipeline: MeetingTranscriptionPipeline(),
+        summarizer: MeetingSummarizer(
+            client: AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey }),
+            model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"),
+        store: MeetingStore(directory: MeetingStore.defaultDirectory()),
+        makeSummarizer: {
+            // Backend + model read live so Settings changes take effect without relaunch.
+            let model = UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"
+            let client: MinutesAPIClient
+            switch MeetingSummaryBackend.current {
+            case .subscription:
+                client = ClaudeCLIMinutesClient()
+            case .apiKey:
+                client = AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey })
+            }
+            return MeetingSummarizer(client: client, model: model)
+        })
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -44,6 +63,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         privacy.start()
         claudeStats.start()
         ClipboardStore.shared.start()
+
+        // Expose the meeting-capture controller so the notch record control can
+        // reach it. Constructing it is side-effect-free; capture starts only when
+        // the user taps Record.
+        model.meeting = meeting
 
         // Keep the feature-gated pollers in sync with their toggles at runtime,
         // so turning a feature off actually stops its timer (and turning it back
@@ -106,9 +130,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Starts the system-audio tap when music is playing, its visualizer is on
     /// screen, and the setting is on; stops it otherwise. Idempotent.
     private func updateAudioTap() {
-        let wanted = model.nowPlaying?.isPlaying == true
+        let visualizerWants = model.nowPlaying?.isPlaying == true
             && model.settings.liveAudioVisualizer
             && model.visualizerOnScreen
+        // A meeting also needs the tap running to capture the far side, even with no music.
+        // meeting.phase changes propagate to model.objectWillChange (NotchViewModel bridges it),
+        // so this re-evaluates when a capture starts/stops.
+        let wanted = visualizerWants || (model.meeting?.isCapturing == true)
         if wanted { audioTap.start() } else { audioTap.stop() }
     }
 
@@ -124,7 +152,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model: model,
             metrics: metrics,
             onCommand: { [weak self] cmd in self?.media.send(cmd) },
-            onOpenSettings: { SettingsWindowController.shared.show() }
+            onOpenSettings: { [weak self] in
+                guard let self else { return }
+                SettingsWindowController.shared.show(meeting: self.meeting)
+            }
         )
     }
 
