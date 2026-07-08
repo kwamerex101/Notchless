@@ -18,7 +18,6 @@ final class MeetingController: ObservableObject {
     private let store: MeetingStore
     private let deleteAudioAfterProcessing: Bool
     private var timer: Timer?
-    private var workDir: URL?
 
     init(capture: MeetingCaptureService, pipeline: MeetingTranscriptionPipeline,
          summarizer: MeetingSummarizer, store: MeetingStore,
@@ -32,12 +31,11 @@ final class MeetingController: ObservableObject {
     func start() {
         guard phase == .idle else { return }
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("meeting-\(UUID().uuidString)")
-        workDir = dir
         do {
             try capture.start(workDir: dir)
             phase = .recording; elapsed = 0
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-                Task { @MainActor in self?.elapsed += 1 }
+                MainActor.assumeIsolated { self?.elapsed += 1 }
             }
         } catch {
             phase = .failed("Couldn't start capture: \(error.localizedDescription)")
@@ -83,7 +81,17 @@ final class MeetingController: ObservableObject {
 
     func delete(id: UUID) { try? store.delete(id: id); reload() }
 
+    /// Return to idle after a completed/failed meeting so a new one can be recorded.
+    func reset() {
+        if case .ready = phase { phase = .idle; elapsed = 0; return }
+        if case .failed = phase { phase = .idle; elapsed = 0; return }
+    }
+
     func rerunSummary(id: UUID) {
+        switch phase {
+        case .idle, .ready, .failed: break
+        case .recording, .transcribing, .summarizing: return
+        }
         guard var rec = records.first(where: { $0.id == id }) else { return }
         phase = .summarizing
         Task {
