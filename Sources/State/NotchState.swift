@@ -18,6 +18,7 @@ enum NotchActivity: String, CaseIterable, Codable {
     case privacy
     case claudeUsage
     case goals
+    case meeting
 
     /// SF Symbol shown for this page in the expanded tab strip.
     var tabGlyph: String {
@@ -35,6 +36,7 @@ enum NotchActivity: String, CaseIterable, Codable {
         case .privacy:     return "dot.radiowaves.left.and.right"
         case .claudeUsage: return "sparkle"
         case .goals:       return "target"
+        case .meeting:     return "record.circle"
         }
     }
 
@@ -54,6 +56,7 @@ enum NotchActivity: String, CaseIterable, Codable {
         case .privacy:     return "Privacy"
         case .claudeUsage: return "Claude Usage"
         case .goals:       return "Goals"
+        case .meeting:     return "Meeting"
         }
     }
 }

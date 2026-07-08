@@ -144,7 +144,8 @@ struct NotchRootView: View {
                             calendar: model.calendar, battery: model.battery,
                             stats: model.stats, audio: model.audio,
                             timer: model.notchTimer, privacy: model.privacy,
-                            claudeStats: model.claudeStats, glow: glowColor,
+                            claudeStats: model.claudeStats, meetingPhase: model.meeting?.phase,
+                            glow: glowColor,
                             liveActivities: model.carouselActivities, metrics: metrics,
                             artworkNamespace: artworkNamespace)
         case let .hud(kind):
@@ -212,6 +213,12 @@ struct NotchRootView: View {
             ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
         case .goals:
             GoalExpandedView(metrics: metrics)
+        case .meeting:
+            if let meeting = model.meeting {
+                MeetingExpandedView(meeting: meeting, metrics: metrics)
+            } else {
+                Color.clear
+            }
         }
     }
 

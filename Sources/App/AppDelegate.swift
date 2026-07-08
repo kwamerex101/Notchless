@@ -27,6 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var calendar = CalendarController(model: model)
     private lazy var notifications = NotificationsController(model: model)
     private(set) lazy var dictation = DictationController(model: model)
+    private lazy var meeting = MeetingController(
+        capture: MeetingCaptureService(systemTap: audioTap),
+        pipeline: MeetingTranscriptionPipeline(),
+        summarizer: MeetingSummarizer(
+            client: AnthropicMinutesAPIClient(apiKey: DictationSettings.shared.anthropicAPIKey),
+            model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"),
+        store: MeetingStore(directory: MeetingStore.defaultDirectory()))
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -44,6 +51,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         privacy.start()
         claudeStats.start()
         ClipboardStore.shared.start()
+
+        // Expose the meeting-capture controller so the notch record control can
+        // reach it. Constructing it is side-effect-free; capture starts only when
+        // the user taps Record.
+        model.meeting = meeting
 
         // Keep the feature-gated pollers in sync with their toggles at runtime,
         // so turning a feature off actually stops its timer (and turning it back
