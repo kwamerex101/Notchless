@@ -35,9 +35,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"),
         store: MeetingStore(directory: MeetingStore.defaultDirectory()),
         makeSummarizer: {
-            MeetingSummarizer(
-                client: AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey }),
-                model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5")
+            // Backend + model read live so Settings changes take effect without relaunch.
+            let model = UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"
+            let client: MinutesAPIClient
+            switch MeetingSummaryBackend.current {
+            case .subscription:
+                client = ClaudeCLIMinutesClient()
+            case .apiKey:
+                client = AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey })
+            }
+            return MeetingSummarizer(client: client, model: model)
         })
     private var effects: EffectsController?
 

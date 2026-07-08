@@ -99,6 +99,14 @@ struct MeetingExpandedView: View {
                 Text("Transcript ready · summary failed")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.orange)
+                if let reason = meeting.summaryError {
+                    Text(reason)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 HStack(spacing: 8) {
                     Button {
                         meeting.rerunSummary(id: id)

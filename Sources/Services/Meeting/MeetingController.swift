@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import OSLog
 
 enum MeetingPhase: Equatable {
     case idle, recording, transcribing, summarizing
@@ -11,6 +12,11 @@ final class MeetingController: ObservableObject {
     @Published private(set) var phase: MeetingPhase = .idle
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var records: [MeetingRecord] = []
+    /// Human-readable reason the last AI summary failed (nil when none). Surfaced
+    /// in the notch/Settings so "summary failed" is actionable.
+    @Published private(set) var summaryError: String?
+
+    private static let log = Logger(subsystem: "com.rexdanquah.Notchless", category: "Meeting")
 
     private let capture: MeetingCaptureService
     private let pipeline: MeetingTranscriptionPipeline
@@ -69,11 +75,14 @@ final class MeetingController: ObservableObject {
             do {
                 let minutes = try await summarizer.summarize(transcript, speakerNames: record.speakerNames)
                 record.minutes = minutes
+                summaryError = nil
                 try store.save(record); reload()
             } catch {
-                // Transcript kept; summary failure is non-fatal — flag it so the
-                // UI can offer a retry (see rerunSummary).
+                // Transcript kept; summary failure is non-fatal — flag it, log the
+                // real cause, and surface it so the UI's retry is actionable.
                 record.summaryFailed = true
+                summaryError = error.localizedDescription
+                Self.log.error("meeting summary failed: \(error.localizedDescription, privacy: .public)")
                 try? store.save(record); reload()
             }
             // Live read (defaults true when unset) so the Settings toggle takes
@@ -96,8 +105,8 @@ final class MeetingController: ObservableObject {
 
     /// Return to idle after a completed/failed meeting so a new one can be recorded.
     func reset() {
-        if case .ready = phase { phase = .idle; elapsed = 0; return }
-        if case .failed = phase { phase = .idle; elapsed = 0; return }
+        if case .ready = phase { phase = .idle; elapsed = 0; summaryError = nil; return }
+        if case .failed = phase { phase = .idle; elapsed = 0; summaryError = nil; return }
     }
 
     func rerunSummary(id: UUID) {
@@ -109,8 +118,16 @@ final class MeetingController: ObservableObject {
         phase = .summarizing
         let summarizer = makeSummarizer?() ?? self.summarizer
         Task {
-            if let m = try? await summarizer.summarize(rec.transcript, speakerNames: rec.speakerNames) {
-                rec.minutes = m; rec.summaryFailed = false; try? store.save(rec); reload()
+            do {
+                let m = try await summarizer.summarize(rec.transcript, speakerNames: rec.speakerNames)
+                rec.minutes = m; rec.summaryFailed = false
+                summaryError = nil
+                try? store.save(rec); reload()
+            } catch {
+                rec.summaryFailed = true
+                summaryError = error.localizedDescription
+                Self.log.error("meeting summary retry failed: \(error.localizedDescription, privacy: .public)")
+                try? store.save(rec); reload()
             }
             phase = .ready(id)
         }
