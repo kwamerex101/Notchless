@@ -92,6 +92,10 @@ Inspired by the great work of the macOS notch community — Alcove, boring.notch
 Atoll, DynamicNotch, rtaudio, and SkyLightWindow. All designs and code here are
 original reimplementations; no GPL code or assets from those projects were used.
 
+## Author
+
+Built by **Theophilus RexDanquah** — [rexdanquah.dev](https://rexdanquah.dev)
+
 ## License
 
 Copyright © HOMEKARE TECHNOLOGY LTD. All rights reserved.
