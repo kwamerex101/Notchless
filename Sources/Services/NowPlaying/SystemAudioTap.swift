@@ -47,7 +47,18 @@ final class SystemAudioTap {
     /// typically 2 channels). Args: `(interleavedPtr, frameCount, channels,
     /// sampleRate)`, where `frameCount` = total Float samples / `channels`.
     /// The consumer is responsible for downmixing to mono.
-    nonisolated(unsafe) var onPCM: ((UnsafePointer<Float>, Int, Int, Double) -> Void)?
+    ///
+    /// Reassigned from the main actor while the IO proc reads it on a realtime
+    /// thread — a data race on the closure (ARC retain/release). Guarded by
+    /// `bandsLock`: the setter takes the lock, and the IO callback snapshots it
+    /// under the same lock before invoking it (outside the lock). Access the
+    /// backing `_onPCM` directly under the lock inside the callback; the computed
+    /// wrapper is main-actor-isolated for the setter side.
+    nonisolated(unsafe) private var _onPCM: ((UnsafePointer<Float>, Int, Int, Double) -> Void)?
+    var onPCM: ((UnsafePointer<Float>, Int, Int, Double) -> Void)? {
+        get { bandsLock.lock(); defer { bandsLock.unlock() }; return _onPCM }
+        set { bandsLock.lock(); _onPCM = newValue; bandsLock.unlock() }
+    }
     /// Recreates attempted in the current silence episode, and whether we've
     /// given up on it. Reset when audio flows again or the gate restarts the tap.
     private var recreateAttempts = 0
@@ -127,11 +138,16 @@ final class SystemAudioTap {
             let bands = analyzer.bands(from: samples, count: n)
             var peak: Float = 0
             for i in 0..<n { let a = abs(samples[i]); if a > peak { peak = a } }
-            lock.lock(); self.latestBands = bands; self.latestPeak = peak; lock.unlock()
+            // Snapshot the PCM sink under the same lock that guards its setter,
+            // then invoke it OUTSIDE the lock (the consumer may take its own).
+            lock.lock()
+            self.latestBands = bands; self.latestPeak = peak
+            let sink = self._onPCM
+            lock.unlock()
 
-            if let onPCM = self.onPCM {
+            if let sink {
                 let channels = max(1, Int(buffer.mNumberChannels))
-                onPCM(samples, count / channels, channels, sampleRate)
+                sink(samples, count / channels, channels, sampleRate)
             }
         }
         guard status == noErr, let proc else {

@@ -4,7 +4,7 @@ import XCTest
 final class MeetingModelsTests: XCTestCase {
     func testSpeakerDisplayName() {
         XCTAssertEqual(Speaker.you.displayName([:]), "You")
-        XCTAssertEqual(Speaker.remote(id: "SPEAKER_01", name: nil).displayName([:]), "Speaker 1")
+        XCTAssertEqual(Speaker.remote(id: "SPEAKER_01", name: nil).displayName([:]), "Speaker 2")
         XCTAssertEqual(Speaker.remote(id: "SPEAKER_01", name: nil).displayName(["SPEAKER_01": "Sarah"]), "Sarah")
     }
 

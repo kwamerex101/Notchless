@@ -31,9 +31,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         capture: MeetingCaptureService(systemTap: audioTap),
         pipeline: MeetingTranscriptionPipeline(),
         summarizer: MeetingSummarizer(
-            client: AnthropicMinutesAPIClient(apiKey: DictationSettings.shared.anthropicAPIKey),
+            client: AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey }),
             model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5"),
-        store: MeetingStore(directory: MeetingStore.defaultDirectory()))
+        store: MeetingStore(directory: MeetingStore.defaultDirectory()),
+        makeSummarizer: {
+            MeetingSummarizer(
+                client: AnthropicMinutesAPIClient(keyProvider: { DictationSettings.shared.anthropicAPIKey }),
+                model: UserDefaults.standard.string(forKey: "meeting.summarizerModel") ?? "claude-sonnet-5")
+        })
     private var effects: EffectsController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {

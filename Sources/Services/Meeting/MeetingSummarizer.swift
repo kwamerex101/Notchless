@@ -68,9 +68,12 @@ struct AnthropicMinutesAPIClient: MinutesAPIClient {
         case malformedResponse
     }
 
-    var apiKey: String
+    /// Read at request time (not construction) so a key entered after launch
+    /// takes effect without relaunching.
+    var keyProvider: () -> String
 
     func minutesJSON(prompt: String, model: String) async throws -> String {
+        let apiKey = keyProvider()
         guard !apiKey.isEmpty else { throw ClientError.missingAPIKey }
 
         var request = URLRequest(url: Self.endpoint)

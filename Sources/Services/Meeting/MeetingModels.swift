@@ -12,10 +12,11 @@ enum Speaker: Codable, Equatable, Hashable {
         case let .remote(id, name):
             if let name, !name.isEmpty { return name }
             if let mapped = names[id], !mapped.isEmpty { return mapped }
-            // Diarization ids look like "SPEAKER_01" — use the trailing integer
-            // directly as the label (e.g. "SPEAKER_01" -> "Speaker 1").
+            // Diarization ids look like "SPEAKER_01" and are 0-indexed; present
+            // them 1-indexed to users (SPEAKER_00 -> "Speaker 1", SPEAKER_01 ->
+            // "Speaker 2") via the trailing integer.
             if let n = Int(id.split(separator: "_").last.map(String.init) ?? "") {
-                return "Speaker \(n)"
+                return "Speaker \(n + 1)"
             }
             return id
         }
@@ -54,6 +55,30 @@ struct MeetingRecord: Codable, Identifiable, Equatable {
     var transcript: MeetingTranscript
     var minutes: MeetingMinutes?
     var speakerNames: [String: String]
+    /// Set when summarization failed but the transcript was kept, so the UI can
+    /// offer a retry. Defaulted (and `decodeIfPresent`) so records saved before
+    /// this field still decode.
+    var summaryFailed: Bool = false
+
+    init(id: UUID, title: String, date: Date, duration: TimeInterval,
+         transcript: MeetingTranscript, minutes: MeetingMinutes?,
+         speakerNames: [String: String], summaryFailed: Bool = false) {
+        self.id = id; self.title = title; self.date = date; self.duration = duration
+        self.transcript = transcript; self.minutes = minutes
+        self.speakerNames = speakerNames; self.summaryFailed = summaryFailed
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        date = try c.decode(Date.self, forKey: .date)
+        duration = try c.decode(TimeInterval.self, forKey: .duration)
+        transcript = try c.decode(MeetingTranscript.self, forKey: .transcript)
+        minutes = try c.decodeIfPresent(MeetingMinutes.self, forKey: .minutes)
+        speakerNames = try c.decode([String: String].self, forKey: .speakerNames)
+        summaryFailed = try c.decodeIfPresent(Bool.self, forKey: .summaryFailed) ?? false
+    }
 }
 
 /// Two on-disk WAVs plus timing, produced by MeetingCaptureService.

@@ -15,15 +15,21 @@ final class MeetingController: ObservableObject {
     private let capture: MeetingCaptureService
     private let pipeline: MeetingTranscriptionPipeline
     private let summarizer: MeetingSummarizer
+    /// Rebuilds the summarizer per request so a key entered / model picked after
+    /// launch takes effect without relaunching. Nil in tests, which inject a
+    /// fixed `summarizer` directly.
+    private let makeSummarizer: (() -> MeetingSummarizer)?
     private let store: MeetingStore
     private let deleteAudioAfterProcessing: Bool
     private var timer: Timer?
 
     init(capture: MeetingCaptureService, pipeline: MeetingTranscriptionPipeline,
          summarizer: MeetingSummarizer, store: MeetingStore,
+         makeSummarizer: (() -> MeetingSummarizer)? = nil,
          deleteAudioAfterProcessing: Bool = true) {
         self.capture = capture; self.pipeline = pipeline
         self.summarizer = summarizer; self.store = store
+        self.makeSummarizer = makeSummarizer
         self.deleteAudioAfterProcessing = deleteAudioAfterProcessing
         self.records = (try? store.load()) ?? []
     }
@@ -59,14 +65,21 @@ final class MeetingController: ObservableObject {
                 transcript: transcript, minutes: nil, speakerNames: [:])
             try store.save(record); reload()
             phase = .summarizing
+            let summarizer = makeSummarizer?() ?? self.summarizer
             do {
                 let minutes = try await summarizer.summarize(transcript, speakerNames: record.speakerNames)
                 record.minutes = minutes
                 try store.save(record); reload()
             } catch {
-                // Transcript kept; summary failure is non-fatal.
+                // Transcript kept; summary failure is non-fatal — flag it so the
+                // UI can offer a retry (see rerunSummary).
+                record.summaryFailed = true
+                try? store.save(record); reload()
             }
-            if deleteAudioAfterProcessing { store.deleteAudio(recording) }
+            // Live read (defaults true when unset) so the Settings toggle takes
+            // effect without relaunching.
+            let deleteAudio = UserDefaults.standard.object(forKey: "meeting.deleteAudio") as? Bool ?? true
+            if deleteAudio { store.deleteAudio(recording) }
             phase = .ready(record.id)
         } catch {
             phase = .failed("Processing failed: \(error.localizedDescription)")
@@ -94,9 +107,10 @@ final class MeetingController: ObservableObject {
         }
         guard var rec = records.first(where: { $0.id == id }) else { return }
         phase = .summarizing
+        let summarizer = makeSummarizer?() ?? self.summarizer
         Task {
             if let m = try? await summarizer.summarize(rec.transcript, speakerNames: rec.speakerNames) {
-                rec.minutes = m; try? store.save(rec); reload()
+                rec.minutes = m; rec.summaryFailed = false; try? store.save(rec); reload()
             }
             phase = .ready(id)
         }
