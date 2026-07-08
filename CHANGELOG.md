@@ -2,6 +2,28 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.3.0] — 2026-07-08
+
+### Added
+- **Meeting minutes.** One-click meeting capture from the notch: records your
+  mic and the far-side participants (via the system-audio tap), transcribes and
+  separates speakers entirely on-device (FluidAudio VAD + diarization + NVIDIA
+  Parakeet), and generates AI meeting minutes — a summary, decisions, and action
+  items — from the transcript. Raw audio never leaves the Mac; only the finished
+  transcript text is sent for summarization.
+- **Summarize on your Claude subscription.** The minutes can be generated via the
+  local `claude` CLI (Claude Code sign-in) with no API key and no per-token cost,
+  or via a stored Anthropic API key. Both are selectable in Settings → Meetings.
+- **Meetings library.** A native Settings pane to browse past meetings, read the
+  speaker-labelled transcript and minutes, rename speakers, re-run the summary,
+  and export Markdown. A one-time consent notice gates the feature, and a
+  recording indicator shows while capture is active.
+- **Works on laptop speakers.** The system-audio tap runs during a meeting (not
+  just for the visualizer), and acoustic echo cancellation on the mic keeps the
+  far side from bleeding in — so a headset is no longer required for speaker
+  separation. Capturing the far side still needs the system-audio recording
+  permission.
+
 ## [1.2.3] — 2026-07-07
 
 ### Fixed
