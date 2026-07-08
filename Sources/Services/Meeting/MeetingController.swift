@@ -12,6 +12,10 @@ final class MeetingController: ObservableObject {
     @Published private(set) var phase: MeetingPhase = .idle
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var records: [MeetingRecord] = []
+
+    /// True while actively recording — used by AppDelegate to keep the system-audio
+    /// tap running during a meeting (it otherwise only runs for the now-playing visualizer).
+    var isCapturing: Bool { phase == .recording }
     /// Human-readable reason the last AI summary failed (nil when none). Surfaced
     /// in the notch/Settings so "summary failed" is actionable.
     @Published private(set) var summaryError: String?

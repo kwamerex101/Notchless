@@ -130,9 +130,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Starts the system-audio tap when music is playing, its visualizer is on
     /// screen, and the setting is on; stops it otherwise. Idempotent.
     private func updateAudioTap() {
-        let wanted = model.nowPlaying?.isPlaying == true
+        let visualizerWants = model.nowPlaying?.isPlaying == true
             && model.settings.liveAudioVisualizer
             && model.visualizerOnScreen
+        // A meeting also needs the tap running to capture the far side, even with no music.
+        // meeting.phase changes propagate to model.objectWillChange (NotchViewModel bridges it),
+        // so this re-evaluates when a capture starts/stops.
+        let wanted = visualizerWants || (model.meeting?.isCapturing == true)
         if wanted { audioTap.start() } else { audioTap.stop() }
     }
 

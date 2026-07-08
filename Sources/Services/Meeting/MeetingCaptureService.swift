@@ -113,6 +113,12 @@ final class MeetingCaptureService {
             // Mic: AVAudioEngine input tap. Write channel 0 (mono) at the input's native rate;
             // the pipeline (Task 6) resamples to 16 kHz for ASR.
             let input = engine.inputNode
+            // Acoustic echo cancellation: on laptop speakers (no headset) the mic would
+            // otherwise pick up the far side coming out of the speakers and mislabel it as
+            // "You". Voice-processing IO cancels the system output from the mic so it captures
+            // only the user; the far side is captured cleanly from the system-audio tap instead.
+            // Best-effort — if VP is unsupported the raw mic still works (just needs headphones).
+            try? input.setVoiceProcessingEnabled(true)
             let inFormat = input.inputFormat(forBus: 0)
             let mWriter = try WAVWriter(url: mic, sampleRate: inFormat.sampleRate)
             micWriter = mWriter
@@ -137,6 +143,7 @@ final class MeetingCaptureService {
         systemTap.onPCM = nil                      // detach the sink BEFORE closing the recorder
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
+        try? engine.inputNode.setVoiceProcessingEnabled(false)
         micWriter?.close(); remoteRecorder?.close()
         let start = startDate ?? Date()
         let recording = MeetingRecording(
