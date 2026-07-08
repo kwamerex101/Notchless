@@ -93,11 +93,31 @@ struct MeetingExpandedView: View {
         case .summarizing:
             progress("Summarizing…")
 
-        case .ready:
-            Text("Meeting ready")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-            resetButton(title: "New")
+        case let .ready(id):
+            let record = meeting.records.first(where: { $0.id == id })
+            if record?.summaryFailed == true {
+                Text("Transcript ready · summary failed")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.orange)
+                HStack(spacing: 8) {
+                    Button {
+                        meeting.rerunSummary(id: id)
+                    } label: {
+                        Text("Retry summary")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .background(Capsule().fill(Color.white.opacity(0.14)))
+                    }
+                    .buttonStyle(.plain)
+                    resetButton(title: "New")
+                }
+            } else {
+                Text("Meeting ready")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                resetButton(title: "New")
+            }
 
         case let .failed(message):
             Text(message)

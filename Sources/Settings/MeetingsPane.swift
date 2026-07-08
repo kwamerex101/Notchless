@@ -23,7 +23,15 @@ struct MeetingsPane: View {
             }
             if let id = selection, let rec = meeting.records.first(where: { $0.id == id }) {
                 Section("Details") {
-                    if let m = rec.minutes { Text(m.summary) }
+                    if let m = rec.minutes {
+                        Text(m.summary)
+                    } else if rec.summaryFailed {
+                        Label("Summary failed", systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                        Text("The transcript was saved, but the AI summary couldn't be generated. Use Re-run summary below to try again.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     ForEach(rec.transcript.segments.indices, id: \.self) { i in
                         let s = rec.transcript.segments[i]
                         Text("\(s.speaker.displayName(rec.speakerNames)): \(s.text)")
@@ -34,6 +42,7 @@ struct MeetingsPane: View {
                         Button("Delete", role: .destructive) { meeting.delete(id: id) }
                     }
                 }
+                speakersSection(for: rec)
             }
             Section("Settings") {
                 Toggle("Enable meeting capture", isOn: Binding(
@@ -54,6 +63,30 @@ struct MeetingsPane: View {
             MeetingConsentSheet(
                 onAgree: { seenConsent = true; enabled = true; showConsent = false },
                 onCancel: { showConsent = false })
+        }
+    }
+
+    /// Editable name rows for each distinct remote speaker id present in the
+    /// transcript, so diarized "Speaker 1/2" labels can be renamed. Renaming
+    /// writes through `MeetingController.rename`, which re-persists the record;
+    /// `meeting.records` republishes and `displayName` picks up the new name.
+    @ViewBuilder
+    private func speakersSection(for rec: MeetingRecord) -> some View {
+        let remoteIds = Array(NSOrderedSet(array: rec.transcript.segments.compactMap {
+            if case let .remote(id, _) = $0.speaker { return id }; return nil
+        })) as? [String] ?? []
+        if !remoteIds.isEmpty {
+            Section("Speakers") {
+                ForEach(remoteIds, id: \.self) { rid in
+                    HStack {
+                        Text(Speaker.remote(id: rid, name: nil).displayName(rec.speakerNames))
+                            .frame(width: 90, alignment: .leading)
+                        TextField("Name", text: Binding(
+                            get: { rec.speakerNames[rid] ?? "" },
+                            set: { meeting.rename(id: rec.id, remoteId: rid, to: $0) }))
+                    }
+                }
+            }
         }
     }
 
