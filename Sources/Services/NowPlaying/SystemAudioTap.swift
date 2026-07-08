@@ -36,6 +36,14 @@ final class SystemAudioTap {
     /// Silence-watchdog bookkeeping (monotonic `systemUptime` seconds).
     private var lastSignalAt: TimeInterval = 0
     private var lastRecreateAt: TimeInterval = 0
+
+    /// Optional realtime PCM sink for meeting recording. Set/cleared from the
+    /// main actor, but invoked on the IO thread alongside the FFT/peak work
+    /// above — `nonisolated(unsafe)` is intentional. Nil unless a meeting is
+    /// recording, so the visualizer path is unaffected when unset. The
+    /// consumer must be realtime-safe (append to a preallocated file/buffer,
+    /// no locks).
+    nonisolated(unsafe) var onPCM: ((UnsafePointer<Float>, Int, Double) -> Void)?
     /// Recreates attempted in the current silence episode, and whether we've
     /// given up on it. Reset when audio flows again or the gate restarts the tap.
     private var recreateAttempts = 0
@@ -103,6 +111,7 @@ final class SystemAudioTap {
         // without invalidating views ~90+ times a second.
         let analyzer = SpectrumAnalyzer(bandCount: 4)
         let lock = bandsLock
+        let sampleRate = nominalSampleRate(aggregate)
         var proc: AudioDeviceIOProcID?
         let status = AudioDeviceCreateIOProcIDWithBlock(&proc, aggregate, nil) { [weak self] _, inInputData, _, _, _ in
             let list = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: inInputData))
@@ -115,6 +124,8 @@ final class SystemAudioTap {
             var peak: Float = 0
             for i in 0..<n { let a = abs(samples[i]); if a > peak { peak = a } }
             lock.lock(); self.latestBands = bands; self.latestPeak = peak; lock.unlock()
+
+            if let onPCM = self.onPCM { onPCM(samples, count, sampleRate) }
         }
         guard status == noErr, let proc else {
             Self.log.error("AudioDeviceCreateIOProcIDWithBlock failed (status \(status))")
@@ -250,5 +261,20 @@ final class SystemAudioTap {
         let status = AudioObjectGetPropertyData(tap, &address, 0, nil, &size, &cfUID)
         guard status == noErr, let cfUID else { return nil }
         return cfUID.takeRetainedValue() as String
+    }
+
+    /// The aggregate device's nominal sample rate, for tagging PCM handed to
+    /// `onPCM`. Falls back to 48 kHz (the standard macOS output rate) if the
+    /// property read fails — the FFT/peak path above doesn't need this at all,
+    /// so a bad read here can't affect the visualizer.
+    private func nominalSampleRate(_ device: AudioObjectID) -> Double {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyNominalSampleRate,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        var rate: Float64 = 0
+        var size = UInt32(MemoryLayout<Float64>.size)
+        let status = AudioObjectGetPropertyData(device, &address, 0, nil, &size, &rate)
+        return status == noErr ? Double(rate) : 48_000
     }
 }
