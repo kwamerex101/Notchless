@@ -43,7 +43,11 @@ final class SystemAudioTap {
     /// recording, so the visualizer path is unaffected when unset. The
     /// consumer must be realtime-safe (append to a preallocated file/buffer,
     /// no locks).
-    nonisolated(unsafe) var onPCM: ((UnsafePointer<Float>, Int, Double) -> Void)?
+    /// Buffer is interleaved (the tap is `stereoGlobalTapButExcludeProcesses`,
+    /// typically 2 channels). Args: `(interleavedPtr, frameCount, channels,
+    /// sampleRate)`, where `frameCount` = total Float samples / `channels`.
+    /// The consumer is responsible for downmixing to mono.
+    nonisolated(unsafe) var onPCM: ((UnsafePointer<Float>, Int, Int, Double) -> Void)?
     /// Recreates attempted in the current silence episode, and whether we've
     /// given up on it. Reset when audio flows again or the gate restarts the tap.
     private var recreateAttempts = 0
@@ -125,7 +129,10 @@ final class SystemAudioTap {
             for i in 0..<n { let a = abs(samples[i]); if a > peak { peak = a } }
             lock.lock(); self.latestBands = bands; self.latestPeak = peak; lock.unlock()
 
-            if let onPCM = self.onPCM { onPCM(samples, count, sampleRate) }
+            if let onPCM = self.onPCM {
+                let channels = max(1, Int(buffer.mNumberChannels))
+                onPCM(samples, count / channels, channels, sampleRate)
+            }
         }
         guard status == noErr, let proc else {
             Self.log.error("AudioDeviceCreateIOProcIDWithBlock failed (status \(status))")
