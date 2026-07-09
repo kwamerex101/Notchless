@@ -65,6 +65,7 @@ final class SettingsStore: ObservableObject {
     @Published var trackpadHapticStrength: HapticStrength { didSet { persist(Keys.trackpadHapticStrength, trackpadHapticStrength.rawValue, oldValue != trackpadHapticStrength) } }
     @Published var trackpadSoundVoice: String { didSet { persist(Keys.trackpadSoundVoice, trackpadSoundVoice, oldValue != trackpadSoundVoice) } }
     @Published var trackpadSoundVolume: Double { didSet { persist(Keys.trackpadSoundVolume, trackpadSoundVolume, oldValue != trackpadSoundVolume) } }
+    @Published var trackpadGesturesEnabled: Bool { didSet { persist(Keys.trackpadGesturesEnabled, trackpadGesturesEnabled, oldValue != trackpadGesturesEnabled) } }
 
     // Notifications
     @Published var batteryEnabled: Bool { didSet { persist(Keys.batteryEnabled, batteryEnabled, oldValue != batteryEnabled) } }
@@ -147,6 +148,7 @@ final class SettingsStore: ObservableObject {
             Keys.trackpadHapticStrength: HapticStrength.medium.rawValue,
             Keys.trackpadSoundVoice: FeedbackVoice.all[0].id,
             Keys.trackpadSoundVolume: 0.72,
+            Keys.trackpadGesturesEnabled: true,
             Keys.batteryEnabled: true,
             Keys.connectivityEnabled: true,
             Keys.focusEnabled: true,
@@ -211,6 +213,7 @@ final class SettingsStore: ObservableObject {
         trackpadHapticStrength = HapticStrength(rawValue: defaults.string(forKey: Keys.trackpadHapticStrength) ?? "") ?? .medium
         trackpadSoundVoice = defaults.string(forKey: Keys.trackpadSoundVoice) ?? FeedbackVoice.all[0].id
         trackpadSoundVolume = defaults.double(forKey: Keys.trackpadSoundVolume)
+        trackpadGesturesEnabled = defaults.bool(forKey: Keys.trackpadGesturesEnabled)
         batteryEnabled = defaults.bool(forKey: Keys.batteryEnabled)
         connectivityEnabled = defaults.bool(forKey: Keys.connectivityEnabled)
         focusEnabled = defaults.bool(forKey: Keys.focusEnabled)
@@ -316,6 +319,7 @@ final class SettingsStore: ObservableObject {
             pullString(Keys.trackpadHapticStrength) { trackpadHapticStrength = HapticStrength(rawValue: $0) ?? trackpadHapticStrength }
             pullString(Keys.trackpadSoundVoice) { trackpadSoundVoice = $0 }
             pullDouble(Keys.trackpadSoundVolume) { trackpadSoundVolume = $0 }
+            pullBool(Keys.trackpadGesturesEnabled) { trackpadGesturesEnabled = $0 }
             pullBool(Keys.batteryEnabled) { batteryEnabled = $0 }
             pullBool(Keys.connectivityEnabled) { connectivityEnabled = $0 }
             pullBool(Keys.focusEnabled) { focusEnabled = $0 }
@@ -389,6 +393,7 @@ final class SettingsStore: ObservableObject {
         static let trackpadHapticStrength = "trackpadHapticStrength"
         static let trackpadSoundVoice = "trackpadSoundVoice"
         static let trackpadSoundVolume = "trackpadSoundVolume"
+        static let trackpadGesturesEnabled = "trackpadGesturesEnabled"
         static let batteryEnabled = "batteryEnabled"
         static let connectivityEnabled = "connectivityEnabled"
         static let focusEnabled = "focusEnabled"

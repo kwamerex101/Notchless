@@ -64,6 +64,7 @@ struct TrackpadFeedbackConfig: Equatable {
     var strength: HapticStrength
     var voiceID: String
     var volume: Double
+    var gesturesOn: Bool = false
 }
 
 /// Haptic output seam — real MTActuator in production, mock in tests.
