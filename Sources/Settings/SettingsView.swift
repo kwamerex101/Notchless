@@ -113,6 +113,7 @@ struct SettingsView: View {
         } detail: {
             ScrollView {
                 content
+                    .environment(\.paneTint, selection.tint)
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
