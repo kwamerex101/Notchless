@@ -76,12 +76,39 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .claudeStats: return .orange
         case .timer: return .orange
         case .clipboard: return .indigo
-        case .tasks: return .yellow
+        // A deep amber rather than flat yellow — legible as a tinted label on a
+        // light card and behind white text on the selected segmented tile.
+        case .tasks: return Color(red: 0.78, green: 0.53, blue: 0.04)
         case .privacyDot: return .green
         case .goals: return .pink
         case .meetings: return .cyan
         case .permissions: return .blue
         case .about: return .gray
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .general: return "Startup, appearance, and system-wide behaviour."
+        case .battery: return "Charge, low-battery, and full-charge alerts."
+        case .connectivity: return "Bluetooth and audio-device connection alerts."
+        case .focus: return "Focus / Do Not Disturb change alerts."
+        case .display: return "A brightness HUD when you change display brightness."
+        case .sound: return "A volume HUD when you change output volume."
+        case .nowPlaying: return "Live media controls and artwork for what's playing."
+        case .calendar: return "Your next event, glanceable in the notch."
+        case .fileTray: return "Drag files onto the notch to hold and move them."
+        case .dictation: return "Speak anywhere; text appears where you type."
+        case .stats: return "Live CPU, memory, and network in the notch."
+        case .claudeStats: return "Your Claude usage and limits at a glance."
+        case .timer: return "Quick countdowns that live in the notch."
+        case .clipboard: return "Recent clipboard items, ready to paste."
+        case .tasks: return "A lightweight to-do list in the notch."
+        case .privacyDot: return "A dot when the mic or camera is in use."
+        case .goals: return "Track daily goals and progress rings."
+        case .meetings: return "Capture and transcribe meetings on device."
+        case .permissions: return "Grant the system access Notchless needs."
+        case .about: return "Version, credits, and updates."
         }
     }
 
@@ -113,6 +140,7 @@ struct SettingsView: View {
         } detail: {
             ScrollView {
                 content
+                    .environment(\.paneTint, selection.tint)
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -199,7 +227,7 @@ struct PlaceholderPane: View {
             case .fileTray:
                 ToggleCard(title: "File Tray", isOn: $settings.fileTrayEnabled)
                 Text("Drag files onto the notch to hold them, then drag them back out anywhere.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.secondary)
             case .about:
                 AboutPane()
             default:
@@ -214,9 +242,28 @@ struct PlaceholderPane: View {
 struct PaneHeader: View {
     let section: SettingsSection
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: section.systemImage).foregroundStyle(section.tint)
-            Text(section.title).font(.title2.bold())
+        HStack(spacing: 11) {
+            Image(systemName: section.systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(
+                            LinearGradient(colors: [section.tint.opacity(0.9), section.tint],
+                                           startPoint: .top, endPoint: .bottom)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+                        )
+                        .shadow(color: section.tint.opacity(0.35), radius: 5, y: 2)
+                )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(section.title).font(.title2.bold())
+                Text(section.description).font(.callout).foregroundStyle(.secondary)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
