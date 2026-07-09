@@ -29,21 +29,27 @@ enum TranscriptCleaner {
         let prompt = systemPrompt(intensity: intensity, extraHint: extraPromptHint)
         let timeout = TimeInterval(max(5, timeoutSeconds))
 
+        let cleaned: String
         switch backend {
         case .api:
-            return await ClaudeAPIClient.clean(text, apiKey: apiKey, systemPrompt: prompt, timeout: timeout) ?? text
+            cleaned = await ClaudeAPIClient.clean(text, apiKey: apiKey, systemPrompt: prompt, timeout: timeout) ?? text
         case .cli:
-            return await runCLI(text, systemPrompt: prompt, timeout: timeout) ?? text
+            cleaned = await runCLI(text, systemPrompt: prompt, timeout: timeout) ?? text
         case .onDevice:
-            return await LocalLLMEngine.shared.clean(text, systemPrompt: prompt, timeout: timeout) ?? text
+            cleaned = await LocalLLMEngine.shared.clean(text, systemPrompt: prompt, timeout: timeout) ?? text
         case .auto:
             // Prefer the API when a key is present, else the local CLI.
             if !apiKey.isEmpty,
                let out = await ClaudeAPIClient.clean(text, apiKey: apiKey, systemPrompt: prompt, timeout: timeout) {
-                return out
+                cleaned = out
+            } else {
+                cleaned = await runCLI(text, systemPrompt: prompt, timeout: timeout) ?? text
             }
-            return await runCLI(text, systemPrompt: prompt, timeout: timeout) ?? text
         }
+
+        // Instruct/local models can leak a chat-template stop token (e.g.
+        // "<|im_end|>") into their output — strip it before delivery.
+        return TranscriptHygiene.stripModelTokens(cleaned)
     }
 
     // MARK: - Prompt

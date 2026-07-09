@@ -32,6 +32,19 @@ final class DictationPipelineTests: XCTestCase {
         XCTAssertEqual(TranscriptHygiene.clean("  spaced   out  "), "spaced out")
     }
 
+    func test_stripsLeakedModelTokens() {
+        // The exact ChatML stop-token leak seen from the on-device cleanup model.
+        XCTAssertEqual(
+            TranscriptHygiene.stripModelTokens("They're not doing any work. I don't know.<|im_end|>"),
+            "They're not doing any work. I don't know.")
+        // Timeout-truncated variant (decode stopped mid-token).
+        XCTAssertEqual(TranscriptHygiene.stripModelTokens("Hello there.<|im_en"), "Hello there.")
+        // Gemma end-of-turn marker.
+        XCTAssertEqual(TranscriptHygiene.stripModelTokens("Clean text.<end_of_turn>"), "Clean text.")
+        // Untouched when there's nothing to strip.
+        XCTAssertEqual(TranscriptHygiene.stripModelTokens("No tokens here."), "No tokens here.")
+    }
+
     // MARK: CleanupGate
 
     func test_needsCleanup() {
