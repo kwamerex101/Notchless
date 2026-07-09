@@ -11,8 +11,8 @@ struct NotchSizing: Equatable {
     /// The interactive band for `content` in screen space (bottom-left origin,
     /// matching `NSEvent.mouseLocation`), padded by `pad` for easy targeting.
     /// Single source of truth for the hover region.
-    static func screenBand(for content: NotchContent, metrics: NotchMetrics, pad: CGFloat) -> CGRect {
-        let sizing = size(for: content, metrics: metrics)
+    static func screenBand(for content: NotchContent, metrics: NotchMetrics, pad: CGFloat, dictationSettled: Bool = true) -> CGRect {
+        let sizing = size(for: content, metrics: metrics, dictationSettled: dictationSettled)
         return CGRect(
             x: metrics.notchCenterX - sizing.width / 2 - pad,
             y: metrics.screenTopY - sizing.height - pad,
@@ -21,7 +21,7 @@ struct NotchSizing: Equatable {
         )
     }
 
-    static func size(for content: NotchContent, metrics: NotchMetrics) -> NotchSizing {
+    static func size(for content: NotchContent, metrics: NotchMetrics, dictationSettled: Bool = true) -> NotchSizing {
         let w = metrics.notchWidth
         let h = metrics.notchHeight
 
@@ -76,8 +76,23 @@ struct NotchSizing: Equatable {
         case .mirror:
             return NotchSizing(width: max(w + 40, 360), height: 250, topRadius: 10, bottomRadius: 24)
 
-        case .dictation:
-            return NotchSizing(width: max(w + 40, 400), height: h + 66, topRadius: 10, bottomRadius: 22)
+        case let .dictation(phase):
+            switch phase {
+            case .recording:
+                if dictationSettled {
+                    // Full panel: waveform + transcript + control row.
+                    return NotchSizing(width: max(w + 40, 420), height: h + 96, topRadius: 10, bottomRadius: 22)
+                } else {
+                    // Entry sliver: waveform only.
+                    return NotchSizing(width: max(w + 40, 260), height: h + 22, topRadius: 9, bottomRadius: 16)
+                }
+            case .transcribing, .cleaning:
+                // Slightly shorter: shimmer + transcript + label, no control row.
+                return NotchSizing(width: max(w + 40, 400), height: h + 74, topRadius: 10, bottomRadius: 22)
+            case .success, .error:
+                // Compact result chip.
+                return NotchSizing(width: max(w + 40, 320), height: h + 40, topRadius: 10, bottomRadius: 20)
+            }
 
         case let .fileTray(isExpanded):
             if isExpanded {
