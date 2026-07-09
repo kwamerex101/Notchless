@@ -68,10 +68,16 @@ final class TrackpadEventMonitor {
         // exits during deinit).
         let finished = DispatchSemaphore(value: 0)
         self.threadFinished = finished
+        // Gate `start()` until the thread has assigned `threadRunLoop` and added
+        // the source. Without this, a `stop()`/`deinit` racing an unstarted thread
+        // would find `threadRunLoop == nil` (nothing to CFRunLoopStop) and then
+        // block forever in `finished.wait()` — an unrecoverable main-thread freeze.
+        let ready = DispatchSemaphore(value: 0)
 
         let thread = Thread { [weak self] in
             self?.threadRunLoop = CFRunLoopGetCurrent()
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+            ready.signal()   // threadRunLoop is now set + source added
             CFRunLoopRun()   // exits via CFRunLoopStop in stop()
             finished.signal()
         }
@@ -79,6 +85,7 @@ final class TrackpadEventMonitor {
         thread.qualityOfService = .userInteractive
         self.thread = thread
         thread.start()
+        ready.wait()   // only on this thread-spawning path — see early returns above
         return true
     }
 
