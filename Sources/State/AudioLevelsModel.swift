@@ -14,4 +14,18 @@ final class AudioLevelsModel: ObservableObject {
     @Published var dictationLevel: CGFloat = 0.5
     /// Live dictation frequency-band levels (low→high).
     @Published var dictationSpectrum: [CGFloat] = []
+
+    /// Live partial transcript from the recognizer (Apple Speech only; Parakeet
+    /// finishes-then-transcribes and never emits partials). High-frequency, so
+    /// it lives here and not on `NotchViewModel`.
+    @Published var dictationPartial: String = ""
+
+    /// Clear dictation state at the start/cancel of a session. `dictationLevel`
+    /// defaults to 0.5, which would flash a phantom half-height bar before real
+    /// audio arrives — reset it to the silence floor.
+    func resetDictation() {
+        dictationLevel = 0
+        dictationSpectrum = []
+        dictationPartial = ""
+    }
 }

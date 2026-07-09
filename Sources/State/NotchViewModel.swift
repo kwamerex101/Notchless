@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import Combine
 
@@ -61,10 +62,21 @@ final class NotchViewModel: ObservableObject {
 
     // Dictation (ListenToMe)
     @Published var dictation: DictationPhase?
+    /// The recording panel has grown past its entry sliver. Drives sliver↔panel
+    /// sizing and reveals the transcript + control row.
+    @Published var dictationSettled: Bool = true
+    /// When the current recording began — drives the elapsed timer view-locally.
+    @Published var dictationStartedAt: Date?
+    /// Where dictated text will land (frontmost app at record start).
+    @Published var dictationTarget: DictationTarget?
+    private var dictationSettleWork: DispatchWorkItem?
     let dictationSettings = DictationSettings.shared
     let dictationDictionary = DictationDictionary.shared
     let dictationHistory = DictationHistory.shared
     private var dictationDismiss: DispatchWorkItem?
+    /// Set by AppDelegate after the controller is created, so in-notch buttons
+    /// (e.g. the recording cancel) can drive a session. Weak to avoid a cycle.
+    weak var dictationController: DictationController?
 
     let settings: SettingsStore
 
@@ -318,14 +330,46 @@ final class NotchViewModel: ObservableObject {
     /// auto-dismiss after a beat; pass nil to clear immediately.
     func setDictation(_ phase: DictationPhase?) {
         dictationDismiss?.cancel()
+        dictationSettleWork?.cancel()
         lastMoveKind = .state
-        withAnimation(Self.quickMorph) { dictation = phase }
+
+        if case .recording = phase {
+            dictationStartedAt = Date()
+            // Skip the sliver beat when it would read as a shrink (already
+            // expanded) or when Reduce Motion is on (two size steps flicker).
+            let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            let skipSliver = reduceMotion || interaction == .expanded
+            withAnimation(Self.quickMorph) {
+                dictationSettled = skipSliver
+                dictation = phase
+            }
+            if !skipSliver {
+                let work = DispatchWorkItem { [weak self] in
+                    withAnimation(NotchMotion.dictationEnter) { self?.dictationSettled = true }
+                }
+                dictationSettleWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: work)
+            }
+        } else {
+            withAnimation(Self.quickMorph) { dictation = phase }
+        }
+
+        if phase == nil {
+            dictationStartedAt = nil
+            dictationTarget = nil
+        }
+
         if let phase, !phase.isActive {
+            // Errors dwell a little longer so they can be read.
+            let dwell: TimeInterval = {
+                if case .error = phase { return NotchMotion.dictationDismiss + 1.2 }
+                return NotchMotion.dictationDismiss
+            }()
             let work = DispatchWorkItem { [weak self] in
                 withAnimation(Self.morph) { self?.dictation = nil }
             }
             dictationDismiss = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.dictationDismiss, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + dwell, execute: work)
         }
     }
 
@@ -370,4 +414,11 @@ final class NotchViewModel: ObservableObject {
         notifDismiss = work
         DispatchQueue.main.asyncAfter(deadline: .now() + note.duration, execute: work)
     }
+}
+
+/// The app that will receive dictated text, shown in the recording control row.
+struct DictationTarget: Equatable {
+    let name: String
+    let icon: NSImage?
+    static func == (lhs: DictationTarget, rhs: DictationTarget) -> Bool { lhs.name == rhs.name }
 }

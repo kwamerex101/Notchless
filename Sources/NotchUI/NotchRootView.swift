@@ -28,7 +28,7 @@ struct NotchRootView: View {
 
     var body: some View {
         let content = model.content
-        let sizing = NotchSizing.size(for: content, metrics: metrics)
+        let sizing = NotchSizing.size(for: content, metrics: metrics, dictationSettled: model.dictationSettled)
         // The tab strip lives in the notch band (in the wings beside the camera),
         // which the body already reserves — so the panel needs no extra height.
         let panelHeight = sizing.height
@@ -92,7 +92,7 @@ struct NotchRootView: View {
         // One spring drives width, height, AND the corner radii together
         // (NotchShape interpolates its radii), so the shape stretches as one
         // continuous object instead of the radii snapping.
-        .animation(NotchMotion.morph, value: sizing)
+        .animation(sizeAnimation, value: sizing)
         .environment(\.notchKeyFocus, { [weak model] want in model?.requestKeyFocus?(want) })
     }
 
@@ -117,6 +117,15 @@ struct NotchRootView: View {
         case .state:
             return .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
         }
+    }
+
+    /// Use the bouncy entry spring for the recording sliver→panel promote; every
+    /// other size change uses the standard morph. Reduce Motion flattens both.
+    private var sizeAnimation: Animation {
+        if case .dictation(.recording) = model.content {
+            return NotchMotion.animation(NotchMotion.dictationEnter, reduceMotion: reduceMotion)
+        }
+        return NotchMotion.animation(NotchMotion.morph, reduceMotion: reduceMotion)
     }
 
     /// Stable identity per content state so SwiftUI runs insert/remove
@@ -178,7 +187,14 @@ struct NotchRootView: View {
         case .mirror:
             MirrorView(metrics: metrics, onClose: { model.showMirror = false })
         case let .dictation(phase):
-            DictationView(phase: phase, metrics: metrics, audio: model.audio)
+            DictationView(phase: phase,
+                          metrics: metrics,
+                          audio: model.audio,
+                          settled: model.dictationSettled,
+                          startedAt: model.dictationStartedAt,
+                          target: model.dictationTarget,
+                          reduceMotion: reduceMotion,
+                          onCancel: { model.dictationController?.cancelRecording() })
         }
     }
 

@@ -1,79 +1,98 @@
 import SwiftUI
 
-/// Dictation content in the notch (ListenToMe). A mic + live waveform while
-/// recording, a spinner while transcribing/cleaning, and the final text on
-/// success — styled to match the compact now-playing look.
+/// Dictation content in the notch (ListenToMe). Recording shows a scrolling
+/// waveform (sliver), settling into a panel with a live transcript and a
+/// context/timer/cancel row. Transcribing/cleaning show a shimmer + transcript;
+/// success/error collapse to a compact chip.
 struct DictationView: View {
     let phase: DictationPhase
     let metrics: NotchMetrics
     @ObservedObject var audio: AudioLevelsModel
+    var settled: Bool
+    var startedAt: Date?
+    var target: DictationTarget?
+    var reduceMotion: Bool
+    var onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            icon
-            content
-            Spacer(minLength: 0)
-            trailing
-        }
-        .padding(.top, metrics.notchHeight + 6)
-        .padding(.horizontal, 26)
-        .padding(.bottom, 14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    @ViewBuilder private var icon: some View {
-        let tint: Color = {
-            switch phase {
-            case .recording: return Color(nsColor: .systemRed)
-            case .success: return .green
-            case .error: return .orange
-            default: return .teal
-            }
-        }()
-        Image(systemName: phase.systemImage)
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 40, height: 40)
-            .background(Circle().fill(tint.gradient))
+        content
+            .padding(.top, metrics.notchHeight + 8)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder private var content: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(phase.label)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
-            switch phase {
-            case let .success(text):
-                Text(text.isEmpty ? "Pasted" : text)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
-            case let .error(message):
-                Text(message)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
-            default:
-                EmptyView()
+        switch phase {
+        case .recording:
+            recordingBody
+        case .transcribing, .cleaning:
+            processingBody
+        case let .success(text):
+            resultChip(system: "checkmark.circle.fill", tint: .green, title: phase.label,
+                       subtitle: text.isEmpty ? "Pasted" : text)
+        case let .error(message):
+            resultChip(system: "exclamationmark.triangle.fill", tint: .orange, title: phase.label,
+                       subtitle: message)
+        }
+    }
+
+    private var recordingBody: some View {
+        VStack(spacing: 8) {
+            ScrollingWaveform(level: audio.dictationLevel, isRecording: true, reduceMotion: reduceMotion)
+            if settled {
+                LiveTranscriptView(text: audio.dictationPartial, reduceMotion: reduceMotion)
+                DictationControlRow(target: target, startedAt: startedAt, onCancel: onCancel)
+                    .transition(.opacity)
             }
         }
     }
 
-    @ViewBuilder private var trailing: some View {
-        switch phase {
-        case .recording:
-            RecordingWaveform(spectrum: audio.dictationSpectrum)
-                .frame(width: 96, height: 26)
-        case .transcribing, .cleaning:
-            ProgressView()
-                .controlSize(.small)
-                .tint(.white)
-        case .success:
-            Image(systemName: "checkmark.circle.fill")
+    private var processingBody: some View {
+        VStack(spacing: 6) {
+            ShimmerBar()
+            LiveTranscriptView(text: audio.dictationPartial, reduceMotion: reduceMotion)
+            Text(phase.label)
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.55))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func resultChip(system: String, tint: Color, title: String, subtitle: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: system)
                 .font(.system(size: 18))
-                .foregroundStyle(.green)
-        case .error:
-            EmptyView()
+                .foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                Text(subtitle).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+/// A slim indeterminate shimmer used while transcribing/polishing.
+private struct ShimmerBar: View {
+    @State private var phase: CGFloat = -1
+    var body: some View {
+        GeometryReader { geo in
+            Capsule().fill(.white.opacity(0.12))
+                .overlay(
+                    Capsule()
+                        .fill(LinearGradient(colors: [.clear, .white.opacity(0.55), .clear],
+                                             startPoint: .leading, endPoint: .trailing))
+                        .frame(width: geo.size.width * 0.4)
+                        .offset(x: phase * geo.size.width)
+                )
+                .clipShape(Capsule())
+        }
+        .frame(height: 4)
+        .onAppear {
+            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                phase = 1
+            }
         }
     }
 }
@@ -105,62 +124,5 @@ struct DictationHintView: View {
         .padding(.horizontal, 26)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-}
-
-/// A symmetric recording waveform driven by the live audio spectrum: it mirrors
-/// out from the center bar, tall bars tracking whichever tones are present. When
-/// nothing is being said it settles into a slow heartbeat pulse.
-struct RecordingWaveform: View {
-    var spectrum: [CGFloat]
-    var barCount: Int = 11
-
-    private let maxHeight: CGFloat = 26
-    private let minHeight: CGFloat = 3
-    /// Below this the input counts as silence → heartbeat.
-    private let speakingThreshold: CGFloat = 0.06
-
-    var body: some View {
-        // TimelineView drives the continuous heartbeat; when speech arrives the
-        // spectrum takes over.
-        TimelineView(.animation) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            HStack(alignment: .center, spacing: 3) {
-                ForEach(0..<barCount, id: \.self) { i in
-                    Capsule()
-                        .fill(Color(nsColor: .systemRed))
-                        .frame(width: 3, height: height(at: i, time: t))
-                }
-            }
-            .animation(NotchMotion.spectrum, value: spectrum)
-        }
-    }
-
-    private var center: Int { (barCount - 1) / 2 }
-
-    private var energy: CGFloat { spectrum.max() ?? 0 }
-
-    private func height(at index: Int, time: TimeInterval) -> CGFloat {
-        let distance = abs(index - center)   // 0 at center, grows outward
-
-        if energy > speakingThreshold {
-            // Symmetric: center = lowest band, mirroring out to higher tones.
-            let band = spectrum.isEmpty ? 0 : spectrum[min(distance, spectrum.count - 1)]
-            return minHeight + (maxHeight - minHeight) * band
-        }
-
-        // Heartbeat: a soft double-thump that ripples out from the center.
-        let cycle = 1.15
-        let phase = time.truncatingRemainder(dividingBy: cycle) / cycle
-        let beat = thump(phase, at: 0.0) + 0.6 * thump(phase, at: 0.16)
-        let falloff = 1 - (CGFloat(distance) / CGFloat(center + 1)) * 0.65
-        let pulse = (0.10 + 0.22 * CGFloat(beat)) * falloff
-        return minHeight + (maxHeight - minHeight) * pulse
-    }
-
-    /// A narrow gaussian "beat" centered at `at` within the 0…1 cycle.
-    private func thump(_ phase: Double, at: Double) -> Double {
-        let d = phase - at
-        return exp(-(d * d) / (2 * 0.0015))
     }
 }

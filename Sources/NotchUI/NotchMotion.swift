@@ -14,6 +14,10 @@ enum NotchMotion {
     static let fill = Animation.spring(response: 0.35, dampingFraction: 0.8)
     /// Audio spectrum smoothing.
     static let spectrum = Animation.spring(response: 0.16, dampingFraction: 0.6)
+    /// The bouncy settle when the recording sliver grows into the full panel.
+    static let dictationEnter = Animation.spring(response: 0.34, dampingFraction: 0.72)
+    /// Word-by-word fade-in of the live transcript.
+    static let transcriptWord = Animation.easeOut(duration: 0.2)
 
     // Timing intervals (seconds).
     static let hoverDwell: TimeInterval = 0.15
