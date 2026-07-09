@@ -65,6 +65,12 @@ final class ModeStore: ObservableObject {
         modes[i] = mode; persistModes()
     }
 
+    /// Insert the mode if new, else replace the existing one. Used by the editor's Done.
+    func save(_ mode: Mode) {
+        if let i = modes.firstIndex(where: { $0.id == mode.id }) { modes[i] = mode } else { modes.append(mode) }
+        persistModes()
+    }
+
     func delete(_ mode: Mode) {
         guard mode.id != Mode.defaultID else { return }   // Default is undeletable
         modes.removeAll { $0.id == mode.id }

@@ -42,9 +42,7 @@ struct ModesTab: View {
             }
 
             Button {
-                let new = Mode(name: "New Mode", systemImage: "wand.and.stars")
-                store.add(new)
-                editingMode = new
+                editingMode = Mode(name: "New Mode", systemImage: "wand.and.stars")
             } label: { Label("Add Mode", systemImage: "plus") }
                 .buttonStyle(.link)
         }

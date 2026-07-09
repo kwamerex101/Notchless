@@ -50,13 +50,13 @@ final class DictationController {
             DictationLog.log("beginRecording ignored (enabled=\(settings.enabled), isRecording=\(isRecording))")
             return
         }
-        DictationLog.log("beginRecording engine=\(settings.engine.rawValue)")
         isRecording = true
         capturedContext = AppContext.current()
         let mode = ModeStore.shared.resolve(forBundleID: capturedContext?.bundleID)
         activeMode = mode
         effective = mode.applied(over: settings.effectiveBase)
         model.dictationModeName = (mode.id == Mode.defaultID) ? nil : mode.name
+        DictationLog.log("beginRecording engine=\(effective.engine.rawValue) mode=\(activeMode.name)")
         let frontApp = NSWorkspace.shared.frontmostApplication
         model.dictationTarget = DictationTarget(name: frontApp?.localizedName ?? "", icon: frontApp?.icon)
         model.audio.resetDictation()

@@ -77,7 +77,7 @@ struct ModeEditorSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Done") { store.update(mode); dismiss() }.keyboardShortcut(.defaultAction)
+                Button("Done") { store.save(mode); dismiss() }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(20)

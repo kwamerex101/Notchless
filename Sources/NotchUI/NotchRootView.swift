@@ -294,7 +294,7 @@ struct NotchRootView: View {
             Button {
                 ModeStore.shared.pinnedModeID = nil
             } label: {
-                Label("Auto", systemImage: ModeStore.shared.pinnedModeID == nil ? "checkmark" : "")
+                Label("Auto", systemImage: ModeStore.shared.pinnedModeID == nil ? "checkmark" : "sparkles")
             }
             Divider()
             ForEach(ModeStore.shared.enabledModes) { mode in
