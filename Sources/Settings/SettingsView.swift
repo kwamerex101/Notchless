@@ -225,7 +225,7 @@ struct PlaceholderPane: View {
             case .fileTray:
                 ToggleCard(title: "File Tray", isOn: $settings.fileTrayEnabled)
                 Text("Drag files onto the notch to hold them, then drag them back out anywhere.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.secondary)
             case .about:
                 AboutPane()
             default:

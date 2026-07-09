@@ -17,6 +17,7 @@ enum DictationTab: String, CaseIterable, Identifiable {
 }
 
 struct DictationPane: View {
+    @Environment(\.paneTint) private var paneTint
     @ObservedObject var settings = DictationSettings.shared
     @ObservedObject var dictionary = DictationDictionary.shared
     @ObservedObject var history = DictationHistory.shared
@@ -43,6 +44,7 @@ struct DictationPane: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .tint(paneTint)
 
             switch tab {
             case .settings: settingsTab
