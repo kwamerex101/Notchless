@@ -194,8 +194,7 @@ struct NotchRootView: View {
                           startedAt: model.dictationStartedAt,
                           target: model.dictationTarget,
                           reduceMotion: reduceMotion,
-                          // TODO(Task 10): wire model.dictationController?.cancelRecording()
-                          onCancel: {})
+                          onCancel: { model.dictationController?.cancelRecording() })
         }
     }
 

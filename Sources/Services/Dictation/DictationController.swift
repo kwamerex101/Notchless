@@ -18,6 +18,8 @@ final class DictationController {
     /// captured up front because it won't change (the notch panel never
     /// activates), and used to tailor cleanup tone.
     private var capturedContext: AppContext?
+    private let escTap = EscapeKeyTap()
+    private var session = SessionGuard()
 
     private var settings: DictationSettings { model.dictationSettings }
 
@@ -32,6 +34,8 @@ final class DictationController {
         hotkey.onRelease = { [weak self] in self?.endRecording() }
         hotkey.requiredFlags = settings.hotkey.requiredFlags
         hotkey.start()
+        model.dictationController = self
+        escTap.onEscape = { [weak self] in self?.cancelRecording() }
     }
 
     /// Manual toggle (menu item) — starts if idle, stops if recording.
@@ -47,16 +51,28 @@ final class DictationController {
         DictationLog.log("beginRecording engine=\(settings.engine.rawValue)")
         isRecording = true
         capturedContext = AppContext.current()
+        let frontApp = NSWorkspace.shared.frontmostApplication
+        model.dictationTarget = DictationTarget(name: frontApp?.localizedName ?? "", icon: frontApp?.icon)
+        model.audio.resetDictation()
+        let generation = session.begin()
+
         // Pick up any hotkey change since launch.
         hotkey.requiredFlags = settings.hotkey.requiredFlags
         transcriber = makeTranscriber()
         transcriber.onLevel = { [weak self] level in
-            self?.model.audio.dictationLevel = level
+            guard let self, self.session.isCurrent(generation) else { return }
+            self.model.audio.dictationLevel = level
         }
         transcriber.onSpectrum = { [weak self] spectrum in
-            self?.model.audio.dictationSpectrum = spectrum
+            guard let self, self.session.isCurrent(generation) else { return }
+            self.model.audio.dictationSpectrum = spectrum
+        }
+        transcriber.onPartial = { [weak self] partial in
+            guard let self, self.session.isCurrent(generation) else { return }
+            self.model.audio.dictationPartial = partial
         }
         model.setDictation(.recording)
+        escTap.start()
         if settings.soundCues { SoundCue.recordingStarted() }
         startMaxDurationTimer()
         Task {
@@ -64,7 +80,9 @@ final class DictationController {
                 try await transcriber.start()
                 DictationLog.log("capture started")
             } catch {
+                guard session.isCurrent(generation) else { return }
                 isRecording = false
+                escTap.stop()
                 let message = (error as? DictationError)?.errorDescription
                     ?? (error as? ParakeetError)?.errorDescription ?? "Couldn't start"
                 DictationLog.log("capture start FAILED: \(message) (\(error))")
@@ -106,14 +124,31 @@ final class DictationController {
         }
     }
 
+    /// Abort the current recording without transcribing/pasting.
+    func cancelRecording() {
+        guard isRecording else { return }
+        isRecording = false
+        maxDurationTimer?.invalidate()
+        escTap.stop()
+        _ = session.begin() // invalidate any in-flight writes from this session
+        transcriber.cancel()
+        model.audio.resetDictation()
+        model.setDictation(nil)
+        if settings.soundCues { SoundCue.failed() }
+        DictationLog.log("cancelRecording")
+    }
+
     private func endRecording() {
         guard isRecording else { return }
         isRecording = false
         maxDurationTimer?.invalidate()
+        escTap.stop()
+        let generation = session.current
         DictationLog.log("endRecording → transcribing")
         model.setDictation(.transcribing)
         Task {
             let raw = await transcriber.finish()
+            guard session.isCurrent(generation) else { return }
             DictationLog.log("transcript raw=\"\(raw.prefix(120))\" (len=\(raw.count))")
             guard !raw.isEmpty else {
                 if settings.soundCues { SoundCue.failed() }
@@ -140,6 +175,7 @@ final class DictationController {
                     apiKey: settings.anthropicAPIKey,
                     extraPromptHint: contextHint()
                 )
+                guard session.isCurrent(generation) else { return }
             }
             model.dictationHistory.add(text, retentionDays: settings.historyRetentionDays)
             DictationOutputRouter.deliver(text, to: settings.output)

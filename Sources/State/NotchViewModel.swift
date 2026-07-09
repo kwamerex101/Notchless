@@ -74,6 +74,9 @@ final class NotchViewModel: ObservableObject {
     let dictationDictionary = DictationDictionary.shared
     let dictationHistory = DictationHistory.shared
     private var dictationDismiss: DispatchWorkItem?
+    /// Set by AppDelegate after the controller is created, so in-notch buttons
+    /// (e.g. the recording cancel) can drive a session. Weak to avoid a cycle.
+    weak var dictationController: DictationController?
 
     let settings: SettingsStore
 
