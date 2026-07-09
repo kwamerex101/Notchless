@@ -32,7 +32,7 @@ enum AppPermission: String, CaseIterable, Identifiable {
 
     var purpose: String {
         switch self {
-        case .accessibility: return "Hold-to-talk hotkey and pasting dictated text"
+        case .accessibility: return "Hold-to-talk hotkey, pasting dictated text, and detecting scroll/click for trackpad feedback"
         case .microphone: return "Recording your voice for dictation"
         case .speechRecognition: return "On-device transcription with Apple Speech"
         case .camera: return "The camera mirror in the notch"

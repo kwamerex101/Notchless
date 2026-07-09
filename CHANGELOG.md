@@ -2,6 +2,23 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.4.0] — 2026-07-09
+
+### Added
+- **Trackpad feedback.** Optional haptic + sound feedback as you scroll and click
+  anywhere in macOS: velocity-aware detent "ticks" while scrolling (tight when
+  slow, a smooth blur on a fast fling) and a pulse on click down and up. Choose a
+  Light/Medium/Strong haptic strength, one of three click-sound voices
+  (Pebble/Twig/Drop), and the volume. Off by default; enable it in
+  Settings → General → Trackpad Feedback (requires Accessibility to observe
+  scrolling). Haptics need a built-in Force Touch trackpad; the sound works on any
+  Mac.
+- **Multi-finger gesture feedback.** A confirming tick when you swipe between
+  spaces or full-screen apps (3/4-finger left/right), open Mission Control or App
+  Exposé (up/down), or pinch to Launchpad / spread to Show Desktop (4-finger).
+  Shares the same strength/voice/volume settings; toggle it under Trackpad
+  Feedback. Observe-only — it never changes what your gestures do.
+
 ## [1.3.0] — 2026-07-08
 
 ### Added

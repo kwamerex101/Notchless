@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return MeetingSummarizer(client: client, model: model)
         })
     private var effects: EffectsController?
+    private lazy var trackpadFeedback = TrackpadFeedbackController(settings: model.settings)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if DEBUG
@@ -63,6 +64,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         privacy.start()
         claudeStats.start()
         ClipboardStore.shared.start()
+
+        // Dormant unless the user enables it in Settings (default off) — the
+        // Accessibility prompt only fires when they flip the toggle.
+        trackpadFeedback.start()
 
         // Expose the meeting-capture controller so the notch record control can
         // reach it. Constructing it is side-effect-free; capture starts only when
