@@ -60,10 +60,3 @@ struct ModesTab: View {
         )
     }
 }
-
-// TEMP stub — replaced by the real editor in Task 7.
-struct ModeEditorSheet: View {
-    let mode: Mode
-    @Environment(\.dismiss) private var dismiss
-    var body: some View { VStack { Text("Editor coming in Task 7"); Button("Close") { dismiss() } }.padding(40) }
-}
