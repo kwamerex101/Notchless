@@ -76,7 +76,9 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .claudeStats: return .orange
         case .timer: return .orange
         case .clipboard: return .indigo
-        case .tasks: return .yellow
+        // A deep amber rather than flat yellow — legible as a tinted label on a
+        // light card and behind white text on the selected segmented tile.
+        case .tasks: return Color(red: 0.78, green: 0.53, blue: 0.04)
         case .privacyDot: return .green
         case .goals: return .pink
         case .meetings: return .cyan
