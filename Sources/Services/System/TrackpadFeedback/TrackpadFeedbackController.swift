@@ -97,6 +97,7 @@ final class TrackpadFeedbackController: ObservableObject {
     }
 
     private func teardown() {
+        stopTrustPolling()
         monitor?.stop()
         monitor = nil
         core = nil
