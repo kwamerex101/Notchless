@@ -19,6 +19,7 @@ final class TrackpadFeedbackController: ObservableObject {
     private let player = ClickSoundPlayer()
     private var core: TrackpadFeedbackCore?
     private var monitor: TrackpadEventMonitor?
+    private var gestureMonitor: MultitouchMonitor?
     private var observers: Set<AnyCancellable> = []
     private var trustPollTimer: Timer?
 
@@ -93,12 +94,31 @@ final class TrackpadFeedbackController: ObservableObject {
                 startTrustPolling()
             }
         }
+        reconcileGestureMonitor()
+    }
+
+    /// Start the gesture monitor when the sub-toggle is on; stop it when off, so
+    /// the MT device isn't streaming frames we'd only discard. Called on every
+    /// apply() while the feature is running.
+    private func reconcileGestureMonitor() {
+        guard let core else { return }
+        if settings.trackpadGesturesEnabled {
+            if gestureMonitor == nil {
+                let m = MultitouchMonitor(core: core, tuning: GestureTuning())
+                if m.start() { gestureMonitor = m }
+            }
+        } else {
+            gestureMonitor?.stop()
+            gestureMonitor = nil
+        }
     }
 
     private func teardown() {
         stopTrustPolling()
         monitor?.stop()
         monitor = nil
+        gestureMonitor?.stop()
+        gestureMonitor = nil
         core = nil
         engine.close()
     }
@@ -111,7 +131,8 @@ final class TrackpadFeedbackController: ObservableObject {
             clickOn: settings.trackpadFeedbackClick,
             strength: settings.trackpadHapticStrength,
             voiceID: settings.trackpadSoundVoice,
-            volume: settings.trackpadSoundVolume)
+            volume: settings.trackpadSoundVolume,
+            gesturesOn: settings.trackpadGesturesEnabled)
     }
 
     private func fireTest() {
