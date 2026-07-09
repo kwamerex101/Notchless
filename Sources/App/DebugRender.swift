@@ -128,7 +128,9 @@ enum DebugRender {
                 case .fileTray(let expanded):
                     FileTrayView(store: store, expanded: expanded, metrics: metrics)
                 case let .dictation(phase):
-                    DictationView(phase: phase, metrics: metrics, audio: audio)
+                    DictationView(phase: phase, metrics: metrics, audio: audio,
+                                  settled: true, startedAt: nil, target: nil,
+                                  reduceMotion: false, onCancel: {})
                 case .mirror, .bare:
                     EmptyView()
                 }
