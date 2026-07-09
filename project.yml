@@ -39,6 +39,8 @@ targets:
         buildPhase: resources
       - path: Resources/AppIcon.icns
         buildPhase: resources
+      - path: Resources/Sounds
+        buildPhase: resources
     settings:
       base:
         INFOPLIST_FILE: Resources/Info.plist
