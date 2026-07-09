@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import Speech
 import AVFoundation
 
@@ -30,6 +31,8 @@ struct DictationPane: View {
     @State private var newExpansion = ""
     @State private var editingRecord: DictationRecord?
     @State private var editingText = ""
+    /// The row whose text was just copied, for a brief checkmark confirmation.
+    @State private var copiedRecordID: DictationRecord.ID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -253,12 +256,18 @@ struct DictationPane: View {
                     HStack {
                         Text(record.text).lineLimit(2)
                         Spacer()
+                        Button { copy(record) } label: {
+                            Image(systemName: copiedRecordID == record.id ? "checkmark" : "doc.on.doc")
+                                .foregroundStyle(copiedRecordID == record.id ? Color.green : .secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Copy")
                         Button { beginEditing(record) } label: {
                             Image(systemName: "pencil").foregroundStyle(.secondary)
-                        }.buttonStyle(.plain)
+                        }.buttonStyle(.plain).help("Edit")
                         Button { history.remove(record) } label: {
                             Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                        }.buttonStyle(.plain)
+                        }.buttonStyle(.plain).help("Delete")
                     }
                     Divider()
                 }
@@ -303,6 +312,17 @@ struct DictationPane: View {
     private func beginEditing(_ record: DictationRecord) {
         editingText = record.text
         editingRecord = record
+    }
+
+    /// Copy a past dictation to the clipboard, with a brief checkmark on its row.
+    private func copy(_ record: DictationRecord) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(record.text, forType: .string)
+        withAnimation { copiedRecordID = record.id }
+        let id = record.id
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if copiedRecordID == id { withAnimation { copiedRecordID = nil } }
+        }
     }
 
     /// The Anthropic key lives in the Keychain, so bridge it through a manual
