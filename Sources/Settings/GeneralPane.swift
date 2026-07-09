@@ -1,4 +1,5 @@
 import SwiftUI
+import ApplicationServices
 
 struct GeneralPane: View {
     @ObservedObject var settings: SettingsStore
@@ -74,6 +75,10 @@ struct GeneralPane: View {
                 Divider()
                 ToggleRow(title: "Haptic feedback", isOn: $settings.hapticFeedback)
             }
+
+            // Trackpad feedback (system-wide haptics + click sounds)
+            SectionLabel("Trackpad Feedback")
+            TrackpadFeedbackSection(settings: settings)
         }
     }
 }
@@ -115,6 +120,104 @@ extension NotchActivity {
         case .claudeUsage: return "chart.pie.fill"
         case .goals: return "target"
         case .meeting: return "record.circle"
+        }
+    }
+}
+
+// MARK: - Trackpad feedback
+
+/// System-wide scroll/click feedback controls. Availability is probed once —
+/// haptics need a built-in Force Touch trackpad; sound works on any Mac.
+struct TrackpadFeedbackSection: View {
+    @ObservedObject var settings: SettingsStore
+
+    @State private var hapticsAvailable = false
+    @State private var accessibilityGranted = false
+    // Re-check trust while visible — grants happen out-of-band in System Settings.
+    private let trustTick = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        CardGroup {
+            ToggleRow(title: "Trackpad feedback", isOn: $settings.trackpadFeedbackEnabled)
+            Text("Feel and hear a subtle click as you scroll and click anywhere — spaced naturally with your scroll speed.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if settings.trackpadFeedbackEnabled {
+                if !accessibilityGranted {
+                    Divider()
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        Text("Needs Accessibility to detect scrolling")
+                        Spacer()
+                        Button("Grant…") { promptForAccessibility() }
+                    }
+                }
+
+                Divider()
+                ToggleRow(title: "Haptics", isOn: $settings.trackpadHapticsEnabled, systemImage: "hand.tap")
+                if !hapticsAvailable {
+                    Text("Haptics need a built-in Force Touch trackpad — sound still works.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else if settings.trackpadHapticsEnabled {
+                    SegmentedCards(
+                        options: HapticStrength.allCases,
+                        selection: $settings.trackpadHapticStrength,
+                        title: { $0.title },
+                        systemImage: { $0.systemImage }
+                    )
+                }
+
+                Divider()
+                ToggleRow(title: "Sound", isOn: $settings.trackpadSoundEnabled, systemImage: "speaker.wave.2")
+                if settings.trackpadSoundEnabled {
+                    SegmentedCards(
+                        options: FeedbackVoice.all,
+                        selection: Binding(
+                            get: { FeedbackVoice.voice(id: settings.trackpadSoundVoice) },
+                            set: { settings.trackpadSoundVoice = $0.id }
+                        ),
+                        title: { $0.displayName },
+                        systemImage: { _ in "waveform" }
+                    )
+                    HStack {
+                        Text("Volume")
+                        Spacer()
+                        Slider(value: $settings.trackpadSoundVolume, in: 0...1).frame(width: 160)
+                        Text("\(Int(settings.trackpadSoundVolume * 100))%").frame(width: 42, alignment: .trailing)
+                    }
+                }
+
+                Divider()
+                ToggleRow(title: "While scrolling", isOn: $settings.trackpadFeedbackScroll, systemImage: "scroll")
+                ToggleRow(title: "While clicking", isOn: $settings.trackpadFeedbackClick, systemImage: "cursorarrow.click")
+
+                Divider()
+                HStack {
+                    Text("Try the current feel")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Test") {
+                        NotificationCenter.default.post(
+                            name: TrackpadFeedbackController.testFeedbackNotification, object: nil)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            hapticsAvailable = TrackpadHapticEngine.probeAvailability()
+            accessibilityGranted = AXIsProcessTrusted()
+        }
+        .onReceive(trustTick) { _ in
+            accessibilityGranted = AXIsProcessTrusted()
+        }
+    }
+
+    private func promptForAccessibility() {
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        if let url = AppPermission.accessibility.settingsURL {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { NSWorkspace.shared.open(url) }
         }
     }
 }
