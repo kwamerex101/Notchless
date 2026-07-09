@@ -213,7 +213,7 @@ struct NotchRootView: View {
             DuoExpandedView(info: model.nowPlaying, snapshot: model.calendar,
                             metrics: metrics, onCommand: onCommand)
         case .dictation:
-            DictationHintView(metrics: metrics)
+            ModeQuickPickView(metrics: metrics)
         case .battery:
             BatteryExpandedView(battery: model.battery, metrics: metrics)
         case .stats:
