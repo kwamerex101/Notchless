@@ -12,7 +12,7 @@ struct ModeQuickPickView: View {
                 chip(name: "Auto", icon: "sparkles", active: store.pinnedModeID == nil, hotkey: nil) {
                     store.pinnedModeID = nil
                 }
-                ForEach(store.enabledModes) { mode in
+                ForEach(store.enabledModes.filter { $0.id != Mode.defaultID }) { mode in
                     chip(name: mode.name, icon: mode.systemImage,
                          active: store.pinnedModeID == mode.id, hotkey: mode.hotkey?.title) {
                         store.pinnedModeID = mode.id
