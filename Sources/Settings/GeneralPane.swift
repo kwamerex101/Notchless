@@ -238,20 +238,27 @@ struct TrackpadFeedbackSection: View {
 // MARK: - Shared building blocks
 
 struct SectionLabel: View {
+    @Environment(\.paneTint) private var tint
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+        Text(text.uppercased())
+            .font(.caption.weight(.semibold))
+            .kerning(0.5)
+            .foregroundStyle(tint)
     }
 }
 
 struct CardGroup<Content: View>: View {
+    @Environment(\.paneTint) private var tint
     @ViewBuilder var content: Content
     private let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
     var body: some View {
         VStack(spacing: 10) { content }
             .padding(14)
             .liquidGlass(in: shape, fallback: .regularMaterial)
+            .overlay(shape.strokeBorder(tint.opacity(0.12), lineWidth: 1))
+            .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
     }
 }
 
@@ -286,20 +293,19 @@ struct SegmentedCards<Option: Hashable>: View {
     @Binding var selection: Option
     let title: (Option) -> String
     let systemImage: (Option) -> String
+    @Environment(\.paneTint) private var tint
 
     var body: some View {
-        // A wrapping grid so many options (e.g. the idle activities) flow into
-        // even rows instead of cramming into one line.
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 74), spacing: 8)], spacing: 8) {
             ForEach(options, id: \.self) { option in
                 let selected = option == selection
                 VStack(spacing: 6) {
                     Image(systemName: systemImage(option))
                         .font(.system(size: 16))
-                        .foregroundStyle(selected ? Color.accentColor : .secondary)
+                        .foregroundStyle(selected ? .white : .secondary)
                     Text(title(option))
                         .font(.caption)
-                        .foregroundStyle(selected ? .primary : .secondary)
+                        .foregroundStyle(selected ? .white : .secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -307,11 +313,8 @@ struct SegmentedCards<Option: Hashable>: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.primary.opacity(selected ? 0.08 : 0.03))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(selected ? Color.accentColor : .clear, lineWidth: 2)
-                        )
+                        .fill(selected ? tint : Color.primary.opacity(0.04))
+                        .shadow(color: selected ? tint.opacity(0.4) : .clear, radius: 5, y: 2)
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { selection = option }
