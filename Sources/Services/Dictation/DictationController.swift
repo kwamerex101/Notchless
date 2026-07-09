@@ -56,6 +56,7 @@ final class DictationController {
         let mode = ModeStore.shared.resolve(forBundleID: capturedContext?.bundleID)
         activeMode = mode
         effective = mode.applied(over: settings.effectiveBase)
+        model.dictationModeName = (mode.id == Mode.defaultID) ? nil : mode.name
         let frontApp = NSWorkspace.shared.frontmostApplication
         model.dictationTarget = DictationTarget(name: frontApp?.localizedName ?? "", icon: frontApp?.icon)
         model.audio.resetDictation()

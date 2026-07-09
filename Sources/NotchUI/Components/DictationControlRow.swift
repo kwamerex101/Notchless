@@ -4,12 +4,20 @@ import SwiftUI
 /// elapsed time (center-trailing, rendered natively so it never republishes),
 /// and an `esc` keycap that cancels the session.
 struct DictationControlRow: View {
+    var modeName: String? = nil
     var target: DictationTarget?
     var startedAt: Date?
     var onCancel: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
+            if let modeName {
+                Text(modeName)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+                Text("·").foregroundStyle(.white.opacity(0.4))
+            }
+
             if let target, !target.name.isEmpty {
                 HStack(spacing: 4) {
                     if let icon = target.icon {

@@ -11,6 +11,7 @@ struct DictationView: View {
     var settled: Bool
     var startedAt: Date?
     var target: DictationTarget?
+    var modeName: String? = nil
     var reduceMotion: Bool
     var onCancel: () -> Void
 
@@ -42,7 +43,7 @@ struct DictationView: View {
             ScrollingWaveform(level: audio.dictationLevel, isRecording: true, reduceMotion: reduceMotion)
             if settled {
                 LiveTranscriptView(text: audio.dictationPartial, reduceMotion: reduceMotion)
-                DictationControlRow(target: target, startedAt: startedAt, onCancel: onCancel)
+                DictationControlRow(modeName: modeName, target: target, startedAt: startedAt, onCancel: onCancel)
                     .transition(.opacity)
             }
         }

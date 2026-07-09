@@ -193,6 +193,7 @@ struct NotchRootView: View {
                           settled: model.dictationSettled,
                           startedAt: model.dictationStartedAt,
                           target: model.dictationTarget,
+                          modeName: model.dictationModeName,
                           reduceMotion: reduceMotion,
                           onCancel: { model.dictationController?.cancelRecording() })
         }

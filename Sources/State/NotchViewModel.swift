@@ -69,6 +69,8 @@ final class NotchViewModel: ObservableObject {
     @Published var dictationStartedAt: Date?
     /// Where dictated text will land (frontmost app at record start).
     @Published var dictationTarget: DictationTarget?
+    /// The active dictation mode's name (nil / "Default" → not shown as a chip).
+    @Published var dictationModeName: String?
     private var dictationSettleWork: DispatchWorkItem?
     let dictationSettings = DictationSettings.shared
     let dictationDictionary = DictationDictionary.shared
@@ -357,6 +359,7 @@ final class NotchViewModel: ObservableObject {
         if phase == nil {
             dictationStartedAt = nil
             dictationTarget = nil
+            dictationModeName = nil
         }
 
         if let phase, !phase.isActive {
