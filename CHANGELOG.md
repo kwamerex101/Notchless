@@ -2,6 +2,32 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.5.0] — 2026-07-09
+
+### Added
+- **Redesigned dictation in the notch.** A calmer, more legible recording
+  experience: a scrolling voice waveform that fills the panel, your live
+  transcript streaming in as you speak, and a control row showing the target app,
+  an elapsed timer, and an `esc`-to-cancel affordance. The notch grows from a
+  listening sliver into the full panel on start, and morphs smoothly through
+  transcribing → polishing → a compact result chip.
+- **Dictation Modes.** Named presets that override your dictation settings — a
+  custom AI-cleanup instruction/tone, output destination, formatting, engine, and
+  language. Ships Default, Email, Code, Notes, and Casual (create your own too).
+  The right mode is chosen automatically by the frontmost app, pinned manually
+  from the notch menu or a hover **quick-pick bar**, or triggered by a mode's own
+  dedicated **hold-to-talk hotkey**. The active mode shows in the recording pill.
+
+### Changed
+- **Settings refresh.** A cohesive, theme-adaptive visual pass across the whole
+  settings window: each pane now carries a subtle identity from its section tint,
+  with richer headers (icon tile + one-line description) and consistent,
+  refined cards.
+
+### Fixed
+- Dictation cleanup no longer leaks chat-template stop tokens (e.g. `<|im_end|>`)
+  into the pasted text.
+
 ## [1.4.0] — 2026-07-09
 
 ### Added
