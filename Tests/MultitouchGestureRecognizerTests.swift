@@ -126,6 +126,51 @@ extension MultitouchGestureRecognizerTests {
         XCTAssertNil(r.recognize(touches: touches(diag), timestamp: 0.10))
     }
 
+    // Competing pinch-vs-swipe tie-break: both `dist` and `dr` cross their
+    // thresholds simultaneously (unlike test_fourFingerSpread/Pinch, which
+    // hold the centroid stationary). Formula (MultitouchGestureRecognizer):
+    //   swipeScore = dist / 0.15;  pinchScore = |dr| / 0.12
+    //   pinch/spread wins iff peakCount>=4 && |dr|>=0.12 && pinchScore >= swipeScore
+    //   else swipe wins iff dist>=0.15 && one axis dominates the other 1.5x
+
+    // Base: 4 fingers, centroid (0.50,0.50), each at radius 0.15 from center
+    // (offsets ±0.15 on each axis) — same shape as `fourBase`.
+    private var tieBase: [(Double, Double)] { [(0.35, 0.50), (0.65, 0.50), (0.50, 0.35), (0.50, 0.65)] }
+
+    func test_competingPinchVsSwipe_swipeDominant_firesSwipe() {
+        // Move centroid dx=+0.30 (dy=0) and grow radius 0.15→0.27 (dr=+0.12).
+        //   dist = 0.30 → swipeScore = 0.30/0.15 = 2.0
+        //   dr   = 0.12 → pinchScore = 0.12/0.12 = 1.0
+        // pinchScore (1.0) < swipeScore (2.0) → pinch condition
+        // (|dr|/pinchThreshold >= swipeScore) is false → falls through to the
+        // swipe check: dist(0.30) >= 0.15 and |dx|(0.30) >= 1.5*|dy|(0) → .swipe(.right).
+        // New centroid (0.80,0.50); offsets scaled 0.15→0.27 (×1.8) from the
+        // base ±0.15/0/0 pattern: (-0.27,0),(0.27,0),(0,-0.27),(0,0.27).
+        let moved: [(Double, Double)] = [(0.53, 0.50), (1.07, 0.50), (0.80, 0.23), (0.80, 0.77)]
+        var r = MultitouchGestureRecognizer(tuning: GestureTuning())
+        _ = r.recognize(touches: touches(tieBase), timestamp: 0.0)   // peak→4, stableSince 0
+        _ = r.recognize(touches: touches(tieBase), timestamp: 0.06)  // armed, baseline radius 0.15
+        XCTAssertEqual(r.recognize(touches: touches(moved), timestamp: 0.10), .swipe(.right))
+    }
+
+    func test_competingPinchVsSwipe_pinchDominant_firesPinch() {
+        // Custom base with a larger radius (0.30) so a big shrink stays
+        // non-negative: centroid (0.50,0.50), offsets ±0.30 on each axis.
+        // Move centroid dx=+0.18 (dy=0) and shrink radius 0.30→0.06 (dr=-0.24).
+        //   dist = 0.18 → swipeScore = 0.18/0.15 = 1.2  (crosses swipe threshold too)
+        //   dr   = -0.24 → pinchScore = 0.24/0.12 = 2.0
+        // pinchScore (2.0) >= swipeScore (1.2) and |dr|(0.24) >= 0.12 → pinch
+        // wins (dr<0 → .pinch) even though dist also cleared 0.15.
+        let base: [(Double, Double)] = [(0.20, 0.50), (0.80, 0.50), (0.50, 0.20), (0.50, 0.80)]
+        // New centroid (0.68,0.50); offsets scaled 0.30→0.06 (×0.2):
+        // (-0.06,0),(0.06,0),(0,-0.06),(0,0.06).
+        let moved: [(Double, Double)] = [(0.62, 0.50), (0.74, 0.50), (0.68, 0.44), (0.68, 0.56)]
+        var r = MultitouchGestureRecognizer(tuning: GestureTuning())
+        _ = r.recognize(touches: touches(base), timestamp: 0.0)   // peak→4, stableSince 0
+        _ = r.recognize(touches: touches(base), timestamp: 0.06)  // armed, baseline radius 0.30
+        XCTAssertEqual(r.recognize(touches: touches(moved), timestamp: 0.10), .pinch)
+    }
+
     func test_resetAfterLift_allowsNewGesture() {
         var r = MultitouchGestureRecognizer(tuning: GestureTuning())
         _ = r.recognize(touches: touches(threeBase), timestamp: 0.0)

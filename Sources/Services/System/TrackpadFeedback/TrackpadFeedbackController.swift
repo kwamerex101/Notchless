@@ -22,6 +22,11 @@ final class TrackpadFeedbackController: ObservableObject {
     private var gestureMonitor: MultitouchMonitor?
     private var observers: Set<AnyCancellable> = []
     private var trustPollTimer: Timer?
+    /// Latches true once MultitouchMonitor.start() fails (no device present)
+    /// so reconcileGestureMonitor() stops re-constructing a throwaway monitor
+    /// (dlopen + wake-observer churn) on every settings-driven apply(). Reset
+    /// on toggle-off and teardown so re-enabling retries.
+    private var gestureStartFailed = false
 
     init(settings: SettingsStore) {
         self.settings = settings
@@ -103,13 +108,18 @@ final class TrackpadFeedbackController: ObservableObject {
     private func reconcileGestureMonitor() {
         guard let core else { return }
         if settings.trackpadGesturesEnabled {
-            if gestureMonitor == nil {
+            if gestureMonitor == nil, !gestureStartFailed {
                 let m = MultitouchMonitor(core: core, tuning: GestureTuning())
-                if m.start() { gestureMonitor = m }
+                if m.start() {
+                    gestureMonitor = m
+                } else {
+                    gestureStartFailed = true
+                }
             }
         } else {
             gestureMonitor?.stop()
             gestureMonitor = nil
+            gestureStartFailed = false
         }
     }
 
@@ -119,6 +129,7 @@ final class TrackpadFeedbackController: ObservableObject {
         monitor = nil
         gestureMonitor?.stop()
         gestureMonitor = nil
+        gestureStartFailed = false
         core = nil
         engine.close()
     }

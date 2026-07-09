@@ -102,9 +102,14 @@ final class MultitouchMonitor {
         stop()
     }
 
-    /// Cheap capability check for the Settings pane: symbols present (device
-    /// creation happens at start()).
-    static func probeAvailability() -> Bool { MTSymbols.load() != nil }
+    /// Capability check for the Settings pane: symbols present AND a real
+    /// device exists (e.g. false on a Mac with no built-in trackpad). Creates
+    /// and immediately releases a probe device so it doesn't leak.
+    static func probeAvailability() -> Bool {
+        guard let symbols = MTSymbols.load(), let dev = symbols.createDefault() else { return false }
+        Unmanaged<CFTypeRef>.fromOpaque(dev).release()
+        return true
+    }
 
     var isRunning: Bool { device != nil }
 
@@ -121,7 +126,15 @@ final class MultitouchMonitor {
         guard let dev = device, let symbols else { device = nil; return }
         symbols.stop(dev)
         symbols.unregister(dev, Self.frameCallback)
-        Self.registry.withLock { $0[UnsafeRawPointer(dev)] = nil }
+        // Only remove our own registration — MTDeviceCreateDefault tends to
+        // return the same pointer, so a second monitor's entry could
+        // otherwise be clobbered by a stale stop() call.
+        Self.registry.withLock { reg in
+            if reg[UnsafeRawPointer(dev)]?.monitor === self { reg[UnsafeRawPointer(dev)] = nil }
+        }
+        // MTDeviceCreateDefault follows the Create rule — we own this
+        // reference and must release it (it's a CF type under the hood).
+        Unmanaged<CFTypeRef>.fromOpaque(dev).release()
         device = nil
     }
 
