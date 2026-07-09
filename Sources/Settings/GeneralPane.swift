@@ -132,6 +132,7 @@ struct TrackpadFeedbackSection: View {
     @ObservedObject var settings: SettingsStore
 
     @State private var hapticsAvailable = false
+    @State private var gesturesAvailable = false
     @State private var accessibilityGranted = false
     // Re-check trust while visible — grants happen out-of-band in System Settings.
     private let trustTick = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
@@ -193,6 +194,17 @@ struct TrackpadFeedbackSection: View {
                 ToggleRow(title: "While clicking", isOn: $settings.trackpadFeedbackClick, systemImage: "cursorarrow.click")
 
                 Divider()
+                ToggleRow(title: "Multi-finger gestures", isOn: $settings.trackpadGesturesEnabled, systemImage: "hand.draw")
+                if !gesturesAvailable {
+                    Text("Multi-finger gestures aren't available on this Mac.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("A tick when you swipe between spaces, open Mission Control, or pinch to Launchpad.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Divider()
                 HStack {
                     Text("Try the current feel")
                         .font(.caption).foregroundStyle(.secondary)
@@ -206,6 +218,7 @@ struct TrackpadFeedbackSection: View {
         }
         .onAppear {
             hapticsAvailable = TrackpadHapticEngine.probeAvailability()
+            gesturesAvailable = MultitouchMonitor.probeAvailability()
             accessibilityGranted = AXIsProcessTrusted()
         }
         .onReceive(trustTick) { _ in
