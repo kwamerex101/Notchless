@@ -48,6 +48,19 @@ struct ModeEditorSheet: View {
                             ForEach(DictationEngine.allCases) { Text($0.title).tag($0) }
                         }.labelsHidden()
                     }
+                    if mode.id != Mode.defaultID {
+                        OverrideRow("Hotkey", isSet: mode.hotkey != nil, onToggle: { on in
+                            mode.hotkey = on ? availableHotkeys(for: mode, main: DictationSettings.shared.hotkey, modes: ModeStore.shared.modes).first : nil
+                        }) {
+                            Picker("", selection: Binding(
+                                get: { mode.hotkey ?? (availableHotkeys(for: mode, main: DictationSettings.shared.hotkey, modes: ModeStore.shared.modes).first ?? .controlOption) },
+                                set: { mode.hotkey = $0 })) {
+                                ForEach(availableHotkeys(for: mode, main: DictationSettings.shared.hotkey, modes: ModeStore.shared.modes)) { Text($0.title).tag($0) }
+                            }.labelsHidden()
+                        }
+                        Text("Hold this combo to dictate straight into \(mode.name). Only combos free of your main hotkey and other modes are shown.")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
                     OverrideToggleRow("Voice commands", value: $mode.voiceCommands)
                     OverrideToggleRow("Smart formatting", value: $mode.smartFormatting)
                     OverrideToggleRow("Auto-capitalize", value: $mode.autoCapitalize)

@@ -20,6 +20,7 @@ struct Mode: Identifiable, Codable, Equatable {
     var autoCapitalize: Bool? = nil
     var engine: DictationEngine? = nil
     var languageID: String? = nil
+    var hotkey: DictationHotkeyOption? = nil
 
     /// The always-present fallback mode's stable id.
     static let defaultID = UUID(uuidString: "00000000-0000-0000-0000-0000000000DE")!
@@ -73,6 +74,14 @@ struct Mode: Identifiable, Codable, Equatable {
             }(),
         ]
     }
+}
+
+/// Modifier combos a mode may claim for its dedicated hotkey: all combos except
+/// the main dictation hotkey and combos already taken by other ENABLED modes.
+/// A mode's own current hotkey stays selectable.
+func availableHotkeys(for mode: Mode, main: DictationHotkeyOption, modes: [Mode]) -> [DictationHotkeyOption] {
+    let takenByOthers = Set(modes.filter { $0.id != mode.id && $0.isEnabled }.compactMap(\.hotkey))
+    return DictationHotkeyOption.allCases.filter { $0 != main && !takenByOthers.contains($0) }
 }
 
 /// The resolved per-session dictation config after a mode is applied.

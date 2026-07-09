@@ -6,18 +6,19 @@ import AppKit
 /// Accessibility permission; degrades to no-op if not granted.
 @MainActor
 final class DictationHotkey {
-    var onPress: (() -> Void)?
+    var onPress: ((UUID?) -> Void)?
     var onRelease: (() -> Void)?
 
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var isDown = false
     private var trustTimer: Timer?
     private var didPromptForAccess = false
 
-    /// All of these flags must be held to trigger dictation. Settable so the
-    /// user's chosen combo takes effect without restarting the tap.
-    var requiredFlags: CGEventFlags = [.maskControl, .maskAlternate]
+    private var bindings: [HotkeyBinding] = []
+    private var active: HotkeyBinding?
+
+    /// (Re)register the combos to watch — main first so it wins duplicate combos.
+    func setBindings(_ bindings: [HotkeyBinding]) { self.bindings = bindings }
 
     func start() {
         if AXIsProcessTrusted() {
@@ -85,7 +86,7 @@ final class DictationHotkey {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        DictationLog.log("hotkey: event tap installed (requiredFlags=\(requiredFlags.rawValue))")
+        DictationLog.log("hotkey: event tap installed (\(bindings.count) bindings)")
     }
 
     private func reenable() {
@@ -95,15 +96,12 @@ final class DictationHotkey {
     }
 
     private func handle(_ event: CGEvent) {
-        // Trigger when every required flag is held; release when any drops.
-        let allHeld = event.flags.contains(requiredFlags)
-        if allHeld, !isDown {
-            isDown = true
-            DictationLog.log("hotkey: PRESS (flags=\(event.flags.rawValue))")
-            onPress?()
-        } else if !allHeld, isDown {
-            isDown = false
-            DictationLog.log("hotkey: RELEASE (flags=\(event.flags.rawValue))")
+        let match = HotkeyMatcher.match(held: event.flags, bindings: bindings)
+        if let match, active == nil {
+            active = match
+            onPress?(match.id)
+        } else if match == nil, active != nil {
+            active = nil
             onRelease?()
         }
     }

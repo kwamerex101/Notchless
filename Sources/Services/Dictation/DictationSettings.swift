@@ -3,7 +3,7 @@ import Combine
 
 /// The modifier combo held to dictate. Combos (not single modifiers) avoid
 /// clobbering normal Option/Command shortcuts — mirrors ListenToMe.
-enum DictationHotkeyOption: String, CaseIterable, Identifiable {
+enum DictationHotkeyOption: String, Codable, CaseIterable, Identifiable {
     case controlOption
     case controlCommand
     case fnCommand

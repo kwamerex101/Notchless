@@ -110,7 +110,7 @@ struct NotchSizing: Equatable {
             case .duo:
                 return NotchSizing(width: max(w + 40, 560), height: 158, topRadius: 10, bottomRadius: 24)
             case .dictation:
-                return NotchSizing(width: max(w + 40, 400), height: h + 66, topRadius: 10, bottomRadius: 22)
+                return NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
             case .battery:
                 return NotchSizing(width: max(w + 40, 360), height: 128, topRadius: 10, bottomRadius: 24)
             case .stats:
