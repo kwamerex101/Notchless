@@ -16,9 +16,21 @@ final class TrackpadEventMonitor {
     private var source: CFRunLoopSource?
     private var thread: Thread?
     private var threadRunLoop: CFRunLoop?
+    /// Signaled by the monitor thread once `CFRunLoopRun()` returns, so `stop()`
+    /// can block until no more callbacks can fire. Essential because the tap
+    /// holds an unretained pointer to `self` — a callback in flight after `self`
+    /// deinits would be a use-after-free.
+    private var threadFinished: DispatchSemaphore?
 
     init(core: TrackpadFeedbackCore) {
         self.core = core
+    }
+
+    deinit {
+        // Backstop: if an owner drops the monitor without calling stop() (Task 8's
+        // controller does `monitor = nil` on teardown), join the tap thread here so
+        // its callback can't run on freed memory.
+        stop()
     }
 
     var isRunning: Bool { tap != nil }
@@ -51,10 +63,17 @@ final class TrackpadEventMonitor {
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         self.source = source
 
+        // Capture the semaphore locally so the thread signals it regardless of
+        // whether `self` survived (weak-self may be nil by the time the runloop
+        // exits during deinit).
+        let finished = DispatchSemaphore(value: 0)
+        self.threadFinished = finished
+
         let thread = Thread { [weak self] in
             self?.threadRunLoop = CFRunLoopGetCurrent()
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
             CFRunLoopRun()   // exits via CFRunLoopStop in stop()
+            finished.signal()
         }
         thread.name = "com.rexdanquah.notchless.trackpad-tap"
         thread.qualityOfService = .userInteractive
@@ -64,12 +83,24 @@ final class TrackpadEventMonitor {
     }
 
     func stop() {
+        // Idempotent / safe when never started: no thread means nothing to join.
+        guard let thread else { return }
+
         if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
         if let threadRunLoop { CFRunLoopStop(threadRunLoop) }
+
+        // Join the monitor thread so no callback can fire after stop() returns —
+        // but never wait from the tap thread itself, or we'd deadlock waiting for
+        // a runloop that can only exit once this call returns.
+        if Thread.current !== thread {
+            threadFinished?.wait()
+        }
+
         tap = nil
         source = nil
-        thread = nil
+        self.thread = nil
         threadRunLoop = nil
+        threadFinished = nil
     }
 
     // MARK: - Tap callback (monitor thread)
