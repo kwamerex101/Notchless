@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// The expanded task panel: a reorderable checklist with per-row check-off
-/// (strike-through, then auto-remove) and a quick-add field at the bottom.
+/// (toggles done, strike-through, stays in the list) and a quick-add field at
+/// the bottom. Completed tasks are cleared in bulk via the header's "Clear done".
 struct TodoExpandedView: View {
     @ObservedObject private var store = TodoStore.shared
     let metrics: NotchMetrics
@@ -12,9 +13,15 @@ struct TodoExpandedView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 8) {
                 Text("Tasks").notchSectionHeader()
                 Spacer()
+                if store.completedCount > 0 {
+                    Button("Clear done") { withAnimation(NotchMotion.quick) { store.clearCompleted() } }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
                 if store.openCount > 0 {
                     Text("\(store.openCount) left")
                         .font(.system(size: 11, weight: .medium))
@@ -53,7 +60,7 @@ struct TodoExpandedView: View {
 
     private func row(_ todo: Todo) -> some View {
         HStack(spacing: 10) {
-            Button { withAnimation(NotchMotion.micro) { store.complete(todo.id) } } label: {
+            Button { withAnimation(NotchMotion.micro) { store.setDone(todo.id, !todo.isDone) } } label: {
                 Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))

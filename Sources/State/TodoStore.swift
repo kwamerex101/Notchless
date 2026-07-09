@@ -64,17 +64,6 @@ struct Todo: Identifiable, Codable, Equatable {
     var allSubtasksDone: Bool {
         !subtasks.isEmpty && subtasks.allSatisfy(\.isDone)
     }
-
-    /// A compact monogram for the tight notch cue — the first letter of each
-    /// word (e.g. "MXN Wallet KYC Integration" → "MWKI"), capped at 4. A
-    /// single-word title falls back to its first three letters.
-    var initials: String {
-        let words = title.split(whereSeparator: { " -_".contains($0) })
-        if words.count >= 2 {
-            return words.prefix(4).compactMap(\.first).map(String.init).joined().uppercased()
-        }
-        return String(title.prefix(3)).uppercased()
-    }
 }
 
 /// The slice of `NSUbiquitousKeyValueStore` that `TodoStore` depends on.
@@ -102,32 +91,24 @@ final class TodoStore: ObservableObject {
     @Published private(set) var items: [Todo] = []
 
     var isEmpty: Bool { items.isEmpty }
-    /// The task the compact cue shows: the first still-open one (skips a task
-    /// that's mid-strike-through after being checked off).
+    /// The task the compact cue shows: the first still-open one (skips any that
+    /// have been checked off — completed tasks stay in the list).
     var next: Todo? { items.first { !$0.isDone } }
+    /// Active (unchecked) tasks — the red count in the notch's trailing wing.
     var openCount: Int { items.lazy.filter { !$0.isDone }.count }
+    /// Completed (checked-off) tasks — the green count in the leading wing.
+    var completedCount: Int { items.lazy.filter(\.isDone).count }
 
     private let defaults: UserDefaults
     private let cloud: CloudKeyValueStore?
-    private let removalDelay: TimeInterval
-    private let schedule: (TimeInterval, @escaping () -> Void) -> Void
     private var cloudObserver: NSObjectProtocol?
-    /// Parents whose delayed post-completion removal is still pending. Lets an
-    /// un-check within the strike-through window cancel the removal.
-    private var pendingRemoval: Set<UUID> = []
 
     init(
         defaults: UserDefaults = .standard,
-        cloud: CloudKeyValueStore? = NSUbiquitousKeyValueStore.default,
-        removalDelay: TimeInterval = 0.9,
-        schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void = { delay, work in
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
-        }
+        cloud: CloudKeyValueStore? = NSUbiquitousKeyValueStore.default
     ) {
         self.defaults = defaults
         self.cloud = cloud
-        self.removalDelay = removalDelay
-        self.schedule = schedule
         seedDefaultsFromCloud()
         load()
         observeCloud()
@@ -144,34 +125,26 @@ final class TodoStore: ObservableObject {
         persist()
     }
 
-    /// Marks a task done (drives the strike-through), then removes it after
-    /// `removalDelay` — unless the completion is cancelled first (e.g. a subtask
-    /// is un-checked within the window).
-    func complete(_ id: UUID) {
-        guard let i = items.firstIndex(where: { $0.id == id }), !items[i].isDone else { return }
-        items[i].isDone = true
-        pendingRemoval.insert(id)
+    /// Marks a task done (strike-through). The task stays in the list so it
+    /// counts toward the completed (green) tally; clear it with `clearCompleted`.
+    func complete(_ id: UUID) { setDone(id, true) }
+
+    /// Sets a task's done state either way — the notch and expanded list toggle
+    /// through this so a checked task can be un-checked back to active.
+    func setDone(_ id: UUID, _ done: Bool) {
+        guard let i = items.firstIndex(where: { $0.id == id }), items[i].isDone != done else { return }
+        items[i].isDone = done
         persist()
-        schedule(removalDelay) { [weak self] in self?.finalizeRemoval(id) }
     }
 
-    /// Fires after `removalDelay`. Removes the task only if its completion is
-    /// still pending (not cancelled by an un-check in the meantime).
-    private func finalizeRemoval(_ id: UUID) {
-        guard pendingRemoval.contains(id) else { return }
-        remove(id)
-    }
-
-    /// Cancels a pending post-completion removal and un-marks the parent, so a
-    /// task rescued within the strike-through window stays put.
-    private func cancelCompletion(_ id: UUID) {
-        guard pendingRemoval.remove(id) != nil else { return }
-        if let i = items.firstIndex(where: { $0.id == id }) { items[i].isDone = false }
+    /// Drops every completed task, leaving only the still-active ones.
+    func clearCompleted() {
+        guard items.contains(where: \.isDone) else { return }
+        items.removeAll(where: \.isDone)
         persist()
     }
 
     func remove(_ id: UUID) {
-        pendingRemoval.remove(id)
         items.removeAll { $0.id == id }
         persist()
     }
@@ -196,19 +169,15 @@ final class TodoStore: ObservableObject {
         persist()
     }
 
-    /// Flips a subtask's done state (it stays in the list, struck through). If
-    /// that leaves every subtask done, the parent auto-completes (hybrid rule):
-    /// `complete` runs its strike-through-then-vanish, taking the subtasks along.
+    /// Flips a subtask's done state (it stays in the list, struck through). The
+    /// parent tracks its subtasks (hybrid rule): it auto-completes once every
+    /// subtask is done, and reverts to active the moment one is un-checked.
     func toggleSubtask(_ subtaskID: UUID, in parentID: UUID) {
         guard let i = items.firstIndex(where: { $0.id == parentID }),
               let j = items[i].subtasks.firstIndex(where: { $0.id == subtaskID }) else { return }
         items[i].subtasks[j].isDone.toggle()
         persist()
-        if items[i].allSubtasksDone {
-            complete(parentID)
-        } else {
-            cancelCompletion(parentID)   // no-op unless a completion was pending
-        }
+        setDone(parentID, items[i].allSubtasksDone)
     }
 
     func updateSubtaskTitle(_ subtaskID: UUID, in parentID: UUID, to title: String) {

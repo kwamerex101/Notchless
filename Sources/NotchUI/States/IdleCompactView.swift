@@ -85,15 +85,12 @@ struct IdleCompactView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
         case .todos:
-            Button {
-                if let id = todos.next?.id { withAnimation(NotchMotion.micro) { todos.complete(id) } }
-            } label: {
-                Image(systemName: "circle")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
+            // Completed tally — green, mirrors the red active count on the right.
+            // Hidden until the first completion so a bare "0" never shows.
+            if todos.completedCount > 0 {
+                countBadge(todos.completedCount, color: .green)
+                    .accessibilityLabel("\(todos.completedCount) completed")
             }
-            .buttonStyle(NotchButtonStyle())
-            .accessibilityLabel("Complete task")
         case .privacy:
             HStack(spacing: 4) {
                 if privacy?.cameraActive ?? false { PulsingDot(color: .green) }
@@ -155,13 +152,9 @@ struct IdleCompactView: View {
         case .clipboard:
             ClipboardBadge()
         case .todos:
-            // Tight wing beside the notch — show a monogram (initials) instead of
-            // a title that would just truncate to nothing legible.
-            Text(todos.next?.initials ?? "✓")
-                .font(.system(size: 13, weight: .bold).monospaced())
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .frame(maxWidth: 60, alignment: .trailing)
+            // Active tally — red, mirrors the green completed count on the left.
+            countBadge(todos.openCount, color: .red)
+                .accessibilityLabel("\(todos.openCount) active")
         case .privacy:
             HStack(spacing: 6) {
                 if privacy?.cameraActive ?? false {
@@ -188,6 +181,19 @@ struct IdleCompactView: View {
                 EmptyView()
             }
         }
+    }
+
+    /// A number inside a solid colored disc — the task count wings. Uses a
+    /// capsule so a two-digit count stays legible without clipping.
+    private func countBadge(_ count: Int, color: Color) -> some View {
+        Text("\(count)")
+            .font(.system(size: 12, weight: .bold).monospacedDigit())
+            .foregroundStyle(.white)
+            .contentTransition(.numericText())
+            .animation(.default, value: count)
+            .frame(minWidth: 20, minHeight: 20)
+            .padding(.horizontal, count > 9 ? 5 : 0)
+            .background(Capsule().fill(color))
     }
 
     @ViewBuilder private var artwork: some View {
