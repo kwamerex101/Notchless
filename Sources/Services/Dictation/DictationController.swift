@@ -143,7 +143,7 @@ final class DictationController {
         isRecording = false
         maxDurationTimer?.invalidate()
         escTap.stop()
-        let generation = session.current
+        let generation = session.begin()
         DictationLog.log("endRecording → transcribing")
         model.setDictation(.transcribing)
         Task {
