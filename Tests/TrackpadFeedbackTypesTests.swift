@@ -17,4 +17,21 @@ final class TrackpadFeedbackTypesTests: XCTestCase {
         XCTAssertEqual(FeedbackVoice.voice(id: "nope"), FeedbackVoice.all[0])
         XCTAssertEqual(FeedbackVoice.voice(id: "twig").id, "twig")
     }
+
+    // MARK: - TrackpadHapticEngine (pure/CI-safe parts only)
+
+    func test_strengthToActuationID_mapping() {
+        XCTAssertEqual(TrackpadHapticEngine.actuationID(for: .light), 3)
+        XCTAssertEqual(TrackpadHapticEngine.actuationID(for: .medium), 4)
+        XCTAssertEqual(TrackpadHapticEngine.actuationID(for: .strong), 6)
+    }
+
+    func test_engine_neverCrashes_evenIfUnavailable() {
+        // On CI (no Force Touch trackpad / VM) this exercises the no-op path;
+        // on a MacBook it exercises the real one. Either way: no crash.
+        let engine = TrackpadHapticEngine()
+        engine.actuate(.medium)
+        engine.close()
+        _ = TrackpadHapticEngine.probeAvailability()
+    }
 }
