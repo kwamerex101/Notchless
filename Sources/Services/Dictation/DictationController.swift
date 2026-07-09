@@ -20,6 +20,8 @@ final class DictationController {
     private var capturedContext: AppContext?
     private let escTap = EscapeKeyTap()
     private var session = SessionGuard()
+    private var activeMode: Mode = Mode(id: Mode.defaultID, name: "Default", systemImage: "mic")
+    private var effective: EffectiveDictation = DictationSettings.shared.effectiveBase
 
     private var settings: DictationSettings { model.dictationSettings }
 
@@ -48,9 +50,13 @@ final class DictationController {
             DictationLog.log("beginRecording ignored (enabled=\(settings.enabled), isRecording=\(isRecording))")
             return
         }
-        DictationLog.log("beginRecording engine=\(settings.engine.rawValue)")
         isRecording = true
         capturedContext = AppContext.current()
+        let mode = ModeStore.shared.resolve(forBundleID: capturedContext?.bundleID)
+        activeMode = mode
+        effective = mode.applied(over: settings.effectiveBase)
+        model.dictationModeName = (mode.id == Mode.defaultID) ? nil : mode.name
+        DictationLog.log("beginRecording engine=\(effective.engine.rawValue) mode=\(activeMode.name)")
         let frontApp = NSWorkspace.shared.frontmostApplication
         model.dictationTarget = DictationTarget(name: frontApp?.localizedName ?? "", icon: frontApp?.icon)
         model.audio.resetDictation()
@@ -95,10 +101,10 @@ final class DictationController {
     /// An injected transcriber (tests) always wins.
     private func makeTranscriber() -> DictationTranscriber {
         if let injectedTranscriber { return injectedTranscriber }
-        switch settings.engine {
+        switch effective.engine {
         case .appleSpeech:
             let speech = SpeechTranscriber()
-            speech.configure(languageID: settings.languageID, microphoneUID: settings.microphoneUID)
+            speech.configure(languageID: effective.languageID, microphoneUID: settings.microphoneUID)
             return speech
         case .parakeet:
             let parakeet = ParakeetTranscriber()
@@ -113,6 +119,12 @@ final class DictationController {
         guard settings.contextAwareCleanup, let context = capturedContext else { return nil }
         let parts = [context.category.promptHint, StyleStore.shared.promptHint(for: context.bundleID)]
             .filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
+    }
+
+    /// The mode's custom instruction (if any) followed by the learned context hint.
+    private func combinedHint() -> String? {
+        let parts = [effective.instruction, contextHint()].compactMap { $0 }.filter { !$0.isEmpty }
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
@@ -156,33 +168,33 @@ final class DictationController {
                 return
             }
             var text = TranscriptHygiene.clean(raw)
-            if settings.voiceCommands { text = SpokenCommands.apply(text) }
-            if settings.smartFormatting { text = BuiltinTransforms.apply(text) }
+            if effective.voiceCommands { text = SpokenCommands.apply(text) }
+            if effective.smartFormatting { text = BuiltinTransforms.apply(text) }
             text = DictationSnippets.shared.expand(text)
             text = TextPolish.apply(
                 text,
                 dictionary: model.dictationDictionary.terms,
-                capitalize: settings.autoCapitalize
+                capitalize: effective.autoCapitalize
             )
             // Optional AI polish; falls back to `text` on any failure/timeout.
-            if TranscriptCleaner.shouldClean(text, mode: settings.cleanup) {
+            if TranscriptCleaner.shouldClean(text, mode: effective.cleanup) {
                 model.setDictation(.cleaning)
                 text = await TranscriptCleaner.clean(
                     text,
                     backend: settings.cleanupBackend,
-                    intensity: settings.cleanupIntensity,
+                    intensity: effective.cleanupIntensity,
                     timeoutSeconds: settings.cleanupTimeoutSeconds,
                     apiKey: settings.anthropicAPIKey,
-                    extraPromptHint: contextHint()
+                    extraPromptHint: combinedHint()
                 )
                 guard session.isCurrent(generation) else { return }
             }
             model.dictationHistory.add(text, retentionDays: settings.historyRetentionDays)
-            DictationOutputRouter.deliver(text, to: settings.output)
+            DictationOutputRouter.deliver(text, to: effective.output)
             if let bundleID = capturedContext?.bundleID {
                 StyleStore.shared.observe(text: text, bundleID: bundleID)
             }
-            DictationLog.log("delivered via \(settings.output.rawValue): \"\(text.prefix(120))\"")
+            DictationLog.log("delivered via \(effective.output.rawValue): \"\(text.prefix(120))\"")
             if settings.soundCues { SoundCue.delivered() }
             model.setDictation(.success(text))
         }

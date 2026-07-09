@@ -5,11 +5,12 @@ import AVFoundation
 
 /// Top-level tabs within the Dictation pane.
 enum DictationTab: String, CaseIterable, Identifiable {
-    case settings, history, style
+    case settings, modes, history, style
     var id: String { rawValue }
     var title: String {
         switch self {
         case .settings: return "Settings"
+        case .modes: return "Modes"
         case .history: return "History"
         case .style: return "Style"
         }
@@ -48,6 +49,7 @@ struct DictationPane: View {
 
             switch tab {
             case .settings: settingsTab
+            case .modes: ModesTab()
             case .history: historyTab
             case .style: styleTab
             }

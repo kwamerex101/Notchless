@@ -193,6 +193,7 @@ struct NotchRootView: View {
                           settled: model.dictationSettled,
                           startedAt: model.dictationStartedAt,
                           target: model.dictationTarget,
+                          modeName: model.dictationModeName,
                           reduceMotion: reduceMotion,
                           onCancel: { model.dictationController?.cancelRecording() })
         }
@@ -289,6 +290,21 @@ struct NotchRootView: View {
         Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0")")
         Button(model.showMirror ? "Hide Camera Mirror" : "Camera Mirror") { model.toggleMirror() }
         Button("Settings…") { onOpenSettings() }.keyboardShortcut(",")
+        Menu("Mode") {
+            Button {
+                ModeStore.shared.pinnedModeID = nil
+            } label: {
+                Label("Auto", systemImage: ModeStore.shared.pinnedModeID == nil ? "checkmark" : "sparkles")
+            }
+            Divider()
+            ForEach(ModeStore.shared.enabledModes) { mode in
+                Button {
+                    ModeStore.shared.pinnedModeID = mode.id
+                } label: {
+                    Label(mode.name, systemImage: ModeStore.shared.pinnedModeID == mode.id ? "checkmark" : mode.systemImage)
+                }
+            }
+        }
         Divider()
         Button("Quit Notchless") { NSApp.terminate(nil) }.keyboardShortcut("q")
     }

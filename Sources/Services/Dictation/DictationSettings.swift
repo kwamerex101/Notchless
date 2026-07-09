@@ -32,7 +32,7 @@ enum DictationHotkeyOption: String, CaseIterable, Identifiable {
 }
 
 /// Where a finished transcript goes.
-enum DictationOutput: String, CaseIterable, Identifiable {
+enum DictationOutput: String, Codable, CaseIterable, Identifiable {
     case pasteActiveApp
     case clipboard
     case appleNotes
@@ -57,7 +57,7 @@ enum DictationOutput: String, CaseIterable, Identifiable {
 }
 
 /// Which speech-to-text backend transcribes the audio.
-enum DictationEngine: String, CaseIterable, Identifiable {
+enum DictationEngine: String, Codable, CaseIterable, Identifiable {
     /// Apple's on-device Speech framework — no download, works everywhere.
     case appleSpeech
     /// NVIDIA Parakeet TDT running on the Neural Engine via FluidAudio.
@@ -82,7 +82,7 @@ enum DictationEngine: String, CaseIterable, Identifiable {
 }
 
 /// Whether/when to polish the raw transcript.
-enum DictationCleanup: String, CaseIterable, Identifiable {
+enum DictationCleanup: String, Codable, CaseIterable, Identifiable {
     case off
     case smart      // clean only longer transcripts
     case always
@@ -118,7 +118,7 @@ enum DictationCleanupBackend: String, CaseIterable, Identifiable {
 }
 
 /// How aggressively cleanup rewrites the transcript.
-enum DictationCleanupIntensity: String, CaseIterable, Identifiable {
+enum DictationCleanupIntensity: String, Codable, CaseIterable, Identifiable {
     case light      // structural only: punctuation, casing, obvious errors
     case medium     // clarity edits, split run-ons
     case high       // concise rewrites
@@ -181,6 +181,15 @@ final class DictationSettings: ObservableObject {
     @Published var smartFormatting: Bool { didSet { persist(Keys.smartFormatting, smartFormatting) } }
     @Published var contextAwareCleanup: Bool { didSet { persist(Keys.contextAware, contextAwareCleanup) } }
     @Published var encryptHistory: Bool { didSet { persist(Keys.encrypt, encryptHistory); DictationHistory.shared.reencrypt(encrypted: encryptHistory) } }
+
+    /// The current global config as a mode base (instruction always nil).
+    var effectiveBase: EffectiveDictation {
+        EffectiveDictation(
+            output: output, cleanup: cleanup, cleanupIntensity: cleanupIntensity,
+            voiceCommands: voiceCommands, smartFormatting: smartFormatting,
+            autoCapitalize: autoCapitalize, engine: engine, languageID: languageID,
+            instruction: nil)
+    }
 
     init() {
         defaults.register(defaults: [
