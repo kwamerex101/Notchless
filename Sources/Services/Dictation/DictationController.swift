@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 /// Orchestrates a dictation session: hold the hotkey → record → transcribe →
 /// polish → deliver, driving the notch through its phases. Reads all behaviour
@@ -22,6 +23,8 @@ final class DictationController {
     private var session = SessionGuard()
     private var activeMode: Mode = Mode(id: Mode.defaultID, name: "Default", systemImage: "mic")
     private var effective: EffectiveDictation = DictationSettings.shared.effectiveBase
+    private var modesObserver: AnyCancellable?
+    private var settingsObserver: AnyCancellable?
 
     private var settings: DictationSettings { model.dictationSettings }
 
@@ -32,12 +35,29 @@ final class DictationController {
     }
 
     func start() {
-        hotkey.onPress = { [weak self] in self?.beginRecording() }
+        hotkey.onPress = { [weak self] id in self?.beginRecording(forcedModeID: id) }
         hotkey.onRelease = { [weak self] in self?.endRecording() }
-        hotkey.requiredFlags = settings.hotkey.requiredFlags
+        refreshHotkeyBindings()
         hotkey.start()
         model.dictationController = self
         escTap.onEscape = { [weak self] in self?.cancelRecording() }
+        // Re-register bindings when the modes or the main hotkey change.
+        modesObserver = ModeStore.shared.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async { self?.refreshHotkeyBindings() }
+        }
+        settingsObserver = settings.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async { self?.refreshHotkeyBindings() }
+        }
+    }
+
+    private func refreshHotkeyBindings() {
+        let main = settings.hotkey
+        var bindings = [HotkeyBinding(id: nil, flags: main.requiredFlags)]
+        for mode in ModeStore.shared.enabledModes {
+            guard mode.id != Mode.defaultID, let combo = mode.hotkey, combo != main else { continue }
+            bindings.append(HotkeyBinding(id: mode.id, flags: combo.requiredFlags))
+        }
+        hotkey.setBindings(bindings)
     }
 
     /// Manual toggle (menu item) — starts if idle, stops if recording.
@@ -45,14 +65,20 @@ final class DictationController {
         if isRecording { endRecording() } else { beginRecording() }
     }
 
-    private func beginRecording() {
+    private func beginRecording(forcedModeID: UUID? = nil) {
         guard settings.enabled, !isRecording else {
             DictationLog.log("beginRecording ignored (enabled=\(settings.enabled), isRecording=\(isRecording))")
             return
         }
         isRecording = true
         capturedContext = AppContext.current()
-        let mode = ModeStore.shared.resolve(forBundleID: capturedContext?.bundleID)
+        let mode: Mode = {
+            if let forcedModeID,
+               let forced = ModeStore.shared.modes.first(where: { $0.id == forcedModeID && $0.isEnabled }) {
+                return forced
+            }
+            return ModeStore.shared.resolve(forBundleID: capturedContext?.bundleID)
+        }()
         activeMode = mode
         effective = mode.applied(over: settings.effectiveBase)
         model.dictationModeName = (mode.id == Mode.defaultID) ? nil : mode.name
@@ -62,8 +88,6 @@ final class DictationController {
         model.audio.resetDictation()
         let generation = session.begin()
 
-        // Pick up any hotkey change since launch.
-        hotkey.requiredFlags = settings.hotkey.requiredFlags
         transcriber = makeTranscriber()
         transcriber.onLevel = { [weak self] level in
             guard let self, self.session.isCurrent(generation) else { return }
