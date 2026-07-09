@@ -13,13 +13,10 @@ private final class FakeCloud: CloudKeyValueStore {
 
 @MainActor
 final class TodoStoreTests: XCTestCase {
-    /// A store backed by an ephemeral suite, no iCloud, and an immediate
-    /// scheduler so completion removal happens synchronously in tests.
-    private func makeStore(
-        schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void = { _, work in work() }
-    ) -> TodoStore {
+    /// A store backed by an ephemeral suite and no iCloud.
+    private func makeStore() -> TodoStore {
         let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
-        return TodoStore(defaults: suite, cloud: nil, removalDelay: 0, schedule: schedule)
+        return TodoStore(defaults: suite, cloud: nil)
     }
 
     func test_add_appendsTrimmedTask() {
@@ -36,17 +33,38 @@ final class TodoStoreTests: XCTestCase {
         XCTAssertTrue(store.items.isEmpty)
     }
 
-    func test_complete_removesTaskViaScheduler() {
-        let store = makeStore() // immediate scheduler + delay 0 → removed synchronously
+    func test_complete_marksDoneAndKeepsInList() {
+        let store = makeStore()
         store.add("A")
         store.complete(store.items[0].id)
-        XCTAssertTrue(store.items.isEmpty)
+        XCTAssertEqual(store.items.count, 1)
+        XCTAssertTrue(store.items[0].isDone)
+        XCTAssertEqual(store.completedCount, 1)
+        XCTAssertEqual(store.openCount, 0)
     }
 
-    func test_next_skipsDoneTaskDuringStrikeThrough() {
-        // Scheduler that never fires, so the completed task lingers (the
-        // strike-through window). `next` must skip it.
-        let store = makeStore(schedule: { _, _ in })
+    func test_setDone_togglesBothWays() {
+        let store = makeStore()
+        store.add("A")
+        let id = store.items[0].id
+        store.setDone(id, true)
+        XCTAssertTrue(store.items[0].isDone)
+        store.setDone(id, false)
+        XCTAssertFalse(store.items[0].isDone)
+    }
+
+    func test_clearCompleted_dropsOnlyDoneTasks() {
+        let store = makeStore()
+        store.add("A"); store.add("B"); store.add("C")
+        store.complete(store.items[0].id)   // A done
+        store.complete(store.items[2].id)   // C done
+        store.clearCompleted()
+        XCTAssertEqual(store.items.map(\.title), ["B"])
+        XCTAssertEqual(store.completedCount, 0)
+    }
+
+    func test_next_skipsDoneTask() {
+        let store = makeStore()
         store.add("A")
         store.add("B")
         store.complete(store.items[0].id)
@@ -80,16 +98,16 @@ final class TodoStoreTests: XCTestCase {
 
     func test_persistence_roundTrips() {
         let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
-        let s1 = TodoStore(defaults: suite, cloud: nil, removalDelay: 0, schedule: { _, w in w() })
+        let s1 = TodoStore(defaults: suite, cloud: nil)
         s1.add("Persist me")
-        let s2 = TodoStore(defaults: suite, cloud: nil, removalDelay: 0, schedule: { _, w in w() })
+        let s2 = TodoStore(defaults: suite, cloud: nil)
         XCTAssertEqual(s2.items.map(\.title), ["Persist me"])
     }
 
     func test_load_recoversFromCorruptData() {
         let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
         suite.set(Data("not json".utf8), forKey: TodoStore.storageKey)
-        let store = TodoStore(defaults: suite, cloud: nil, removalDelay: 0, schedule: { _, w in w() })
+        let store = TodoStore(defaults: suite, cloud: nil)
         XCTAssertTrue(store.items.isEmpty)
     }
 
@@ -100,7 +118,7 @@ final class TodoStoreTests: XCTestCase {
     private func makeSyncedStore(cloud: FakeCloud) -> TodoStore {
         SettingsStore.shared.syncViaICloud = true
         let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
-        return TodoStore(defaults: suite, cloud: cloud, removalDelay: 0, schedule: { _, w in w() })
+        return TodoStore(defaults: suite, cloud: cloud)
     }
 
     func test_init_seedsItemsFromCloud() {
@@ -207,24 +225,38 @@ final class TodoStoreTests: XCTestCase {
     }
 
     func test_toggleLastSubtask_autoCompletesParent() {
-        let store = makeStore() // immediate scheduler + delay 0 → removal is synchronous
+        let store = makeStore()
         store.add("Parent")
         let pid = store.items[0].id
         store.addSubtask(to: pid, title: "a")
         store.addSubtask(to: pid, title: "b")
         store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
-        XCTAssertEqual(store.items.count, 1)               // not yet: one subtask open
+        XCTAssertFalse(store.items[0].isDone)              // not yet: one subtask open
         store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
-        XCTAssertTrue(store.items.isEmpty)                 // all done → parent vanished
+        XCTAssertTrue(store.items[0].isDone)               // all done → parent completed, stays
     }
 
-    func test_manualComplete_withOpenSubtasks_removesParent() {
+    func test_uncheckSubtask_revertsParentToActive() {
+        let store = makeStore()
+        store.add("Parent")
+        let pid = store.items[0].id
+        store.addSubtask(to: pid, title: "a")
+        let sid = store.items[0].subtasks[0].id
+        store.toggleSubtask(sid, in: pid)                  // all done → parent completes
+        XCTAssertTrue(store.items[0].isDone)
+        store.toggleSubtask(sid, in: pid)                  // un-check → parent active again
+        XCTAssertFalse(store.items[0].isDone)
+        XCTAssertEqual(store.items.count, 1)               // never removed
+    }
+
+    func test_manualComplete_withOpenSubtasks_keepsParentDone() {
         let store = makeStore()
         store.add("Parent")
         let pid = store.items[0].id
         store.addSubtask(to: pid, title: "a")
         store.complete(pid)                                // manual override
-        XCTAssertTrue(store.items.isEmpty)
+        XCTAssertEqual(store.items.count, 1)
+        XCTAssertTrue(store.items[0].isDone)
     }
 
     func test_updateSubtaskTitle_removeSubtask_moveSubtask() {
@@ -249,38 +281,14 @@ final class TodoStoreTests: XCTestCase {
         XCTAssertEqual(store.items[0].notes, "ping https://x.com")
     }
 
-    func test_uncheckDuringCompletionWindow_cancelsRemoval() {
-        // A scheduler that CAPTURES the work instead of running it, so we control
-        // when the deferred removal fires — simulating the ~0.9s window.
-        var pending: [() -> Void] = []
-        let suite = UserDefaults(suiteName: "TodoStoreTests-\(UUID().uuidString)")!
-        let store = TodoStore(defaults: suite, cloud: nil, removalDelay: 0,
-                              schedule: { _, work in pending.append(work) })
-        store.add("Parent")
-        let pid = store.items[0].id
-        store.addSubtask(to: pid, title: "a")
-        store.addSubtask(to: pid, title: "b")
-        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid)
-        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid) // all done → completion scheduled
-        XCTAssertEqual(store.items.count, 1)      // not removed yet (scheduler captured)
-        XCTAssertTrue(store.items[0].isDone)      // struck through
-
-        // Un-check within the window:
-        store.toggleSubtask(store.items[0].subtasks[1].id, in: pid)
-        XCTAssertFalse(store.items[0].isDone)     // completion cancelled
-
-        // The deferred removal now fires — and must be a no-op:
-        pending.forEach { $0() }
-        XCTAssertEqual(store.items.count, 1)      // survived
-    }
-
-    func test_autoComplete_stillRemovesWhenNotCancelled() {
-        // Regression: normal auto-complete still removes (immediate scheduler).
+    func test_completedCount_tracksDoneItems() {
         let store = makeStore()
-        store.add("P")
-        let pid = store.items[0].id
-        store.addSubtask(to: pid, title: "a")
-        store.toggleSubtask(store.items[0].subtasks[0].id, in: pid) // all done
-        XCTAssertTrue(store.items.isEmpty)
+        store.add("A"); store.add("B"); store.add("C")
+        XCTAssertEqual(store.completedCount, 0)
+        XCTAssertEqual(store.openCount, 3)
+        store.complete(store.items[0].id)
+        store.complete(store.items[1].id)
+        XCTAssertEqual(store.completedCount, 2)
+        XCTAssertEqual(store.openCount, 1)
     }
 }
