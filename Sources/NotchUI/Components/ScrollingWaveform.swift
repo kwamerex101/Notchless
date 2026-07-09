@@ -11,7 +11,6 @@ struct ScrollingWaveform: View {
 
     private let barCount = 48
     private let barWidth: CGFloat = 2
-    private let barSpacing: CGFloat = 2
     private let maxHeight: CGFloat = 24
     private let floor: CGFloat = 0.04
 
@@ -21,10 +20,15 @@ struct ScrollingWaveform: View {
     var body: some View {
         Canvas { ctx, size in
             let mid = size.height / 2
-            let step = barWidth + barSpacing
+            let count = buffer.samples.count
+            guard count > 0 else { return }
+            // Distribute the bars evenly across the full canvas width so the
+            // trace fills the panel (and is centered) rather than clustering
+            // at the left. Each bar is centered within its slot.
+            let slot = size.width / CGFloat(count)
             for (i, sample) in buffer.samples.enumerated() {
-                let x = CGFloat(i) * step
                 let h = max(floor, sample) * maxHeight
+                let x = slot * CGFloat(i) + (slot - barWidth) / 2
                 let rect = CGRect(x: x, y: mid - h / 2, width: barWidth, height: h)
                 ctx.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2),
                          with: .color(.white.opacity(0.9)))
