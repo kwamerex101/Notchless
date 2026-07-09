@@ -98,3 +98,28 @@ final class TrackpadFeedbackCoreTests: XCTestCase {
         XCTAssertEqual(player.plays.count, 1)
     }
 }
+
+extension TrackpadFeedbackCoreTests {
+    func test_handleGesture_firesWhenGesturesOn() {
+        let config = TrackpadFeedbackConfig(
+            hapticsOn: true, soundOn: true, scrollOn: false, clickOn: false,
+            strength: .strong, voiceID: "drop", volume: 0.4, gesturesOn: true)
+        let core = TrackpadFeedbackCore(config: config, tuning: DetentTuning(),
+                                        actuator: actuator, player: player)
+        core.handleGesture()
+        XCTAssertEqual(actuator.actuations, [.strong])
+        XCTAssertEqual(player.plays.count, 1)
+        XCTAssertEqual(player.plays.first?.voice, "drop")
+    }
+
+    func test_handleGesture_silentWhenGesturesOff() {
+        let config = TrackpadFeedbackConfig(
+            hapticsOn: true, soundOn: true, scrollOn: true, clickOn: true,
+            strength: .medium, voiceID: "twig", volume: 0.5, gesturesOn: false)
+        let core = TrackpadFeedbackCore(config: config, tuning: DetentTuning(),
+                                        actuator: actuator, player: player)
+        core.handleGesture()
+        XCTAssertTrue(actuator.actuations.isEmpty)
+        XCTAssertTrue(player.plays.isEmpty)
+    }
+}

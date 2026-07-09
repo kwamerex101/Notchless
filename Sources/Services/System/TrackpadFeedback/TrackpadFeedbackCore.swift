@@ -41,6 +41,14 @@ final class TrackpadFeedbackCore {
         fire(config)   // one pulse each for down and up
     }
 
+    /// One pulse per recognized multi-finger gesture, gated by the gestures
+    /// toggle. Feel is identical to scroll/click (shared fire()).
+    func handleGesture() {
+        let config = state.withLock { $0.config }
+        guard config.gesturesOn else { return }
+        fire(config)
+    }
+
     /// One unconditional pulse for the Settings "Test" button (ignores the
     /// scroll/click type toggles, honors haptics/sound/strength/voice/volume).
     func fireTest() {
