@@ -28,6 +28,13 @@ struct ModesTab: View {
                         if mode.id != Mode.defaultID {
                             Toggle("", isOn: enabledBinding(mode)).labelsHidden().toggleStyle(.switch).tint(.green)
                         }
+                        let idx = store.modes.firstIndex(of: mode) ?? 0
+                        Button { store.move(from: IndexSet(integer: idx), to: idx - 1) } label: {
+                            Image(systemName: "chevron.up").foregroundStyle(.secondary)
+                        }.buttonStyle(.plain).disabled(idx == 0)
+                        Button { store.move(from: IndexSet(integer: idx), to: idx + 2) } label: {
+                            Image(systemName: "chevron.down").foregroundStyle(.secondary)
+                        }.buttonStyle(.plain).disabled(idx >= store.modes.count - 1)
                         Button { editingMode = mode } label: {
                             Image(systemName: "pencil").foregroundStyle(.secondary)
                         }.buttonStyle(.plain)
