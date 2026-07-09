@@ -33,11 +33,10 @@ final class TrackpadFeedbackController: ObservableObject {
             .sink { [weak self] _ in self?.apply() }
             .store(in: &observers)
 
-        NotificationCenter.default.addObserver(
-            forName: Self.testFeedbackNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.fireTest() }
-        }
+        NotificationCenter.default.publisher(for: Self.testFeedbackNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.fireTest() }
+            .store(in: &observers)
 
         apply()
     }
@@ -126,6 +125,10 @@ final class TrackpadFeedbackController: ObservableObject {
                 config: currentConfig(), tuning: DetentTuning(),
                 actuator: engine, player: player
             ).fireTest()
+            // Feature isn't running, so nothing else will ever close this
+            // transient actuator open — close it now rather than leaving the
+            // MTActuator open for the rest of the app's lifetime.
+            engine.close()
         }
     }
 

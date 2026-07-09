@@ -123,6 +123,8 @@ final class TrackpadHapticEngine: HapticActuating {
     // MARK: Lifecycle
 
     private func openIfNeeded() -> Actuator? {
+        // Holds the lock across the IOKit create/open calls (a few ms) — only
+        // the first actuation pays this cost; the actuator is cached after.
         lock.withLock { current in
             if let current { return current }
             guard let symbols, let deviceID,

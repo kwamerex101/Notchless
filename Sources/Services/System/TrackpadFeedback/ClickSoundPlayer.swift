@@ -61,6 +61,8 @@ final class ClickSoundPlayer: ClickSounding {
     private func ensureEngineRunning(format: AVAudioFormat) -> Bool {
         if engineReady, engine.isRunning { return true }
         if nodes.isEmpty {
+            // Pool is wired to the FIRST played buffer's format; all bundled
+            // voices must share one format, or the pool needs rebuilding per-format.
             for _ in 0..<Self.poolSize {
                 let node = AVAudioPlayerNode()
                 engine.attach(node)
