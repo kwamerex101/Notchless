@@ -37,6 +37,7 @@ final class SettingsStore: ObservableObject {
     @Published var launchAtLogin: Bool { didSet { persist(Keys.launchAtLogin, launchAtLogin, oldValue != launchAtLogin) } }
     @Published var syncViaICloud: Bool { didSet { persist(Keys.syncViaICloud, syncViaICloud, oldValue != syncViaICloud) } }
     @Published var hideInFullscreen: Bool { didSet { persist(Keys.hideInFullscreen, hideInFullscreen, oldValue != hideInFullscreen) } }
+    @Published var collapseInFullscreen: Bool { didSet { persist(Keys.collapseInFullscreen, collapseInFullscreen, oldValue != collapseInFullscreen) } }
     @Published var hideInMissionControl: Bool { didSet { persist(Keys.hideInMissionControl, hideInMissionControl, oldValue != hideInMissionControl) } }
     @Published var hideFromScreenCapture: Bool { didSet { persist(Keys.hideFromScreenCapture, hideFromScreenCapture, oldValue != hideFromScreenCapture) } }
     @Published var forceSimulatedNotch: Bool { didSet { persist(Keys.forceSimulatedNotch, forceSimulatedNotch, oldValue != forceSimulatedNotch) } }
@@ -128,6 +129,7 @@ final class SettingsStore: ObservableObject {
             Keys.launchAtLogin: true,
             Keys.syncViaICloud: true,
             Keys.hideInFullscreen: false,   // stay visible over fullscreen by default
+            Keys.collapseInFullscreen: true, // ...but rest bare there, so wings never cover content
             Keys.hideInMissionControl: true,
             Keys.hideFromScreenCapture: false,
             Keys.forceSimulatedNotch: false,
@@ -193,6 +195,7 @@ final class SettingsStore: ObservableObject {
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         syncViaICloud = defaults.bool(forKey: Keys.syncViaICloud)
         hideInFullscreen = defaults.bool(forKey: Keys.hideInFullscreen)
+        collapseInFullscreen = defaults.bool(forKey: Keys.collapseInFullscreen)
         hideInMissionControl = defaults.bool(forKey: Keys.hideInMissionControl)
         hideFromScreenCapture = defaults.bool(forKey: Keys.hideFromScreenCapture)
         forceSimulatedNotch = defaults.bool(forKey: Keys.forceSimulatedNotch)
@@ -299,6 +302,7 @@ final class SettingsStore: ObservableObject {
             pullBool(Keys.launchAtLogin) { launchAtLogin = $0 }
             pullBool(Keys.syncViaICloud) { syncViaICloud = $0 }
             pullBool(Keys.hideInFullscreen) { hideInFullscreen = $0 }
+            pullBool(Keys.collapseInFullscreen) { collapseInFullscreen = $0 }
             pullBool(Keys.hideInMissionControl) { hideInMissionControl = $0 }
             pullBool(Keys.hideFromScreenCapture) { hideFromScreenCapture = $0 }
             pullBool(Keys.forceSimulatedNotch) { forceSimulatedNotch = $0 }
@@ -373,6 +377,7 @@ final class SettingsStore: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
         static let syncViaICloud = "syncViaICloud"
         static let hideInFullscreen = "hideInFullscreen"
+        static let collapseInFullscreen = "collapseInFullscreen"
         static let hideInMissionControl = "hideInMissionControl"
         static let hideFromScreenCapture = "hideFromScreenCapture"
         static let forceSimulatedNotch = "forceSimulatedNotch"

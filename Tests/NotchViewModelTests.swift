@@ -72,6 +72,54 @@ final class NotchViewModelTests: XCTestCase {
         }
     }
 
+    // MARK: Fullscreen
+
+    func test_fullscreenRestsBareEvenWithLiveActivity() {
+        let s = SettingsStore.shared
+        let saved = s.collapseInFullscreen
+        defer { s.collapseInFullscreen = saved }
+        s.collapseInFullscreen = true
+
+        let model = NotchViewModel()
+        model.nowPlaying = playing()
+        model.fullscreenActive = true
+        XCTAssertEqual(model.content, .bare, "resting wings would cover fullscreen content")
+    }
+
+    func test_fullscreenStillShowsTransientsAndHover() {
+        let s = SettingsStore.shared
+        let saved = s.collapseInFullscreen
+        defer { s.collapseInFullscreen = saved }
+        s.collapseInFullscreen = true
+
+        let model = NotchViewModel()
+        model.nowPlaying = playing()
+        model.fullscreenActive = true
+        // A HUD is transient and intentional — it must still surface.
+        model.hud = .sound(level: 0.5, muted: false)
+        if case .hud = model.content {} else { XCTFail("HUD should show in fullscreen") }
+        model.hud = nil
+        // Hover is explicit user intent — the activity comes back.
+        model.interaction = .hovering
+        if case .idle(.playing) = model.content {} else {
+            XCTFail("hover should restore the activity, got \(model.content)")
+        }
+    }
+
+    func test_fullscreenCollapseRespectsOptOut() {
+        let s = SettingsStore.shared
+        let saved = s.collapseInFullscreen
+        defer { s.collapseInFullscreen = saved }
+        s.collapseInFullscreen = false
+
+        let model = NotchViewModel()
+        model.nowPlaying = playing()
+        model.fullscreenActive = true
+        if case .idle(.playing) = model.content {} else {
+            XCTFail("opting out should keep the resting activity, got \(model.content)")
+        }
+    }
+
     // MARK: Live activity ordering
 
     func test_privacySortsFirstAmongLiveActivities() {

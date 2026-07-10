@@ -15,6 +15,10 @@ struct GeneralPane: View {
                 ToggleRow(title: "Sync settings via iCloud", isOn: $settings.syncViaICloud)
                 Divider()
                 ToggleRow(title: "Hide in fullscreen", isOn: $settings.hideInFullscreen)
+                if !settings.hideInFullscreen {
+                    Divider()
+                    ToggleRow(title: "Collapse activities in fullscreen", isOn: $settings.collapseInFullscreen)
+                }
                 Divider()
                 ToggleRow(title: "Hide in mission control", isOn: $settings.hideInMissionControl)
                 Divider()

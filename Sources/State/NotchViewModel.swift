@@ -9,6 +9,10 @@ final class NotchViewModel: ObservableObject {
     // Interaction
     @Published var interaction: Interaction = .collapsed
 
+    /// True while the active Space (on the notch's screen) is a fullscreen app.
+    /// Set by EffectsController; drives the collapse-to-bare-in-fullscreen rest.
+    @Published var fullscreenActive = false
+
     // Transient / top priority
     @Published var hud: HUDKind?
     @Published var notification: TransientNotification?
@@ -112,6 +116,14 @@ final class NotchViewModel: ObservableObject {
         if showMirror { return .mirror }
         if settings.fileTrayEnabled, isDropTargeted { return .fileTray(expanded: true) }
         if interaction == .expanded { return .expanded(activeExpandedActivity) }
+
+        // In fullscreen the menu bar is gone and window content reaches the top
+        // edge, so resting wings would sit on top of it. Rest bare — the physical
+        // cutout covers nothing — until the user hovers; transients above still show.
+        if settings.collapseInFullscreen, fullscreenActive, interaction == .collapsed {
+            return .bare
+        }
+
         if settings.fileTrayEnabled, !fileTray.isEmpty {
             return .fileTray(expanded: interaction == .hovering)
         }
