@@ -35,6 +35,16 @@ struct NotchRootView: View {
 
         let expanded = { if case .expanded = content { return true } else { return false } }()
 
+        // A real notch resting bare covers only its own hardware cutout, but a
+        // simulated one is still a black pill over fullscreen content — fade it
+        // out entirely there. Hover still revives it: the mouse tracker's band
+        // follows content, not visibility.
+        let hiddenInFullscreen = {
+            guard case .bare = content else { return false }
+            return !metrics.hasRealNotch && model.fullscreenActive
+                && model.settings.collapseInFullscreen
+        }()
+
         return VStack(spacing: 0) {
             NotchShape(topCornerRadius: sizing.topRadius, bottomCornerRadius: sizing.bottomRadius)
                 .fill(Color.black)
@@ -79,6 +89,9 @@ struct NotchRootView: View {
                 }
                 // Slight magnetic growth while the hover dwell is pending.
                 .scaleEffect(model.interaction == .hovering && !reduceMotion ? 1.03 : 1, anchor: .top)
+                .opacity(hiddenInFullscreen ? 0 : 1)
+                .animation(NotchMotion.animation(NotchMotion.morph, reduceMotion: reduceMotion),
+                           value: hiddenInFullscreen)
                 .contentShape(NotchShape(topCornerRadius: sizing.topRadius,
                                          bottomCornerRadius: sizing.bottomRadius))
                 .onTapGesture { model.tapped() }

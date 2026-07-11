@@ -99,7 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.updateAudioTap() }
             .store(in: &settingsObservers)
         updateAudioTap()
-        effects = EffectsController(settings: model.settings, panel: panel)
+        effects = EffectsController(settings: model.settings, panel: panel, model: model)
         effects?.start()
 
         // Services that trigger system permission prompts wait until the user
@@ -215,6 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         mouseTracker?.metrics = metrics
         currentScreenFrame = screen.frame
+        effects?.refresh()   // fullscreen state is per-screen; re-evaluate on the new one
     }
 
     /// Repositions only when the target screen changed — driven by the follow
