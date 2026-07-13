@@ -2,6 +2,33 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.6.0] — 2026-07-13
+
+### Added
+- **HUD styles.** The volume/brightness overlay now comes in four styles —
+  Notch (the default, integrated in the notch), Classic, iOS, and Circular —
+  each with a live preview in Settings › Sound, plus a Line/Dot indicator for
+  the dial and an optional accent-color tint.
+- **Off-notch HUD placement.** Show the HUD at any of nine screen positions
+  (or on all displays), via a floating panel. "Top" keeps it in the notch.
+- **Drag to change value.** Click-drag on a floating HUD to set volume or
+  brightness live.
+- **True system-HUD replacement (opt-in).** Suppress the native macOS volume/
+  brightness overlay and show only Notchless's own — off by default; enable in
+  Settings › Sound. Also: react to external/Control-Center volume changes,
+  mute-as-empty, percentage label, output-device glyph, and a configurable
+  hide delay.
+- **Brightness control.** Read and set built-in display brightness; external
+  displays are driven through BetterDisplay or Lunar when installed.
+- **Now Playing options.** Choose which transport buttons appear (including
+  15-second skip), and restrict Now Playing to specific apps (System-wide vs
+  an allowed-apps list).
+- **Sound feedback.** Optional beep when the volume changes.
+
+### Changed
+- The default notch sound HUD now shows the current output-device glyph and
+  empties the bar when muted. Both are toggleable in Settings › Sound.
+
 ## [1.5.0] — 2026-07-09
 
 ### Added
