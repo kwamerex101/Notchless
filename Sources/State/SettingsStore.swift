@@ -143,6 +143,13 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// reproduce the current fixed row (shuffle, previous, play/pause, next).
     @Stored("npShowShuffle", default: true) var npShowShuffle: Bool
     @Stored("npShowSkip15", default: false) var npShowSkip15: Bool
+    /// MediaMate parity: restrict the Now Playing widget to specific apps.
+    /// `.systemWide` (default) shows every app — no behavior change.
+    @Stored("nowPlayingSource", default: NowPlayingSource.systemWide) var nowPlayingSource: NowPlayingSource
+    @Stored("nowPlayingAllowedApps", default: [String]()) var nowPlayingAllowedApps: [String]
+    /// Bundle ids seen in `MediaController.onChange`, most-recent-first,
+    /// capped — powers the allow-list toggle rows in `NowPlayingPane`.
+    @Stored("nowPlayingSeenApps", default: [String]()) var nowPlayingSeenApps: [String]
 
     // Calendar
     @Published var calendarShowWeather: Bool { didSet { persist(Keys.calendarShowWeather, calendarShowWeather, oldValue != calendarShowWeather) } }

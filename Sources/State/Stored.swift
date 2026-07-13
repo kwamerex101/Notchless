@@ -35,6 +35,11 @@ extension String: StoredValue {
     var storedRepresentation: Any { self }
 }
 
+extension Array: StoredValue where Element == String {
+    static func storedValue(from raw: Any?, default defaultValue: [String]) -> [String] { (raw as? [String]) ?? defaultValue }
+    var storedRepresentation: Any { self }
+}
+
 extension StoredValue where Self: RawRepresentable, RawValue == String {
     static func storedValue(from raw: Any?, default defaultValue: Self) -> Self {
         guard let rawString = raw as? String, let value = Self(rawValue: rawString) else { return defaultValue }

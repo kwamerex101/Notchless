@@ -257,8 +257,50 @@ struct NowPlayingPane: View {
                 Text("A row of page icons across the top of the expanded notch; tap or swipe to move between pages.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
+            SectionLabel("Source")
+            CardGroup {
+                SettingsPicker(options: NowPlayingSource.allCases, selection: $settings.nowPlayingSource) { $0.displayName }
+                if settings.nowPlayingSource == .specificApps {
+                    Divider()
+                    if settings.nowPlayingSeenApps.isEmpty {
+                        Text("Play something and the app will appear here to allow.")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(settings.nowPlayingSeenApps, id: \.self) { id in
+                            ToggleRow(title: displayName(forBundleID: id), isOn: allowedBinding(for: id))
+                        }
+                    }
+                }
+            }
+            SectionLabel("Transport")
+            CardGroup {
+                ToggleRow(title: "Show shuffle button", isOn: $settings.npShowShuffle)
+                Divider()
+                ToggleRow(title: "Show 15-second skip buttons", isOn: $settings.npShowSkip15)
+            }
             Spacer()
         }
+    }
+
+    /// Cleans a bundle id into a readable app name — the last dotted
+    /// component, capitalized (e.g. `com.apple.Music` → "Music") — falling
+    /// back to the raw id when that isn't meaningful.
+    private func displayName(forBundleID id: String) -> String {
+        guard let last = id.split(separator: ".").last, !last.isEmpty else { return id }
+        return String(last).prefix(1).uppercased() + String(last).dropFirst()
+    }
+
+    private func allowedBinding(for id: String) -> Binding<Bool> {
+        Binding(
+            get: { settings.nowPlayingAllowedApps.contains(id) },
+            set: { on in
+                if on {
+                    if !settings.nowPlayingAllowedApps.contains(id) { settings.nowPlayingAllowedApps.append(id) }
+                } else {
+                    settings.nowPlayingAllowedApps.removeAll { $0 == id }
+                }
+            }
+        )
     }
 }
 
