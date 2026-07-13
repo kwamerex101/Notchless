@@ -14,7 +14,6 @@ final class HUDController {
     private let model: NotchViewModel
     private let audio = AudioService()
     private let keys = MediaKeyTap()
-    private var primed = false
     private var settingsObservers: Set<AnyCancellable> = []
 
     init(model: NotchViewModel) {
@@ -22,11 +21,21 @@ final class HUDController {
     }
 
     func start() {
-        audio.onChange = { [weak self] level, muted in
+        audio.onChange = { [weak self] level, muted, origin in
             guard let self, self.model.settings.soundHUDEnabled else { return }
             // Skip the initial snapshot so we don't flash a HUD on launch.
-            guard self.primed else { self.primed = true; return }
+            // AudioService itself tags this .initial; any other origin
+            // (.selfWrite or .external) shows the HUD for now.
+            guard origin != .initial else { return }
             self.model.showHUD(.sound(level: level, muted: muted))
+        }
+        audio.onDeviceChange = { [weak self] supportsVolume in
+            guard let self else { return }
+            if !supportsVolume, OSDSuppressor.shared.isActive {
+                OSDSuppressor.shared.deactivate()
+            } else if supportsVolume {
+                self.applySuppressionSetting()
+            }
         }
         audio.start()
 
