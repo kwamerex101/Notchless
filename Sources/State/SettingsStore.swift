@@ -95,11 +95,9 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// When true, floating HUD styles tint their fill with the current
     /// artwork/accent color instead of white.
     @Stored("hudUseAccentColor", default: false) var hudUseAccentColor: Bool
-    /// Where the HUD renders: `.top` keeps it in the notch (unchanged prior
-    /// behavior, and the default), any other `HUDPosition` routes it to the
-    /// floating panel via `HUDPresenter`. Per-HUD placement (Sound vs.
-    /// Display having independent positions) and a sync-with-notch toggle
-    /// are deferred to a later task.
+    /// On-screen placement of the floating HUD, used only when `hudStyle` is
+    /// non-`.notch`; the notch-vs-floating decision itself is made by
+    /// `hudStyle`, not this property.
     @Stored("hudPosition", default: HUDPosition.top) var hudPosition: HUDPosition
     /// Seconds before the HUD auto-dismisses; UI constrains to 0.5...5, and
     /// `NotchViewModel.clampHUDDelay` clamps again at read time as a backstop.
