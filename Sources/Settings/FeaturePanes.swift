@@ -75,6 +75,8 @@ struct DisplayPane: View {
             }
             Text("Replaces the system brightness overlay with one anchored to the notch.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text("Built-in display only. External displays need BetterDisplay or Lunar (set up in the next update).")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Spacer()
         }
     }
