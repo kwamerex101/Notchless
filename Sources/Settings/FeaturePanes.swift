@@ -89,6 +89,16 @@ struct DisplayPane: View {
             Text("Replaces the system brightness overlay with one anchored to the notch. Built-in display only.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
+            SectionLabel("Behavior")
+            CardGroup {
+                HStack {
+                    Text("Position")
+                    Spacer()
+                    SettingsPicker(options: HUDPosition.allCases, selection: $settings.hudPosition) { $0.displayName }
+                }
+            }
+            .disabled(!settings.displayHUDEnabled)
+
             SectionLabel("External Displays")
             CardGroup {
                 ToggleRow(title: "Control external displays via BetterDisplay/Lunar",
@@ -134,8 +144,16 @@ struct SoundPane: View {
                 }
                 Divider()
                 ToggleRow(title: "Show on external volume change", isOn: $settings.showOnExternalVolumeEvent)
+                Divider()
+                HStack {
+                    Text("Position")
+                    Spacer()
+                    SettingsPicker(options: HUDPosition.allCases, selection: $settings.hudPosition) { $0.displayName }
+                }
             }
             .disabled(!settings.soundHUDEnabled)
+            Text("'Top' uses the notch; other positions float on the main display.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
             SectionLabel("System OSD")
             CardGroup {
