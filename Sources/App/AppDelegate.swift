@@ -248,6 +248,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         followTimer?.invalidate()
         media.stop()
+        // Restore the system OSD on normal quit (SIGTERM/SIGINT/crash are
+        // covered by OSDSuppressor's own atexit/signal handlers).
+        OSDSuppressor.shared.deactivate()
     }
 
     @objc private func screensChanged() {
