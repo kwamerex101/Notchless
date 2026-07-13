@@ -163,7 +163,62 @@ struct SoundPane: View {
             }
             .disabled(!settings.soundHUDEnabled)
 
+            SectionLabel("HUD Style")
+            CardGroup {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(colors: [Color.black.opacity(0.35), Color.black.opacity(0.15)],
+                                              startPoint: .top, endPoint: .bottom))
+                    hudPreview
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.08))
+                )
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            CardGroup {
+                HStack {
+                    Text("Style")
+                    Spacer()
+                    SettingsPicker(options: HUDStyle.allCases, selection: $settings.hudStyle) { $0.displayName }
+                }
+                if settings.hudStyle == .circular {
+                    Divider()
+                    HStack {
+                        Text("Indicator")
+                        Spacer()
+                        SettingsPicker(options: HUDIndicator.allCases, selection: $settings.hudIndicator) { $0.displayName }
+                    }
+                }
+                Divider()
+                ToggleRow(title: "Use accent color", isOn: $settings.hudUseAccentColor)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
             Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var hudPreview: some View {
+        let sample = HUDKind.sound(level: 0.6, muted: false)
+        let options = HUDOptions(from: settings)
+        let accent: Color? = settings.hudUseAccentColor ? Color.accentColor : nil
+        switch settings.hudStyle {
+        case .notch:
+            Text("Appears at the notch").font(.caption).foregroundStyle(.secondary)
+        case .classic:
+            ClassicHUDView(kind: sample, options: options, accent: accent)
+        case .ios:
+            IOSHUDView(kind: sample, options: options, accent: accent)
+        case .circular:
+            CircularHUDView(kind: sample, options: options, accent: accent, indicator: settings.hudIndicator)
         }
     }
 
