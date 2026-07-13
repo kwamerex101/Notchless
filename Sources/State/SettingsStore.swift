@@ -83,6 +83,9 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Published var soundHUDEnabled: Bool { didSet { persist(Keys.soundHUDEnabled, soundHUDEnabled, oldValue != soundHUDEnabled) } }
     /// Stateful OSD suppression (`OSDSuppressor`) — off by default, on-device-validated feature.
     @Stored("suppressSystemOSD", default: false) var suppressSystemOSD: Bool
+    @Stored("hudShowMuteAsEmpty", default: true) var hudShowMuteAsEmpty: Bool
+    @Stored("hudShowPercentageLabel", default: false) var hudShowPercentageLabel: Bool
+    @Stored("hudShowOutputDevice", default: true) var hudShowOutputDevice: Bool
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 

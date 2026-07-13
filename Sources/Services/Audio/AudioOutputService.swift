@@ -35,6 +35,39 @@ final class AudioOutputService: ObservableObject {
         }
     }
 
+    /// Maps a `kAudioDevicePropertyTransportType` value to an SF Symbol for the
+    /// HUD's output-device glyph. PURE — unit-tested in `HUDSizingTests`.
+    nonisolated static func symbol(forTransportType t: UInt32) -> String {
+        switch t {
+        case kAudioDeviceTransportTypeBuiltIn:
+            return "speaker.wave.2.fill"
+        case kAudioDeviceTransportTypeUSB:
+            return "headphones"
+        case kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE:
+            return "airpods"
+        case kAudioDeviceTransportTypeHDMI, kAudioDeviceTransportTypeDisplayPort:
+            return "tv"
+        default:
+            return "speaker.wave.2.fill"
+        }
+    }
+
+    /// SF Symbol for the current default output device, for the HUD glyph.
+    func currentOutputSymbol() -> String {
+        let device = currentDefault()
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyTransportType,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var transportType: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &transportType) == noErr else {
+            return "speaker.wave.2.fill"
+        }
+        return Self.symbol(forTransportType: transportType)
+    }
+
     func currentDefault() -> AudioDeviceID {
         var id = AudioDeviceID(kAudioObjectUnknown)
         var size = UInt32(MemoryLayout<AudioDeviceID>.size)

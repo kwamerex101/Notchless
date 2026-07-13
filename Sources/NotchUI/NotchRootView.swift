@@ -171,7 +171,7 @@ struct NotchRootView: View {
                             liveActivities: model.carouselActivities, metrics: metrics,
                             artworkNamespace: artworkNamespace)
         case let .hud(kind):
-            HUDView(kind: kind, metrics: metrics)
+            HUDView(kind: kind, metrics: metrics, options: HUDOptions(from: model.settings))
         case let .notification(note):
             // Key on the note id so a replacement note re-runs the entrance
             // animation instead of reusing the previous view's `appeared` state.

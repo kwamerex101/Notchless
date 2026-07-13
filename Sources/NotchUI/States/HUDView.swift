@@ -5,6 +5,16 @@ import SwiftUI
 struct HUDView: View {
     let kind: HUDKind
     let metrics: NotchMetrics
+    var options: HUDOptions = .default
+
+    /// Level actually drawn in the bar — muted sound collapses to empty when
+    /// `options.showMuteAsEmpty` is set (the icon already reads `speaker.slash.fill`).
+    private var barLevel: Double {
+        if case let .sound(_, muted) = kind, muted, options.showMuteAsEmpty {
+            return 0
+        }
+        return kind.level
+    }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -19,8 +29,22 @@ struct HUDView: View {
 
             Spacer(minLength: 12)
 
-            HUDBar(level: kind.level)
+            if case .sound = kind, options.showOutputDevice {
+                Image(systemName: AudioOutputService.shared.currentOutputSymbol())
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .frame(width: 16)
+            }
+
+            HUDBar(level: barLevel)
                 .frame(width: 120, height: 6)
+
+            if options.showPercentageLabel {
+                Text("\(Int((kind.level * 100).rounded()))%")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .fixedSize()
+            }
         }
         // Clear the 18pt bottom corners (curve reaches ~27pt inward) and sit the
         // row in the region below the physical notch.
