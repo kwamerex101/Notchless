@@ -16,6 +16,11 @@ final class HUDController {
     private let keys = MediaKeyTap()
     private var settingsObservers: Set<AnyCancellable> = []
 
+    /// Timestamp of the last `.soundUp`/`.soundDown`/`.mute` media-key press,
+    /// used to correlate an `.external` volume change with a physical key
+    /// press within `shouldShowVolumeHUD`'s `keyWindow`.
+    private var lastVolumeKeyAt: Date?
+
     init(model: NotchViewModel) {
         self.model = model
     }
@@ -23,10 +28,14 @@ final class HUDController {
     func start() {
         audio.onChange = { [weak self] level, muted, origin in
             guard let self, self.model.settings.soundHUDEnabled else { return }
-            // Skip the initial snapshot so we don't flash a HUD on launch.
-            // AudioService itself tags this .initial; any other origin
-            // (.selfWrite or .external) shows the HUD for now.
-            guard origin != .initial else { return }
+            let shouldShow = Self.shouldShowVolumeHUD(
+                origin: origin,
+                showOnExternal: self.model.settings.showOnExternalVolumeEvent,
+                axTrusted: AXIsProcessTrusted(),
+                lastVolumeKeyAt: self.lastVolumeKeyAt,
+                now: Date()
+            )
+            guard shouldShow else { return }
             self.model.showHUD(.sound(level: level, muted: muted))
         }
         audio.onDeviceChange = { [weak self] supportsVolume in
@@ -46,7 +55,10 @@ final class HUDController {
                 guard self.model.settings.displayHUDEnabled else { return }
                 self.showBrightnessHUD()
             case .soundUp, .soundDown, .mute:
-                break // handled by AudioService
+                // The HUD itself is shown by AudioService's onChange; this
+                // just timestamps the key press so shouldShowVolumeHUD can
+                // correlate a subsequent .external CoreAudio change with it.
+                self.lastVolumeKeyAt = Date()
             }
         }
         keys.start()
@@ -67,6 +79,32 @@ final class HUDController {
             OSDSuppressor.shared.activate()
         } else {
             OSDSuppressor.shared.deactivate()
+        }
+    }
+
+    /// Pure decision for whether an audio-level change should surface the
+    /// Sound HUD. `.initial` (the launch snapshot) never shows; `.selfWrite`
+    /// (app-initiated, e.g. a HUD drag) always shows; `.external` shows when
+    /// the user opted in to "Show on External Volume Event", or when
+    /// Accessibility isn't trusted (we can't detect media keys, so we can't
+    /// tell a legitimate key press from another app — default to showing),
+    /// or when the change lands within `keyWindow` of a real media-key press.
+    nonisolated static func shouldShowVolumeHUD(origin: VolumeChangeOrigin,
+                                     showOnExternal: Bool,
+                                     axTrusted: Bool,
+                                     lastVolumeKeyAt: Date?,
+                                     now: Date,
+                                     keyWindow: TimeInterval = 0.3) -> Bool {
+        switch origin {
+        case .initial:
+            return false
+        case .selfWrite:
+            return true
+        case .external:
+            if showOnExternal { return true }
+            if !axTrusted { return true }
+            guard let lastVolumeKeyAt else { return false }
+            return now.timeIntervalSince(lastVolumeKeyAt) <= keyWindow
         }
     }
 
