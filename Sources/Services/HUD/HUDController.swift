@@ -14,6 +14,7 @@ final class HUDController {
     private let model: NotchViewModel
     private let audio = AudioService()
     private let keys = MediaKeyTap()
+    private lazy var presenter = HUDPresenter(model: model)
     private var settingsObservers: Set<AnyCancellable> = []
 
     /// Timestamp of the last `.soundUp`/`.soundDown`/`.mute` media-key press,
@@ -36,7 +37,7 @@ final class HUDController {
                 now: Date()
             )
             guard shouldShow else { return }
-            self.model.showHUD(.sound(level: level, muted: muted))
+            self.presenter.show(.sound(level: level, muted: muted))
         }
         audio.onDeviceChange = { [weak self] supportsVolume in
             guard let self else { return }
@@ -113,7 +114,7 @@ final class HUDController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             guard let self else { return }
             let level = DisplayService.shared.brightness() ?? 0
-            self.model.showHUD(.display(level: level))
+            self.presenter.show(.display(level: level))
         }
     }
 }

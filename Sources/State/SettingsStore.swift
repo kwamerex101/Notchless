@@ -86,6 +86,12 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Stored("hudShowMuteAsEmpty", default: true) var hudShowMuteAsEmpty: Bool
     @Stored("hudShowPercentageLabel", default: false) var hudShowPercentageLabel: Bool
     @Stored("hudShowOutputDevice", default: true) var hudShowOutputDevice: Bool
+    /// Where the HUD renders: `.top` keeps it in the notch (unchanged prior
+    /// behavior, and the default), any other `HUDPosition` routes it to the
+    /// floating panel via `HUDPresenter`. Per-HUD placement (Sound vs.
+    /// Display having independent positions) and a sync-with-notch toggle
+    /// are deferred to a later task.
+    @Stored("hudPosition", default: HUDPosition.top) var hudPosition: HUDPosition
     /// Seconds before the HUD auto-dismisses; UI constrains to 0.5...5, and
     /// `NotchViewModel.clampHUDDelay` clamps again at read time as a backstop.
     @Stored("hudHideDelay", default: 1.3) var hudHideDelay: Double
