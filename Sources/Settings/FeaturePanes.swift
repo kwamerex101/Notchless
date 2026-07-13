@@ -67,16 +67,37 @@ struct FocusPane: View {
 
 struct DisplayPane: View {
     @ObservedObject var settings: SettingsStore
+
+    private var detectedExternalTool: ExternalBrightnessTool? {
+        ExternalBrightnessBridge.shared.detectTool()
+    }
+
+    private var externalToolCaption: String {
+        switch detectedExternalTool {
+        case .betterDisplay: return "Detected: BetterDisplay."
+        case .lunar: return "Detected: Lunar."
+        case nil: return "Install BetterDisplay or Lunar to control external-display brightness."
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PaneHeader(section: .display)
             CardGroup {
                 ToggleRow(title: "Brightness HUD", isOn: $settings.displayHUDEnabled)
             }
-            Text("Replaces the system brightness overlay with one anchored to the notch.")
+            Text("Replaces the system brightness overlay with one anchored to the notch. Built-in display only.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Text("Built-in display only. External displays need BetterDisplay or Lunar (set up in the next update).")
+
+            SectionLabel("External Displays")
+            CardGroup {
+                ToggleRow(title: "Control external displays via BetterDisplay/Lunar",
+                          isOn: $settings.externalBrightnessDelegate)
+            }
+            .disabled(detectedExternalTool == nil)
+            Text(externalToolCaption)
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
             Spacer()
         }
     }

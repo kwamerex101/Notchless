@@ -92,6 +92,10 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// MediaMate parity: when true, any external volume change (Control
     /// Center, headphones, another app) shows the HUD, not just media keys.
     @Stored("showOnExternalVolumeEvent", default: false) var showOnExternalVolumeEvent: Bool
+    /// P2b: delegate EXTERNAL-display brightness writes to BetterDisplay/Lunar
+    /// via `ExternalBrightnessBridge`. Off by default; UI disables the toggle
+    /// when neither tool is detected.
+    @Stored("externalBrightnessDelegate", default: false) var externalBrightnessDelegate: Bool
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 
