@@ -36,7 +36,8 @@ final class MediaController {
             // still recording every app seen so the settings UI can list it.
             let s = self.model.settings
             if let bundle = info?.bundleIdentifier {
-                s.nowPlayingSeenApps = NowPlayingFilter.addSeen(bundle, to: s.nowPlayingSeenApps)
+                let updated = NowPlayingFilter.addSeen(bundle, to: s.nowPlayingSeenApps)
+                if updated != s.nowPlayingSeenApps { s.nowPlayingSeenApps = updated }
             }
             let allowed = NowPlayingFilter.shouldAccept(bundleID: info?.bundleIdentifier, source: s.nowPlayingSource, allowed: s.nowPlayingAllowedApps)
             self.model.nowPlaying = allowed ? info : nil
