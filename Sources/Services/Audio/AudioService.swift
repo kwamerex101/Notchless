@@ -132,7 +132,7 @@ final class AudioService {
         guard device != kAudioObjectUnknown else { return }
 
         let volBlock: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            self?.emit()
+            Task { @MainActor in self?.emit() }
         }
         volumeBlock = volBlock
 
@@ -152,7 +152,7 @@ final class AudioService {
         }
 
         let muteBlk: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            self?.emit()
+            Task { @MainActor in self?.emit() }
         }
         muteBlock = muteBlk
         var muteAddr = Self.muteAddress()
@@ -207,10 +207,6 @@ final class AudioService {
     private func emit() {
         let level = currentVolume()
         let muted = currentMute()
-        Task { @MainActor in self.emitOnMain(level: level, muted: muted) }
-    }
-
-    private func emitOnMain(level: Double, muted: Bool) {
         let origin: VolumeChangeOrigin
         if !hasEmitted {
             hasEmitted = true
