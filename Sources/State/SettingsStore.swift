@@ -27,10 +27,17 @@ enum SimulatedDisplay: String, CaseIterable, Codable {
 /// All persisted user preferences, mirroring Alcove's settings surface.
 /// Backed by `UserDefaults`, optionally mirrored to iCloud key-value store.
 @MainActor
-final class SettingsStore: ObservableObject {
+final class SettingsStore: ObservableObject, StoredHost {
     static let shared = SettingsStore()
 
-    private let defaults = UserDefaults.standard
+    /// Injected storage seam (for `@Stored` and tests). The existing
+    /// persist/load/cloud-mirror logic below keeps using its own `cloud`
+    /// reference — `NSUbiquitousKeyValueStore`'s typed convenience accessors
+    /// (`.bool(forKey:)`, `.string(forKey:)`, …) aren't part of the
+    /// `KeyValueStore` protocol, so rerouting that logic through `kvs` isn't
+    /// a trivially-safe change; left as-is per the task brief.
+    let defaults: UserDefaults
+    let kvs: KeyValueStore
     private let cloud = NSUbiquitousKeyValueStore.default
 
     // General
@@ -123,7 +130,10 @@ final class SettingsStore: ObservableObject {
 
     private var loading = false
 
-    private init() {
+    init(defaults: UserDefaults = .standard, kvs: KeyValueStore = NSUbiquitousKeyValueStore.default) {
+        self.defaults = defaults
+        self.kvs = kvs
+
         // Register defaults (all the Alcove-observed on/off states).
         defaults.register(defaults: [
             Keys.launchAtLogin: true,
