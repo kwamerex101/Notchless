@@ -90,8 +90,48 @@ struct SoundPane: View {
             }
             Text("Replaces the system volume overlay with one anchored to the notch.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            SectionLabel("Appearance")
+            CardGroup {
+                ToggleRow(title: "Show mute as empty", isOn: $settings.hudShowMuteAsEmpty)
+                Divider()
+                ToggleRow(title: "Show percentage label", isOn: $settings.hudShowPercentageLabel)
+                Divider()
+                ToggleRow(title: "Show output device", isOn: $settings.hudShowOutputDevice)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            SectionLabel("Behavior")
+            CardGroup {
+                HStack {
+                    Text("Hide HUD after")
+                    Spacer()
+                    Slider(value: $settings.hudHideDelay, in: 0.5...5, step: 0.1).frame(width: 150)
+                    Text(String(format: "%.1fs", settings.hudHideDelay)).frame(width: 44, alignment: .trailing)
+                }
+                Divider()
+                ToggleRow(title: "Show on external volume change", isOn: $settings.showOnExternalVolumeEvent)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            SectionLabel("System OSD")
+            CardGroup {
+                ToggleRow(title: "Replace the system volume HUD", isOn: $settings.suppressSystemOSD)
+                Text(osdCaption)
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
             Spacer()
         }
+    }
+
+    private var osdCaption: String {
+        var text = "Also hides the Caps Lock and keyboard-backlight overlays while enabled."
+        if !OSDSuppressor.isValidatedOnCurrentOS {
+            text += " Not yet verified on this macOS version."
+        }
+        return text
     }
 }
 
