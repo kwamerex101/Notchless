@@ -27,6 +27,7 @@ final class HUDController {
     }
 
     func start() {
+        presenter.applyValue = { [weak self] kind, value in self?.applyHUDValue(kind, value) }
         audio.onChange = { [weak self] level, muted, origin in
             guard let self, self.model.settings.soundHUDEnabled else { return }
             let shouldShow = Self.shouldShowVolumeHUD(
@@ -106,6 +107,26 @@ final class HUDController {
             if !axTrusted { return true }
             guard let lastVolumeKeyAt else { return false }
             return now.timeIntervalSince(lastVolumeKeyAt) <= keyWindow
+        }
+    }
+
+    /// Drives the live system setter for a click-drag on the floating HUD
+    /// (Phase 5). Wired into `presenter.applyValue` in `start()`. Volume goes
+    /// through `AudioService.setVolume`, which stamps the write `.selfWrite`
+    /// so the resulting CoreAudio callback doesn't loop back into showing
+    /// another HUD. Brightness prefers the built-in setter when available,
+    /// falling back to `ExternalBrightnessBridge` only when the user opted
+    /// into delegating external-display brightness.
+    private func applyHUDValue(_ kind: HUDKind, _ value: Double) {
+        switch kind {
+        case .sound:
+            audio.setVolume(value)
+        case .display:
+            if DisplayService.shared.setterAvailable && DisplayService.shared.isBuiltIn() {
+                DisplayService.shared.setBrightness(value)
+            } else if model.settings.externalBrightnessDelegate {
+                ExternalBrightnessBridge.shared.setExternalBrightness(value)
+            }
         }
     }
 

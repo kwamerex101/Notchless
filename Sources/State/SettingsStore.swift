@@ -109,6 +109,12 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// via `ExternalBrightnessBridge`. Off by default; UI disables the toggle
     /// when neither tool is detected.
     @Stored("externalBrightnessDelegate", default: false) var externalBrightnessDelegate: Bool
+    /// P5: click-drag over the floating HUD (Classic/iOS/Circular) live-sets
+    /// volume/brightness. Wired this task.
+    @Stored("clickDragToChangeValue", default: true) var clickDragToChangeValue: Bool
+    /// P5: two-finger-drag equivalent — stored for a later task, not wired
+    /// yet (neither the notch route nor the floating panel reads it).
+    @Stored("twoFingerDragToChangeValue", default: false) var twoFingerDragToChangeValue: Bool
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 
