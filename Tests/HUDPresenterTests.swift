@@ -2,13 +2,13 @@ import XCTest
 @testable import Notchless
 
 final class HUDPresenterTests: XCTestCase {
-    func testTopIsNotchRoute() {
-        XCTAssertTrue(HUDPresenter.isNotchRoute(.top))
+    func testNotchStyleIsNotchRoute() {
+        XCTAssertTrue(HUDPresenter.isNotchRoute(.notch))
     }
 
-    func testNonTopPositionsAreFloatingRoute() {
-        for position in HUDPosition.allCases where position != .top {
-            XCTAssertFalse(HUDPresenter.isNotchRoute(position), "\(position) should not be the notch route")
+    func testNonNotchStylesAreFloatingRoute() {
+        for style in HUDStyle.allCases where style != .notch {
+            XCTAssertFalse(HUDPresenter.isNotchRoute(style), "\(style) should not be the notch route")
         }
     }
 }

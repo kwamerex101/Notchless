@@ -86,6 +86,15 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Stored("hudShowMuteAsEmpty", default: true) var hudShowMuteAsEmpty: Bool
     @Stored("hudShowPercentageLabel", default: false) var hudShowPercentageLabel: Bool
     @Stored("hudShowOutputDevice", default: true) var hudShowOutputDevice: Bool
+    /// Which HUD style renders: `.notch` keeps it in the notch (unchanged
+    /// prior behavior, and the default); `.classic`/`.ios`/`.circular` route
+    /// to the floating panel at `hudPosition` via `HUDPresenter`.
+    @Stored("hudStyle", default: HUDStyle.notch) var hudStyle: HUDStyle
+    /// Progress-ring style for `.circular`: a continuous stroke or a ring of dots.
+    @Stored("hudIndicator", default: HUDIndicator.dot) var hudIndicator: HUDIndicator
+    /// When true, floating HUD styles tint their fill with the current
+    /// artwork/accent color instead of white.
+    @Stored("hudUseAccentColor", default: false) var hudUseAccentColor: Bool
     /// Where the HUD renders: `.top` keeps it in the notch (unchanged prior
     /// behavior, and the default), any other `HUDPosition` routes it to the
     /// floating panel via `HUDPresenter`. Per-HUD placement (Sound vs.

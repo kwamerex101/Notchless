@@ -1,9 +1,10 @@
 import AppKit
 
 /// The sole sink `HUDController` shows HUDs through. Routes to the notch
-/// (`model.showHUD`, unchanged behavior) when `hudPosition == .top`, or to a
-/// non-interactive floating panel otherwise — and on the floating route
-/// leaves `model.hud == nil` so the notch does not also morph into a HUD
+/// (`model.showHUD`, unchanged behavior) when `hudStyle == .notch`, or to a
+/// non-interactive floating panel — sized and styled per `hudStyle`,
+/// positioned at `hudPosition` — otherwise. On the floating route it leaves
+/// `model.hud == nil` so the notch does not also morph into a HUD
 /// (`NotchViewModel.content` resolves `hud` first).
 @MainActor
 final class HUDPresenter {
@@ -15,15 +16,15 @@ final class HUDPresenter {
         self.model = model
     }
 
-    /// Pure route selection: `.top` is the notch's home position; every
-    /// other `HUDPosition` routes to the floating panel.
-    nonisolated static func isNotchRoute(_ position: HUDPosition) -> Bool {
-        position == .top
+    /// Pure route selection: `.notch` is the only style the notch itself
+    /// renders; every other `HUDStyle` routes to the floating panel.
+    nonisolated static func isNotchRoute(_ style: HUDStyle) -> Bool {
+        style == .notch
     }
 
     func show(_ kind: HUDKind) {
-        let position = model.settings.hudPosition
-        if Self.isNotchRoute(position) {
+        let style = model.settings.hudStyle
+        if Self.isNotchRoute(style) {
             hide()
             model.showHUD(kind)
             return
@@ -32,11 +33,18 @@ final class HUDPresenter {
         model.hideHUD()
 
         let options = HUDOptions(from: model.settings)
-        panel.setContent(FloatingHUDContentView(kind: kind, options: options))
+        let accent = model.settings.hudUseAccentColor ? model.artworkColor : nil
+        panel.setContent(FloatingHUDContentView(
+            kind: kind,
+            options: options,
+            style: style,
+            indicator: model.settings.hudIndicator,
+            accent: accent
+        ))
 
         let frame = FloatingHUDPositioner.frame(
-            for: position,
-            hudSize: FloatingHUDContentView.estimatedSize,
+            for: model.settings.hudPosition,
+            hudSize: FloatingHUDContentView.estimatedSize(for: style),
             in: NSScreen.main?.visibleFrame ?? .zero,
             inset: 16
         )
