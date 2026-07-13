@@ -119,6 +119,12 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// (one panel per screen) instead of just the main screen. Off by
     /// default — the single-display path stays exactly as before.
     @Stored("hudAllDisplays", default: false) var hudAllDisplays: Bool
+    /// MediaMate parity: "Play [Beep] when the volume is changed" — a short
+    /// system sound on real key/external volume changes. Off by default; see
+    /// `HUDController.audio.onChange` for the origin gate that decides when
+    /// to actually play it.
+    @Stored("hudSoundOnChange", default: false) var hudSoundOnChange: Bool
+    @Stored("hudSoundName", default: HUDSound.pop) var hudSoundName: HUDSound
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 

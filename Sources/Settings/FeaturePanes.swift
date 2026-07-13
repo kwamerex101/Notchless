@@ -152,6 +152,17 @@ struct SoundPane: View {
                 }
                 Divider()
                 ToggleRow(title: "Show on all displays", isOn: $settings.hudAllDisplays)
+                Divider()
+                ToggleRow(title: "Play a sound on volume change", isOn: $settings.hudSoundOnChange)
+                if settings.hudSoundOnChange {
+                    Divider()
+                    HStack {
+                        Text("Sound")
+                        Spacer()
+                        SettingsPicker(options: HUDSound.allCases, selection: $settings.hudSoundName) { $0.displayName }
+                        Button("Preview") { HUDSoundPlayer.shared.play(settings.hudSoundName) }
+                    }
+                }
             }
             .disabled(!settings.soundHUDEnabled)
             Text("'Top' uses the notch; other positions float on the main display.")

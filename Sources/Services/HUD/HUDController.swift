@@ -39,6 +39,13 @@ final class HUDController {
             )
             guard shouldShow else { return }
             self.presenter.show(.sound(level: level, muted: muted))
+            // MediaMate parity: beep on a real key/external volume change,
+            // never on `.selfWrite` (HUD drag would machine-gun) or
+            // `.initial` (launch snapshot never shows anyway, since
+            // `shouldShow` is already false for it).
+            if self.model.settings.hudSoundOnChange, origin != .selfWrite, origin != .initial {
+                HUDSoundPlayer.shared.play(self.model.settings.hudSoundName)
+            }
         }
         audio.onDeviceChange = { [weak self] supportsVolume in
             guard let self else { return }
