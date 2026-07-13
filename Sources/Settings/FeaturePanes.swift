@@ -150,6 +150,8 @@ struct SoundPane: View {
                     Spacer()
                     SettingsPicker(options: HUDPosition.allCases, selection: $settings.hudPosition) { $0.displayName }
                 }
+                Divider()
+                ToggleRow(title: "Show on all displays", isOn: $settings.hudAllDisplays)
             }
             .disabled(!settings.soundHUDEnabled)
             Text("'Top' uses the notch; other positions float on the main display.")

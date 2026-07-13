@@ -115,6 +115,10 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// P5: two-finger-drag equivalent — stored for a later task, not wired
     /// yet (neither the notch route nor the floating panel reads it).
     @Stored("twoFingerDragToChangeValue", default: false) var twoFingerDragToChangeValue: Bool
+    /// P5b: when true, the floating HUD shows on every connected display
+    /// (one panel per screen) instead of just the main screen. Off by
+    /// default — the single-display path stays exactly as before.
+    @Stored("hudAllDisplays", default: false) var hudAllDisplays: Bool
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 
