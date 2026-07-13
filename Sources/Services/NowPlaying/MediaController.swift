@@ -31,7 +31,16 @@ final class MediaController {
                 self.lastColorTitle = info?.title
                 self.model.artworkColor = info?.artwork.flatMap(ColorExtractor.vibrantColor)
             }
-            self.model.nowPlaying = info
+            // MediaMate parity: restrict which app's now-playing info is
+            // published per the "System-wide"/"Specific Apps" setting, while
+            // still recording every app seen so the settings UI can list it.
+            let s = self.model.settings
+            if let bundle = info?.bundleIdentifier {
+                let updated = NowPlayingFilter.addSeen(bundle, to: s.nowPlayingSeenApps)
+                if updated != s.nowPlayingSeenApps { s.nowPlayingSeenApps = updated }
+            }
+            let allowed = NowPlayingFilter.shouldAccept(bundleID: info?.bundleIdentifier, source: s.nowPlayingSource, allowed: s.nowPlayingAllowedApps)
+            self.model.nowPlaying = allowed ? info : nil
         }
         provider.start()
     }

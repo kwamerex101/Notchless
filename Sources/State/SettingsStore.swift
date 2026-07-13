@@ -27,10 +27,17 @@ enum SimulatedDisplay: String, CaseIterable, Codable {
 /// All persisted user preferences, mirroring Alcove's settings surface.
 /// Backed by `UserDefaults`, optionally mirrored to iCloud key-value store.
 @MainActor
-final class SettingsStore: ObservableObject {
+final class SettingsStore: ObservableObject, StoredHost {
     static let shared = SettingsStore()
 
-    private let defaults = UserDefaults.standard
+    /// Injected storage seam (for `@Stored` and tests). The existing
+    /// persist/load/cloud-mirror logic below keeps using its own `cloud`
+    /// reference — `NSUbiquitousKeyValueStore`'s typed convenience accessors
+    /// (`.bool(forKey:)`, `.string(forKey:)`, …) aren't part of the
+    /// `KeyValueStore` protocol, so rerouting that logic through `kvs` isn't
+    /// a trivially-safe change; left as-is per the task brief.
+    let defaults: UserDefaults
+    let kvs: KeyValueStore
     private let cloud = NSUbiquitousKeyValueStore.default
 
     // General
@@ -74,6 +81,50 @@ final class SettingsStore: ObservableObject {
     @Published var focusEnabled: Bool { didSet { persist(Keys.focusEnabled, focusEnabled, oldValue != focusEnabled) } }
     @Published var displayHUDEnabled: Bool { didSet { persist(Keys.displayHUDEnabled, displayHUDEnabled, oldValue != displayHUDEnabled) } }
     @Published var soundHUDEnabled: Bool { didSet { persist(Keys.soundHUDEnabled, soundHUDEnabled, oldValue != soundHUDEnabled) } }
+    /// Stateful OSD suppression (`OSDSuppressor`) — off by default, on-device-validated feature.
+    @Stored("suppressSystemOSD", default: false) var suppressSystemOSD: Bool
+    @Stored("hudShowMuteAsEmpty", default: true) var hudShowMuteAsEmpty: Bool
+    @Stored("hudShowPercentageLabel", default: false) var hudShowPercentageLabel: Bool
+    @Stored("hudShowOutputDevice", default: true) var hudShowOutputDevice: Bool
+    /// Which HUD style renders: `.notch` keeps it in the notch (unchanged
+    /// prior behavior, and the default); `.classic`/`.ios`/`.circular` route
+    /// to the floating panel at `hudPosition` via `HUDPresenter`.
+    @Stored("hudStyle", default: HUDStyle.notch) var hudStyle: HUDStyle
+    /// Progress-ring style for `.circular`: a continuous stroke or a ring of dots.
+    @Stored("hudIndicator", default: HUDIndicator.dot) var hudIndicator: HUDIndicator
+    /// When true, floating HUD styles tint their fill with the current
+    /// artwork/accent color instead of white.
+    @Stored("hudUseAccentColor", default: false) var hudUseAccentColor: Bool
+    /// On-screen placement of the floating HUD, used only when `hudStyle` is
+    /// non-`.notch`; the notch-vs-floating decision itself is made by
+    /// `hudStyle`, not this property.
+    @Stored("hudPosition", default: HUDPosition.top) var hudPosition: HUDPosition
+    /// Seconds before the HUD auto-dismisses; UI constrains to 0.5...5, and
+    /// `NotchViewModel.clampHUDDelay` clamps again at read time as a backstop.
+    @Stored("hudHideDelay", default: 1.3) var hudHideDelay: Double
+    /// MediaMate parity: when true, any external volume change (Control
+    /// Center, headphones, another app) shows the HUD, not just media keys.
+    @Stored("showOnExternalVolumeEvent", default: false) var showOnExternalVolumeEvent: Bool
+    /// P2b: delegate EXTERNAL-display brightness writes to BetterDisplay/Lunar
+    /// via `ExternalBrightnessBridge`. Off by default; UI disables the toggle
+    /// when neither tool is detected.
+    @Stored("externalBrightnessDelegate", default: false) var externalBrightnessDelegate: Bool
+    /// P5: click-drag over the floating HUD (Classic/iOS/Circular) live-sets
+    /// volume/brightness. Wired this task.
+    @Stored("clickDragToChangeValue", default: true) var clickDragToChangeValue: Bool
+    /// P5: two-finger-drag equivalent — stored for a later task, not wired
+    /// yet (neither the notch route nor the floating panel reads it).
+    @Stored("twoFingerDragToChangeValue", default: false) var twoFingerDragToChangeValue: Bool
+    /// P5b: when true, the floating HUD shows on every connected display
+    /// (one panel per screen) instead of just the main screen. Off by
+    /// default — the single-display path stays exactly as before.
+    @Stored("hudAllDisplays", default: false) var hudAllDisplays: Bool
+    /// MediaMate parity: "Play [Beep] when the volume is changed" — a short
+    /// system sound on real key/external volume changes. Off by default; see
+    /// `HUDController.audio.onChange` for the origin gate that decides when
+    /// to actually play it.
+    @Stored("hudSoundOnChange", default: false) var hudSoundOnChange: Bool
+    @Stored("hudSoundName", default: HUDSound.pop) var hudSoundName: HUDSound
     @Published var fileTrayEnabled: Bool { didSet { persist(Keys.fileTrayEnabled, fileTrayEnabled, oldValue != fileTrayEnabled) } }
     @Published var todosEnabled: Bool { didSet { persist(Keys.todosEnabled, todosEnabled, oldValue != todosEnabled) } }
 
@@ -94,6 +145,17 @@ final class SettingsStore: ObservableObject {
     @Published var swipeToSeek: Bool { didSet { persist(Keys.swipeToSeek, swipeToSeek, oldValue != swipeToSeek) } }
     @Published var swipeGesturesEnabled: Bool { didSet { persist(Keys.swipeGesturesEnabled, swipeGesturesEnabled, oldValue != swipeGesturesEnabled) } }
     @Published var showTabBar: Bool { didSet { persist(Keys.showTabBar, showTabBar, oldValue != showTabBar) } }
+    /// MediaMate parity: transport row button configuration. Defaults
+    /// reproduce the current fixed row (shuffle, previous, play/pause, next).
+    @Stored("npShowShuffle", default: true) var npShowShuffle: Bool
+    @Stored("npShowSkip15", default: false) var npShowSkip15: Bool
+    /// MediaMate parity: restrict the Now Playing widget to specific apps.
+    /// `.systemWide` (default) shows every app — no behavior change.
+    @Stored("nowPlayingSource", default: NowPlayingSource.systemWide) var nowPlayingSource: NowPlayingSource
+    @Stored("nowPlayingAllowedApps", default: [String]()) var nowPlayingAllowedApps: [String]
+    /// Bundle ids seen in `MediaController.onChange`, most-recent-first,
+    /// capped — powers the allow-list toggle rows in `NowPlayingPane`.
+    @Stored("nowPlayingSeenApps", default: [String]()) var nowPlayingSeenApps: [String]
 
     // Calendar
     @Published var calendarShowWeather: Bool { didSet { persist(Keys.calendarShowWeather, calendarShowWeather, oldValue != calendarShowWeather) } }
@@ -123,7 +185,10 @@ final class SettingsStore: ObservableObject {
 
     private var loading = false
 
-    private init() {
+    init(defaults: UserDefaults = .standard, kvs: KeyValueStore = NSUbiquitousKeyValueStore.default) {
+        self.defaults = defaults
+        self.kvs = kvs
+
         // Register defaults (all the Alcove-observed on/off states).
         defaults.register(defaults: [
             Keys.launchAtLogin: true,

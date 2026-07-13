@@ -67,14 +67,47 @@ struct FocusPane: View {
 
 struct DisplayPane: View {
     @ObservedObject var settings: SettingsStore
+
+    private var detectedExternalTool: ExternalBrightnessTool? {
+        ExternalBrightnessBridge.shared.detectTool()
+    }
+
+    private var externalToolCaption: String {
+        switch detectedExternalTool {
+        case .betterDisplay: return "Detected: BetterDisplay."
+        case .lunar: return "Detected: Lunar."
+        case nil: return "Install BetterDisplay or Lunar to control external-display brightness."
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PaneHeader(section: .display)
             CardGroup {
                 ToggleRow(title: "Brightness HUD", isOn: $settings.displayHUDEnabled)
             }
-            Text("Replaces the system brightness overlay with one anchored to the notch.")
+            Text("Replaces the system brightness overlay with one anchored to the notch. Built-in display only.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            SectionLabel("Behavior")
+            CardGroup {
+                HStack {
+                    Text("Position")
+                    Spacer()
+                    SettingsPicker(options: HUDPosition.allCases, selection: $settings.hudPosition) { $0.displayName }
+                }
+            }
+            .disabled(!settings.displayHUDEnabled)
+
+            SectionLabel("External Displays")
+            CardGroup {
+                ToggleRow(title: "Control external displays via BetterDisplay/Lunar",
+                          isOn: $settings.externalBrightnessDelegate)
+            }
+            .disabled(detectedExternalTool == nil)
+            Text(externalToolCaption)
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
             Spacer()
         }
     }
@@ -90,8 +123,124 @@ struct SoundPane: View {
             }
             Text("Replaces the system volume overlay with one anchored to the notch.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            SectionLabel("Appearance")
+            CardGroup {
+                ToggleRow(title: "Show mute as empty", isOn: $settings.hudShowMuteAsEmpty)
+                Divider()
+                ToggleRow(title: "Show percentage label", isOn: $settings.hudShowPercentageLabel)
+                Divider()
+                ToggleRow(title: "Show output device", isOn: $settings.hudShowOutputDevice)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            SectionLabel("Behavior")
+            CardGroup {
+                HStack {
+                    Text("Hide HUD after")
+                    Spacer()
+                    Slider(value: $settings.hudHideDelay, in: 0.5...5, step: 0.1).frame(width: 150)
+                    Text(String(format: "%.1fs", settings.hudHideDelay)).frame(width: 44, alignment: .trailing)
+                }
+                Divider()
+                ToggleRow(title: "Show on external volume change", isOn: $settings.showOnExternalVolumeEvent)
+                Divider()
+                HStack {
+                    Text("Position")
+                    Spacer()
+                    SettingsPicker(options: HUDPosition.allCases, selection: $settings.hudPosition) { $0.displayName }
+                }
+                Divider()
+                ToggleRow(title: "Show on all displays", isOn: $settings.hudAllDisplays)
+                Divider()
+                ToggleRow(title: "Play a sound on volume change", isOn: $settings.hudSoundOnChange)
+                if settings.hudSoundOnChange {
+                    Divider()
+                    HStack {
+                        Text("Sound")
+                        Spacer()
+                        SettingsPicker(options: HUDSound.allCases, selection: $settings.hudSoundName) { $0.displayName }
+                        Button("Preview") { HUDSoundPlayer.shared.play(settings.hudSoundName) }
+                    }
+                }
+            }
+            .disabled(!settings.soundHUDEnabled)
+            Text("'Top' uses the notch; other positions float on the main display.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            SectionLabel("System OSD")
+            CardGroup {
+                ToggleRow(title: "Replace the system volume HUD", isOn: $settings.suppressSystemOSD)
+                Text(osdCaption)
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            SectionLabel("HUD Style")
+            CardGroup {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(colors: [Color.black.opacity(0.35), Color.black.opacity(0.15)],
+                                              startPoint: .top, endPoint: .bottom))
+                    hudPreview
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.08))
+                )
+            }
+            .disabled(!settings.soundHUDEnabled)
+
+            CardGroup {
+                HStack {
+                    Text("Style")
+                    Spacer()
+                    SettingsPicker(options: HUDStyle.allCases, selection: $settings.hudStyle) { $0.displayName }
+                }
+                if settings.hudStyle == .circular {
+                    Divider()
+                    HStack {
+                        Text("Indicator")
+                        Spacer()
+                        SettingsPicker(options: HUDIndicator.allCases, selection: $settings.hudIndicator) { $0.displayName }
+                    }
+                }
+                Divider()
+                ToggleRow(title: "Use accent color", isOn: $settings.hudUseAccentColor)
+            }
+            .disabled(!settings.soundHUDEnabled)
+
             Spacer()
         }
+    }
+
+    @ViewBuilder
+    private var hudPreview: some View {
+        let sample = HUDKind.sound(level: 0.6, muted: false)
+        let options = HUDOptions(from: settings)
+        let accent: Color? = settings.hudUseAccentColor ? Color.accentColor : nil
+        switch settings.hudStyle {
+        case .notch:
+            Text("Appears at the notch").font(.caption).foregroundStyle(.secondary)
+        case .classic:
+            ClassicHUDView(kind: sample, options: options, accent: accent)
+        case .ios:
+            IOSHUDView(kind: sample, options: options, accent: accent)
+        case .circular:
+            CircularHUDView(kind: sample, options: options, accent: accent, indicator: settings.hudIndicator)
+        }
+    }
+
+    private var osdCaption: String {
+        var text = "Also hides the Caps Lock and keyboard-backlight overlays while enabled."
+        if !OSDSuppressor.isValidatedOnCurrentOS {
+            text += " Not yet verified on this macOS version."
+        }
+        return text
     }
 }
 
@@ -119,8 +268,50 @@ struct NowPlayingPane: View {
                 Text("A row of page icons across the top of the expanded notch; tap or swipe to move between pages.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
+            SectionLabel("Source")
+            CardGroup {
+                SettingsPicker(options: NowPlayingSource.allCases, selection: $settings.nowPlayingSource) { $0.displayName }
+                if settings.nowPlayingSource == .specificApps {
+                    Divider()
+                    if settings.nowPlayingSeenApps.isEmpty {
+                        Text("Play something and the app will appear here to allow.")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(settings.nowPlayingSeenApps, id: \.self) { id in
+                            ToggleRow(title: displayName(forBundleID: id), isOn: allowedBinding(for: id))
+                        }
+                    }
+                }
+            }
+            SectionLabel("Transport")
+            CardGroup {
+                ToggleRow(title: "Show shuffle button", isOn: $settings.npShowShuffle)
+                Divider()
+                ToggleRow(title: "Show 15-second skip buttons", isOn: $settings.npShowSkip15)
+            }
             Spacer()
         }
+    }
+
+    /// Cleans a bundle id into a readable app name — the last dotted
+    /// component, capitalized (e.g. `com.apple.Music` → "Music") — falling
+    /// back to the raw id when that isn't meaningful.
+    private func displayName(forBundleID id: String) -> String {
+        guard let last = id.split(separator: ".").last, !last.isEmpty else { return id }
+        return String(last).prefix(1).uppercased() + String(last).dropFirst()
+    }
+
+    private func allowedBinding(for id: String) -> Binding<Bool> {
+        Binding(
+            get: { settings.nowPlayingAllowedApps.contains(id) },
+            set: { on in
+                if on {
+                    if !settings.nowPlayingAllowedApps.contains(id) { settings.nowPlayingAllowedApps.append(id) }
+                } else {
+                    settings.nowPlayingAllowedApps.removeAll { $0 == id }
+                }
+            }
+        )
     }
 }
 

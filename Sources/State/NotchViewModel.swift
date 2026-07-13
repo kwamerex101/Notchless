@@ -414,7 +414,24 @@ final class NotchViewModel: ObservableObject {
             withAnimation(Self.morph) { self?.hud = nil }
         }
         hudDismiss = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + NotchMotion.hudDismiss, execute: work)
+        let delay = Self.clampHUDDelay(settings.hudHideDelay)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// Clamps a raw `hudHideDelay` setting into the supported 0.5...5s range.
+    /// Pure so it can be unit-tested without a live `NotchViewModel`.
+    nonisolated static func clampHUDDelay(_ raw: Double) -> Double {
+        min(5.0, max(0.5, raw))
+    }
+
+    /// Clears the notch HUD safely — cancels any pending auto-dismiss so it
+    /// can't fire after `hud` has already been cleared, and reuses `showHUD`'s
+    /// dismiss animation. Used by `HUDPresenter` to guarantee no double-present
+    /// when routing to the floating panel, and when switching routes.
+    func hideHUD() {
+        hudDismiss?.cancel()
+        hudDismiss = nil
+        withAnimation(Self.morph) { hud = nil }
     }
 
     // MARK: - Notifications

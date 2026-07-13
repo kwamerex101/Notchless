@@ -22,7 +22,6 @@ enum NotchMotion {
     // Timing intervals (seconds).
     static let hoverDwell: TimeInterval = 0.15
     static let collapseGrace: TimeInterval = 0.35
-    static let hudDismiss: TimeInterval = 1.4
     static let dictationDismiss: TimeInterval = 2.2
 
     /// Returns `base`, or a short opacity-friendly ease when Reduce Motion is on

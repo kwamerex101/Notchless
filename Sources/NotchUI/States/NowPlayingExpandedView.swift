@@ -134,9 +134,30 @@ struct NowPlayingExpandedView: View {
     }
 
     private var transport: some View {
-        HStack(spacing: 26) {
+        let settings = SettingsStore.shared
+        let order = NowPlayingTransport.ordered(showShuffle: settings.npShowShuffle,
+                                                 showSkip15: settings.npShowSkip15)
+        return HStack(spacing: 26) {
+            ForEach(order, id: \.self) { kind in
+                transportButtonView(for: kind)
+            }
+            outputPicker
+        }
+    }
+
+    @ViewBuilder
+    private func transportButtonView(for kind: TransportButtonKind) -> some View {
+        switch kind {
+        case .shuffle:
             transportButton("shuffle", size: 13, label: "Shuffle") { onCommand(.toggleShuffle) }
+        case .rewind15:
+            transportButton("gobackward.15", size: 15, label: "Back 15s") {
+                let e = info?.elapsed(at: Date()) ?? 0
+                onCommand(.seek(max(0, e - 15)))
+            }
+        case .previous:
             transportButton("backward.fill", size: 15, label: "Previous") { onCommand(.previous) }
+        case .playPause:
             Button { onCommand(.playPause) } label: {
                 Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .semibold))
@@ -147,8 +168,14 @@ struct NowPlayingExpandedView: View {
             }
             .buttonStyle(NotchButtonStyle())
             .accessibilityLabel((info?.isPlaying ?? false) ? "Pause" : "Play")
+        case .next:
             transportButton("forward.fill", size: 15, label: "Next") { onCommand(.next) }
-            outputPicker
+        case .forward15:
+            transportButton("goforward.15", size: 15, label: "Forward 15s") {
+                let e = info?.elapsed(at: Date()) ?? 0
+                let d = info?.duration ?? 0
+                onCommand(.seek(d > 0 ? min(d, e + 15) : e + 15))
+            }
         }
     }
 

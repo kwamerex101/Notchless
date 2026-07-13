@@ -21,6 +21,22 @@ struct NotchSizing: Equatable {
         )
     }
 
+    /// Width for the HUD panel, growing to fit the option-driven extras
+    /// (percentage label, output-device glyph). PURE — unit-tested in
+    /// `HUDSizingTests`. Called from `size(for:)` so the drawn `NotchShape`,
+    /// `NotchHostingView.hitTest`, and `NotchMouseTracker`'s click-through band
+    /// all agree.
+    static func hudWidth(base: CGFloat, kind: HUDKind, options: HUDOptions) -> CGFloat {
+        var width = base
+        if options.showPercentageLabel {
+            width += 44
+        }
+        if case .sound = kind, options.showOutputDevice {
+            width += 26
+        }
+        return width
+    }
+
     static func size(for content: NotchContent, metrics: NotchMetrics, dictationSettled: Bool = true) -> NotchSizing {
         let w = metrics.notchWidth
         let h = metrics.notchHeight
@@ -67,8 +83,14 @@ struct NotchSizing: Equatable {
                 return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
-        case .hud:
-            return NotchSizing(width: w + 250, height: h + 28, topRadius: 9, bottomRadius: 18)
+        case let .hud(kind):
+            // All production call sites (`NotchRootView`, `NotchHostingView.hitTest`,
+            // `NotchMouseTracker`) already run on the main actor; `size(for:)` stays
+            // nonisolated so pure sizing tests (e.g. `DictationSizingTests`) can keep
+            // calling it directly without hopping actors.
+            let options = MainActor.assumeIsolated { HUDOptions(from: SettingsStore.shared) }
+            let width = hudWidth(base: w + 250, kind: kind, options: options)
+            return NotchSizing(width: width, height: h + 28, topRadius: 9, bottomRadius: 18)
 
         case .notification:
             return NotchSizing(width: w + 300, height: h + 30, topRadius: 9, bottomRadius: 20)
