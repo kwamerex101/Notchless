@@ -139,6 +139,10 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Published var swipeToSeek: Bool { didSet { persist(Keys.swipeToSeek, swipeToSeek, oldValue != swipeToSeek) } }
     @Published var swipeGesturesEnabled: Bool { didSet { persist(Keys.swipeGesturesEnabled, swipeGesturesEnabled, oldValue != swipeGesturesEnabled) } }
     @Published var showTabBar: Bool { didSet { persist(Keys.showTabBar, showTabBar, oldValue != showTabBar) } }
+    /// MediaMate parity: transport row button configuration. Defaults
+    /// reproduce the current fixed row (shuffle, previous, play/pause, next).
+    @Stored("npShowShuffle", default: true) var npShowShuffle: Bool
+    @Stored("npShowSkip15", default: false) var npShowSkip15: Bool
 
     // Calendar
     @Published var calendarShowWeather: Bool { didSet { persist(Keys.calendarShowWeather, calendarShowWeather, oldValue != calendarShowWeather) } }
