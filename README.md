@@ -1,14 +1,31 @@
 <div align="center">
 
-<img src=".github/assets/icon.png" width="128" alt="Notchless icon" />
+<img src=".github/assets/hero.svg" width="100%" alt="Notchless — turn your Mac's notch into a Dynamic Island" />
 
-# Notchless
+<br/>
 
-**Turn your Mac's notch into a Dynamic Island.**
-
-A native macOS menu-bar app that puts live activities, HUDs, and on-device dictation into the notch — with an iOS-style, physics-driven feel.
+[![Release](https://img.shields.io/badge/release-v1.6.0-6C63E8)](https://github.com/kwamerex101/Notchless/releases)
+[![Platform](https://img.shields.io/badge/macOS-14.0%2B-000000?logo=apple&logoColor=white)](#requirements)
+[![Swift](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)](https://swift.org)
+[![AI](https://img.shields.io/badge/AI-on--device-35C6CE)](#dictation-ported-from-a-standalone-app-fully-integrated)
+[![License](https://img.shields.io/badge/license-proprietary-8891A2)](#license)
 
 </div>
+
+---
+
+**Notchless** is a native macOS menu-bar app that turns your Mac's notch into a
+Dynamic Island. Live activities, HUDs, and hold-to-talk dictation live in the
+notch — with an iOS-style, physics-driven feel, and the AI runs **on-device**.
+
+- 🎧 **It reacts to what's happening** — music, calls, timers, battery, and more surface in the notch and morph as things change.
+- 🎙️ **Dictation anywhere** — hold a hotkey, speak, and it types into the focused app, transcribed on-device.
+- 🔊 **Native HUDs** — notch-anchored volume and brightness overlays that replace the system OSD.
+- 🖥️ **Follows you** — moves to your active display and can stay visible over fullscreen apps.
+
+> **Requires macOS 14.0+.** Grab a notarized build from the
+> [**Releases**](https://github.com/kwamerex101/Notchless/releases) page, or
+> [build from source](#build).
 
 ---
 
@@ -34,11 +51,11 @@ A native macOS menu-bar app that puts live activities, HUDs, and on-device dicta
 - Optional AI cleanup — local `claude` CLI, the Anthropic API, or **on-device Gemma** (llama.cpp).
 - Custom vocabulary, snippets/text-expansion, spoken operators, per-app tone learning, encrypted history, and more.
 
-### HUDs & notifications
+### HUDs &amp; notifications
 - Notch-anchored **volume** and **brightness** HUDs replacing the system OSD.
 - Polished transient banners for charging, Bluetooth, Focus, and network (No Internet / Back online).
 
-### System & polish
+### System &amp; polish
 - **Follows your active display** across the built-in screen and external monitors.
 - **Stays visible over fullscreen** apps (optional).
 - **Liquid Glass** theming (Clear / Tinted + intensity) on macOS 26; the primary accent follows your macOS accent colour.
@@ -69,7 +86,7 @@ The project is generated from `project.yml` — the `.xcodeproj` is not committe
 
 ## Permissions
 
-Grant these in **System Settings → Privacy & Security** (the in-app **Permissions**
+Grant these in **System Settings → Privacy &amp; Security** (the in-app **Permissions**
 pane lists them with live status):
 
 - **Accessibility** — hold-to-talk hotkey and pasting dictated text
