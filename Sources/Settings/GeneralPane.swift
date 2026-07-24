@@ -59,23 +59,12 @@ struct GeneralPane: View {
                 Footnote("Tints the notch surface across every state.")
             }
 
-            // Behaviour (includes the Liquid Glass style/intensity controls,
-            // which the flat-dark spec doesn't call out but which stay put
-            // rather than being dropped).
+            // Behaviour
             SectionLabel("Behaviour")
             CardGroup {
                 ToggleRow(title: "Progressive blur", isOn: $settings.progressiveBlur)
                 CardDivider()
                 ToggleRow(title: "Haptic feedback", isOn: $settings.hapticFeedback)
-                CardDivider()
-                SegmentedCards(
-                    options: GlassStyle.allCases,
-                    selection: $settings.glassStyle,
-                    title: { $0.title },
-                    systemImage: { $0 == .clear ? "circle.dotted" : "circle.fill" }
-                )
-                SliderRow(title: "Intensity", value: $settings.glassIntensity)
-                Footnote("Choose a Clear or Tinted glass look for the notch and Settings, and how strong it is.")
             }
 
             // Trackpad feedback (system-wide haptics + click sounds)
@@ -552,45 +541,77 @@ private struct TintSwatchRow: View {
     var body: some View {
         HStack(spacing: 10) {
             ForEach(NotchTint.allCases) { tint in
-                let selected = tint == selection
-                Button {
+                TintSwatch(tint: tint, selected: tint == selection) {
                     selection = tint
-                } label: {
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(tint.color)
-                            .frame(width: 40, height: 26)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(SettingsTheme.swatchBorder, lineWidth: 0.5)
-                            )
-                            .overlay {
-                                if selected {
-                                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                        .inset(by: -2)
-                                        .stroke(SettingsTheme.windowBody, lineWidth: 2)
-                                }
-                            }
-                            .overlay {
-                                if selected {
-                                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                        .inset(by: -5.5)
-                                        .stroke(SettingsTheme.primaryFill, lineWidth: 3.5)
-                                }
-                            }
-                        Text(tint.displayName)
-                            .font(.system(size: 10))
-                            .foregroundStyle(
-                                selected
-                                    ? SettingsTheme.swatchCaptionSelected
-                                    : SettingsTheme.textTertiary
-                            )
-                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(tint.displayName) tint")
-                .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
             }
         }
+    }
+}
+
+/// A single swatch button in `TintSwatchRow` — its own view so hover state
+/// (`@State`, via `.onHover`) is scoped per-swatch rather than shared across
+/// the row.
+private struct TintSwatch: View {
+    let tint: NotchTint
+    let selected: Bool
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(tint.color)
+                    .frame(width: 44, height: 30)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder(SettingsTheme.swatchBorder, lineWidth: 0.5)
+                    )
+                    .overlay {
+                        if hovering && !selected {
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .strokeBorder(SettingsTheme.swatchBorder.opacity(0.9), lineWidth: 1)
+                        }
+                    }
+                    .overlay {
+                        if selected {
+                            // Thin gap ring underneath, so the accent ring
+                            // reads cleanly against any tint colour.
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .inset(by: -2)
+                                .stroke(SettingsTheme.windowBody, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                .inset(by: -3)
+                                .stroke(SettingsTheme.primaryFill, lineWidth: 2)
+                        }
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if selected {
+                            Circle()
+                                .fill(SettingsTheme.primaryFill)
+                                .frame(width: 14, height: 14)
+                                .overlay(
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(SettingsTheme.onPrimary)
+                                )
+                                .offset(x: 5, y: -5)
+                        }
+                    }
+                    .scaleEffect(hovering ? 1.06 : 1)
+                    .brightness(hovering ? 0.06 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.7), value: hovering)
+                Text(tint.displayName)
+                    .font(.system(size: 10, weight: selected ? .medium : .regular))
+                    .foregroundStyle(selected ? SettingsTheme.text : SettingsTheme.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityLabel("\(tint.displayName) tint")
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 }

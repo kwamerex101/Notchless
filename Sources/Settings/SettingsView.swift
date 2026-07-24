@@ -148,8 +148,8 @@ struct SettingsView: View {
     /// lights, which sit inside this dark surface.
     private var sidebar: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                Color.clear.frame(height: 28) // room for traffic lights
+            VStack(alignment: .leading, spacing: 2) {
+                Color.clear.frame(height: 26) // room for traffic lights
                 row(.general)
                 sectionHeader("Notifications")
                 ForEach([SettingsSection.battery, .connectivity, .focus, .display, .sound]) { row($0) }
@@ -160,7 +160,7 @@ struct SettingsView: View {
                 sectionHeader("Notchless")
                 ForEach([SettingsSection.permissions, .about]) { row($0) }
             }
-            .padding(.horizontal, 8).padding(.vertical, 12)
+            .padding(.horizontal, 8).padding(.top, 2).padding(.bottom, 14)
         }
         .frame(width: 212)
         .background(SettingsTheme.sidebar)
@@ -175,7 +175,7 @@ struct SettingsView: View {
             .kerning(0.5)
             .foregroundStyle(SettingsTheme.sidebarHeader)
             .padding(.horizontal, 8)
-            .padding(.top, 10).padding(.bottom, 3)
+            .padding(.top, 16).padding(.bottom, 4)
     }
 
     private func row(_ section: SettingsSection) -> some View {
@@ -198,7 +198,7 @@ struct SettingsView: View {
                 Spacer(minLength: 0)
             }
             .foregroundStyle(selected ? SettingsTheme.text : SettingsTheme.textMuted)
-            .padding(.horizontal, 8).padding(.vertical, 3)
+            .padding(.horizontal, 8).padding(.vertical, 5)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
