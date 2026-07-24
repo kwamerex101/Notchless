@@ -116,6 +116,16 @@ final class NotchViewModel: ObservableObject {
     /// Debug-only: forces `content` for the `--dump-states` render harness.
     @Published var debugContentOverride: NotchContent?
 
+    /// The shared collapse-in-fullscreen policy: the user opted to collapse in
+    /// fullscreen, a fullscreen Space is active, and no hover-reveal is in play.
+    /// Each call site ANDs its own extra concern — the `content` gate below adds
+    /// `.collapsed` interaction, the simulated-notch fade in `NotchRootView` adds
+    /// `!hasRealNotch` — so the policy core lives in one place and the two can't
+    /// drift (issue #25).
+    var collapsesInFullscreen: Bool {
+        settings.collapseInFullscreen && fullscreenActive && !revealActive
+    }
+
     /// The single content the notch should render right now.
     var content: NotchContent {
         if let debugContentOverride { return debugContentOverride }
@@ -131,7 +141,7 @@ final class NotchViewModel: ObservableObject {
         // cutout covers nothing — until the user hovers; transients above still show.
         // Suppressed while revealed: the edge-reveal hover would otherwise fade in
         // a panel with nothing in it.
-        if settings.collapseInFullscreen, fullscreenActive, interaction == .collapsed, !revealActive {
+        if collapsesInFullscreen, interaction == .collapsed {
             return .bare
         }
 

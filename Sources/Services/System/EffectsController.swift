@@ -123,22 +123,46 @@ final class EffectsController {
         guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]]
         else { return false }
 
+        let windows: [(layer: Int, bounds: CGRect)] = list.compactMap { info in
+            guard let layer = info[kCGWindowLayer as String] as? Int,
+                  let boundsDict = info[kCGWindowBounds as String] as? [String: Any],
+                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
+            else { return nil }
+            return (layer, bounds)
+        }
+        return Self.coversNotchTopBand(
+            notchScreenFrame: screen.frame,
+            primaryScreenFrame: primary.frame,
+            windows: windows
+        )
+    }
+
+    /// Pure decision behind `isFullscreenSpaceActive`: given the notch screen's
+    /// frame, the primary screen's frame (for the AppKit bottom-left → CGWindow
+    /// top-left flip), and the on-screen windows as `(layer, bounds)` pairs,
+    /// returns true when a normal-level (layer 0) window reaches the screen's
+    /// 3pt top band AND spans at least 80% of its width — a fullscreen Space, or
+    /// a maximized window under a hidden menu bar. Deterministic and free of
+    /// AppKit/CoreGraphics globals so it can be exercised against synthetic
+    /// window lists (issue #25).
+    nonisolated static func coversNotchTopBand(
+        notchScreenFrame: CGRect,
+        primaryScreenFrame: CGRect,
+        windows: [(layer: Int, bounds: CGRect)]
+    ) -> Bool {
         // The screen's top edge in CGWindow global (top-left origin) coordinates,
         // widened to a 3pt band to tolerate sub-pixel/rounding at the very top.
         let topBand = CGRect(
-            x: screen.frame.minX,
-            y: primary.frame.maxY - screen.frame.maxY,
-            width: screen.frame.width,
+            x: notchScreenFrame.minX,
+            y: primaryScreenFrame.maxY - notchScreenFrame.maxY,
+            width: notchScreenFrame.width,
             height: 3
         )
-        for info in list {
-            guard let layer = info[kCGWindowLayer as String] as? Int, layer == 0,
-                  let boundsDict = info[kCGWindowBounds as String] as? [String: Any],
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
-            else { continue }
+        for window in windows where window.layer == 0 {
             // Must reach the top edge AND cover most of the width — a small window
             // parked at the top must not count as fullscreen.
-            if bounds.intersects(topBand), bounds.width >= screen.frame.width * 0.8 {
+            if window.bounds.intersects(topBand),
+               window.bounds.width >= notchScreenFrame.width * 0.8 {
                 return true
             }
         }

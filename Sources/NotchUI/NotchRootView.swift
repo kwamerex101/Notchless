@@ -80,8 +80,7 @@ struct NotchRootView: View {
         // FullscreenRevealController just faded its alpha back in.
         let hiddenInFullscreen = {
             guard case .bare = content else { return false }
-            return !metrics.hasRealNotch && model.fullscreenActive
-                && model.settings.collapseInFullscreen && !model.revealActive
+            return !metrics.hasRealNotch && model.collapsesInFullscreen
         }()
 
         return VStack(spacing: 0) {
