@@ -12,18 +12,7 @@ final class NotchPanel: NSPanel {
             defer: false
         )
 
-        isFloatingPanel = true
-        level = .statusBar
-        backgroundColor = .clear
-        isOpaque = false
-        hasShadow = false
-        ignoresMouseEvents = true         // pass-through by default; NotchMouseTracker
-                                          // flips this to false only over the notch
-        acceptsMouseMovedEvents = true
-        isMovableByWindowBackground = false
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        configureAsOverlayPanel()
     }
 
     /// Whether the panel may currently become key. False by default (pure
