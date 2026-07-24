@@ -2,6 +2,15 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.7.2] — 2026-07-24
+
+### Fixed
+- **Settings no longer revert via iCloud.** A setting changed on this Mac
+  could be silently reverted on the next launch when iCloud held an older
+  value for it — so toggling a setting appeared to do nothing. The initial
+  iCloud sync now leaves values you've already set on this device alone,
+  while a fresh install still adopts your synced settings.
+
 ## [1.7.1] — 2026-07-24
 
 ### Fixed
