@@ -15,15 +15,10 @@ struct GoalExpandedView: View {
     /// isolated settings (currency symbol) drive this too.
     let settings: SettingsStore
 
-    @State private var amountText = ""
-    @State private var labelText = ""
-    @FocusState private var amountFocused: Bool
+    @State private var addingContribution = false
     @Environment(\.notchKeyFocus) private var keyFocus
 
     private var symbol: String { settings.currencySymbol }
-
-    /// The goal the quick-log row targets: the pinned goal (falls back to first).
-    private var focused: Goal? { store.pinned }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -39,14 +34,16 @@ struct GoalExpandedView: View {
                     .font(.system(size: 12)).foregroundStyle(NotchTheme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(store.goals) { goal in
-                            GoalProgressView(goal: goal, metrics: .notch, symbol: symbol)
+                if !addingContribution {
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(store.goals) { goal in
+                                GoalProgressView(goal: goal, metrics: .notch, symbol: symbol)
+                            }
                         }
                     }
                 }
-                quickLog
+                GoalQuickLogView(symbol: symbol, expanded: $addingContribution)
             }
         }
         .padding(.top, metrics.notchHeight + 10)
@@ -70,32 +67,4 @@ struct GoalExpandedView: View {
         .accessibilityLabel(widgets.isOpen(.goals) ? "Close Goals widget" : "Open Goals widget")
     }
 
-    // Spec §3 draws this footer as a static "+ Log contribution" row; the real
-    // feature needs inline Amount/Label entry, so that behaviour is kept as-is
-    // and only the colours/metrics are brought onto the token system.
-    private var quickLog: some View {
-        HStack(spacing: 6) {
-            TextField("Amount", text: $amountText)
-                .textFieldStyle(.plain).font(.system(size: 12)).foregroundStyle(NotchTheme.textPrimary)
-                .frame(width: 70).focused($amountFocused)
-            TextField("Label", text: $labelText)
-                .textFieldStyle(.plain).font(.system(size: 12)).foregroundStyle(NotchTheme.textPrimary)
-                .onSubmit(submit)
-            Button(action: submit) {
-                Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(NotchTheme.textBrightSecondary.opacity(0.75))
-            }.buttonStyle(.plain)
-        }
-        .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: NotchDesign.chipRadius).fill(NotchTheme.inset))
-    }
-
-    private func submit() {
-        guard let goal = focused,
-              let amount = Decimal(string: amountText.trimmingCharacters(in: .whitespaces)),
-              !labelText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        withAnimation(NotchMotion.fill) { _ = store.logContribution(goalID: goal.id, amount: amount, label: labelText) }
-        amountText = ""; labelText = ""
-    }
 }

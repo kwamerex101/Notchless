@@ -153,8 +153,10 @@ struct NotchSizing: Equatable {
             case .claudeUsage:
                 sizing = NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .goals:
-                // Placeholder sizing until Task 7 ships the real expanded view.
-                sizing = NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+                // Sized for the ring-led goal card (ring header + hero amount +
+                // meta grid + breakdown) so a single goal's full card clears the
+                // fold; extra goals scroll.
+                sizing = NotchSizing(width: max(w + 40, 420), height: 264, topRadius: 10, bottomRadius: 24)
             case .meeting:
                 sizing = NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             }

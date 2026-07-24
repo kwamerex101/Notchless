@@ -138,6 +138,14 @@ import SwiftUI
         persistence.openSet = open
     }
 
+    /// Re-applies the desktop-vs-floating placement preference to every open
+    /// widget panel. Called when the "Widgets on desktop" setting changes so the
+    /// change takes effect immediately without reopening the widgets.
+    func applyDesktopPlacement() {
+        let onDesktop = SettingsStore.shared.widgetsOnDesktop
+        for panel in panels.values { panel.applyDesktopPlacement(onDesktop) }
+    }
+
     func close(_ kind: WidgetKind) {
         guard let panel = panels[kind] else { return }
         persistence.setFrame(panel.frame, for: kind)
@@ -159,6 +167,7 @@ import SwiftUI
         let created = WidgetPanel(kind: kind)
         created.focusCoordinator = focusCoordinator
         panels[kind] = created
+        created.applyDesktopPlacement(SettingsStore.shared.widgetsOnDesktop)
         moveObservers[kind] = NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification,
             object: created,

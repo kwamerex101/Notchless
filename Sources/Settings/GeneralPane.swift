@@ -33,6 +33,14 @@ struct GeneralPane: View {
                 )
             }
 
+            SectionLabel("Widgets")
+            CardGroup {
+                ToggleRow(title: "Widgets on desktop", isOn: $settings.widgetsOnDesktop)
+            }
+            .onChange(of: settings.widgetsOnDesktop) { _, _ in
+                WidgetController.shared.applyDesktopPlacement()
+            }
+
             // Idle activity
             SectionLabel("Idle Activity")
             CardGroup {

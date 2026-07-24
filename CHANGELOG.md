@@ -2,6 +2,16 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.7.3] — 2026-07-24
+
+### Added
+- **Savings-goal widget redesign.** Each goal now leads with a progress ring that holds the percentage, the saved amount as the headline figure, a one-line pace verdict (e.g. "Ahead by 31.2k"), and a quiet deadline / monthly-target grid. The same card renders in the notch drawer and the floating widget.
+- **Contribution input state.** A "+ Add to <goal>" row opens a focused entry — a large amount field, +500 / +1,000 / +5,000 quick-add chips, and a label — replacing the old inline Amount/Label row.
+- **Widgets on the desktop.** A new Settings › General › Widgets toggle places the section widgets on the desktop behind your app windows, like native macOS desktop widgets; off keeps them floating above everything. Widgets can also be dragged from anywhere on the card (Tasks still drags from its title bar so list reordering keeps working).
+
+### Fixed
+- **Widget dead space.** The floating Goals and Tasks widgets no longer leave a large empty gap above their content — the card now fills from top to bottom.
+
 ## [1.7.2] — 2026-07-24
 
 ### Fixed
