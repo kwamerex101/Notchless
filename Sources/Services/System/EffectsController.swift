@@ -55,7 +55,12 @@ final class EffectsController {
                 // behind its back, so its state doesn't desync from actual
                 // alpha (it stays desynced until the next fullscreen
                 // transition otherwise, mis-driving the next reveal).
-                if on { self.refreshFullscreenState() } else { self.reveal?.reset() }
+                //
+                // Turning on: this sink fires from `willSet`, before
+                // `settings.hideInFullscreen` commits, so pass `on` through
+                // explicitly instead of letting `refreshFullscreenState()`
+                // -> `reveal?.evaluate()` re-read the (still-stale) property.
+                if on { self.refreshFullscreenStateAndScheduleRecheck(hidingEnabledOverride: on) } else { self.reveal?.reset() }
             }
             .store(in: &cancellables)
         refreshFullscreenState()
@@ -66,18 +71,24 @@ final class EffectsController {
     func refresh() { refreshFullscreenState() }
 
     @objc private func refreshFullscreenState() {
-        applyFullscreenState()
+        refreshFullscreenStateAndScheduleRecheck(hidingEnabledOverride: nil)
+    }
+
+    private func refreshFullscreenStateAndScheduleRecheck(hidingEnabledOverride: Bool?) {
+        applyFullscreenState(hidingEnabledOverride: hidingEnabledOverride)
         // The Space-change notification fires while the fullscreen transition is
         // still animating — window bounds and the menu bar haven't settled — so
-        // sample once more after the animation is over.
+        // sample once more after the animation is over. The recheck always
+        // re-reads the live (by-then-committed) setting, so it never needs
+        // an override.
         settleRecheck?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.applyFullscreenState() }
+        let work = DispatchWorkItem { [weak self] in self?.applyFullscreenState(hidingEnabledOverride: nil) }
         settleRecheck = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
     private var settleRecheck: DispatchWorkItem?
 
-    private func applyFullscreenState() {
+    private func applyFullscreenState(hidingEnabledOverride: Bool?) {
         let fullscreen = isFullscreenSpaceActive()
         // Only publish real transitions — this fires on every app switch, and a
         // same-value set would still invalidate the whole notch view tree.
@@ -89,7 +100,7 @@ final class EffectsController {
         // off the machine returns idle/alpha 1 on its own (see
         // FullscreenRevealMachine.update's leading guard), which is the same
         // behavior the old direct write produced.
-        reveal?.evaluate()
+        reveal?.evaluate(hidingEnabledOverride: hidingEnabledOverride)
     }
 
     /// Whether window content on the notch's own screen can reach the top edge

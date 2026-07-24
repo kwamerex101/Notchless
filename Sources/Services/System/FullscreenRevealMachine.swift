@@ -79,13 +79,16 @@ struct FullscreenRevealMachine {
             holdsOpen = input.interaction == .expanded
         }
 
-        let band = CGRect(
-            x: input.screenFrame.minX,
-            y: input.screenFrame.maxY - Self.bandHeight,
-            width: input.screenFrame.width,
-            height: Self.bandHeight
-        )
-        let cursorEngaged = input.notchRect.contains(input.cursor) || band.contains(input.cursor)
+        // `CGRect.contains` is half-open at `maxY`, so a plain band `CGRect`
+        // would exclude a cursor slammed exactly to the top edge
+        // (`cursor.y == screenFrame.maxY`) — the natural "flick to the top"
+        // gesture that also summons the menu bar. Test the inclusive range
+        // explicitly instead of building a `CGRect` and calling `contains`.
+        let bandTop = input.screenFrame.maxY
+        let bandBottom = bandTop - Self.bandHeight
+        let inBand = input.cursor.y >= bandBottom && input.cursor.y <= bandTop
+            && input.cursor.x >= input.screenFrame.minX && input.cursor.x <= input.screenFrame.maxX
+        let cursorEngaged = input.notchRect.contains(input.cursor) || inBand
 
         if holdsOpen || cursorEngaged {
             state = .revealed

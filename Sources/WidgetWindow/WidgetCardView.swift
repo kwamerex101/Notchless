@@ -54,6 +54,12 @@ struct WidgetCardView<Content: View>: View {
     }
 }
 
+/// Marks a view whose clicks must NOT borrow keyboard focus through
+/// `WidgetPanel.sendEvent` — today just the title-strip drag handle below,
+/// whose `mouseDown` hands the event straight to `performDrag(with:)`
+/// instead of letting it participate in the normal click-to-focus path.
+protocol NonBorrowingClickTarget: NSView {}
+
 /// Forwards `mouseDown` on the title strip to `performDrag(with:)` so the
 /// widget panel can be repositioned by its title strip only. Deliberately
 /// not `isMovableByWindowBackground` — see `WidgetPanel`'s init comment:
@@ -63,7 +69,7 @@ private struct WindowDragHandle: NSViewRepresentable {
     func makeNSView(context: Context) -> DragHandleView { DragHandleView() }
     func updateNSView(_ nsView: DragHandleView, context: Context) {}
 
-    final class DragHandleView: NSView {
+    final class DragHandleView: NSView, NonBorrowingClickTarget {
         override func mouseDown(with event: NSEvent) {
             window?.performDrag(with: event)
         }

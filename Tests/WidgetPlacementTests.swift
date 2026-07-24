@@ -66,4 +66,30 @@ final class WidgetPlacementTests: XCTestCase {
         XCTAssertTrue(externalScreen.contains(result))
         XCTAssertEqual(result.size, frame.size)
     }
+
+    // MARK: - Bug 2: rescue must never collapse to a zero/undersized frame
+
+    func testRescueAgainstZeroFallbackDoesNotProduceAZeroSizedFrame() {
+        // NSScreen.screens can be transiently empty mid display
+        // reconfiguration, which leaves WidgetController's fallback at
+        // .zero. A rescue against that must not brick the widget behind an
+        // invisible 0x0 panel.
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let result = WidgetPlacement.clamped(frame: frame, screens: [], fallback: .zero)
+        XCTAssertGreaterThan(result.width, 0)
+        XCTAssertGreaterThan(result.height, 0)
+        XCTAssertGreaterThanOrEqual(result.width, WidgetPlacement.minimumSize.width)
+        XCTAssertGreaterThanOrEqual(result.height, WidgetPlacement.minimumSize.height)
+    }
+
+    func testRescueAgainstUndersizedFallbackYieldsAtLeastTheMinimum() {
+        // A fallback screen smaller than the minimum widget size (e.g. a
+        // tiny built-in display reported mid-transition) must still rescue
+        // to at least minimumSize, even though that overflows the fallback.
+        let tinyFallback = CGRect(x: 0, y: 0, width: 100, height: 80)
+        let frame = CGRect(x: 5000, y: 5000, width: 300, height: 400)
+        let result = WidgetPlacement.clamped(frame: frame, screens: [mainScreen], fallback: tinyFallback)
+        XCTAssertGreaterThanOrEqual(result.width, WidgetPlacement.minimumSize.width)
+        XCTAssertGreaterThanOrEqual(result.height, WidgetPlacement.minimumSize.height)
+    }
 }

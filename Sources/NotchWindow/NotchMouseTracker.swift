@@ -36,6 +36,11 @@ final class NotchMouseTracker {
     private var cachedRect: CGRect = .zero
     private var rectDirty = true
     private var contentObserver: AnyCancellable?
+    /// Coalesces the content observer's deferred `evaluate()` calls — see
+    /// `start()` — so a burst of `@Published` writes in one runloop turn
+    /// (e.g. every field a HUD write touches) schedules a single deferred
+    /// evaluate rather than one per publish.
+    private var deferredEvaluateScheduled = false
 
     init(panel: NotchPanel, model: NotchViewModel, metrics: NotchMetrics) {
         self.panel = panel
@@ -53,8 +58,24 @@ final class NotchMouseTracker {
         // must react to that content change on its own, not wait for the next
         // move. Safe against recursion — see evaluate()'s own dedup below.
         contentObserver = model.objectWillChange.sink { [weak self] _ in
-            self?.rectDirty = true
-            self?.evaluate()
+            guard let self else { return }
+            self.rectDirty = true
+            // `objectWillChange` fires from `@Published`'s `willSet`, which
+            // runs BEFORE the new value commits — a reader inside this sink
+            // (directly, or via `evaluate()` -> `FullscreenRevealController`
+            // -> `model.content`) still sees the OLD value. Calling
+            // `evaluate()` synchronously here made HUDs render invisible
+            // (reveal read pre-HUD content) and cleared `rectDirty` against
+            // a stale rect. Defer one runloop turn so `evaluate()` runs
+            // after the value has committed. Do NOT "simplify" this back to
+            // a synchronous call — that reintroduces the pre-commit read.
+            guard !self.deferredEvaluateScheduled else { return }
+            self.deferredEvaluateScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.deferredEvaluateScheduled = false
+                self.evaluate()
+            }
         }
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(

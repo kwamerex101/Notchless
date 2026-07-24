@@ -23,6 +23,28 @@ import SwiftUI
     private let persistence: WidgetPersistence
     private var screenParamsObserver: NSObjectProtocol?
 
+    /// Per-panel `NSWindow.didMoveNotification` observers backing the
+    /// drag-persists-position fix (bug 3) — one per panel, added once when
+    /// the panel is created and removed in `deinit`.
+    private var moveObservers: [WidgetKind: NSObjectProtocol] = [:]
+
+    /// Coalesces the burst of `didMove` notifications a single drag emits
+    /// into one persisted write, per widget.
+    private var pendingMovePersists: [WidgetKind: DispatchWorkItem] = [:]
+
+    /// How long to wait after the last `didMove` in a burst before
+    /// persisting. A drag fires many of these per second; without
+    /// coalescing every intermediate frame would hit `UserDefaults`.
+    private static let movePersistDebounce: TimeInterval = 0.2
+
+    /// True while this controller is moving a panel programmatically (a
+    /// screen-reconcile rescue, or the `setFrame` in `show`/`restore`) —
+    /// distinguishes that from a user drag so the `didMove` observer above
+    /// doesn't treat it as a position to remember (bug 4: a rescue must be
+    /// ephemeral, and `show`/`restore` already persist explicitly, so
+    /// letting `didMove` persist too would just be redundant work).
+    private var isApplyingProgrammaticFrame = false
+
     /// Default intrinsic size used for `WidgetPlacement.defaultFrame` when a
     /// widget has no remembered frame yet, sized to what each widget's real
     /// SwiftUI content needs. `.meeting` has no view yet (phase 3) so it
@@ -46,6 +68,14 @@ import SwiftUI
     /// before restoring any previously-open widgets.
     weak var focusCoordinator: WidgetFocusCoordinator?
 
+    /// Test seam: how the controller discovers live screens, as frames.
+    /// Defaults to the real `NSScreen.screens`. `NSScreen` has no public
+    /// initializer, so tests fake screens as plain `CGRect`s here rather
+    /// than constructing real `NSScreen`s — including the empty-array case
+    /// bug 2 guards against, which can't otherwise be produced on demand
+    /// from a live test run's real screens.
+    var screenFramesProvider: () -> [CGRect] = { NSScreen.screens.map(\.visibleFrame) }
+
     init(defaults: UserDefaults = .standard) {
         persistence = WidgetPersistence(defaults: defaults)
         open = persistence.openSet
@@ -62,6 +92,12 @@ import SwiftUI
     deinit {
         if let screenParamsObserver {
             NotificationCenter.default.removeObserver(screenParamsObserver)
+        }
+        for (_, observer) in moveObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        for (_, work) in pendingMovePersists {
+            work.cancel()
         }
     }
 
@@ -88,7 +124,13 @@ import SwiftUI
         let target = persistence.frame(for: kind) ?? WidgetPlacement.defaultFrame(size: defaultSize(for: kind), on: fallback)
         let frame = WidgetPlacement.clamped(frame: target, screens: currentScreenFrames(), fallback: fallback)
 
+        // Suppress the didMove-triggered persist below: this frame is about
+        // to be persisted explicitly, right after, with the exact same
+        // value — letting didMove persist too would just be a redundant
+        // scheduled write.
+        isApplyingProgrammaticFrame = true
         panel.setFrame(frame, display: true)
+        isApplyingProgrammaticFrame = false
         panel.orderFrontRegardless()
         persistence.setFrame(frame, for: kind)
 
@@ -117,7 +159,28 @@ import SwiftUI
         let created = WidgetPanel(kind: kind)
         created.focusCoordinator = focusCoordinator
         panels[kind] = created
+        moveObservers[kind] = NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification,
+            object: created,
+            queue: .main
+        ) { [weak self] _ in
+            self?.scheduleMovePersist(for: kind, panel: created)
+        }
         return created
+    }
+
+    /// Debounced `didMove` handler backing bug 3 (persist a drag's landing
+    /// spot) while staying out of bug 4's way (never persist a rescue).
+    /// Ignored entirely while `isApplyingProgrammaticFrame` is set — only a
+    /// real user drag should end up here.
+    private func scheduleMovePersist(for kind: WidgetKind, panel: WidgetPanel) {
+        guard !isApplyingProgrammaticFrame else { return }
+        pendingMovePersists[kind]?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.persistence.setFrame(panel.frame, for: kind)
+        }
+        pendingMovePersists[kind] = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.movePersistDebounce, execute: work)
     }
 
     /// Test seam: exposes the backing panel for an already-open widget.
@@ -140,20 +203,44 @@ import SwiftUI
     /// parked on a display that disconnects would otherwise sit at
     /// coordinates on no screen at all, unreachable, with its close button
     /// unclickable.
-    private func reconcilePanelsForScreenChange() {
-        let fallback = NSScreen.main?.visibleFrame ?? .zero
+    ///
+    /// Two guards keep this from doing more harm than good:
+    ///
+    /// - `NSScreen.screens` can be transiently empty mid display
+    ///   reconfiguration (sleep/wake, clamshell). Reconciling against that
+    ///   would treat every screen as disconnected and rescue every open
+    ///   widget onto a `.zero` fallback for no reason — bail out instead and
+    ///   let the next, real notification do the reconciling.
+    /// - A rescue here is ephemeral: it moves the panel so the widget stays
+    ///   reachable right now, but must NOT overwrite the user's remembered
+    ///   frame (bug 4) — an external display blinking out for a moment
+    ///   would otherwise permanently teleport the widget to the built-in
+    ///   screen, even after the display returns. `isApplyingProgrammaticFrame`
+    ///   also keeps the `didMove` persist (bug 3) from re-persisting this
+    ///   rescued position under our feet.
+    ///
+    /// Not `private`: also a test seam. Production code only reaches this
+    /// through the `didChangeScreenParametersNotification` observer set up
+    /// in `init` — real screen changes can't be produced on demand in a
+    /// test run, so tests call this directly after pointing
+    /// `screenFramesProvider` at a synthetic screen layout.
+    func reconcilePanelsForScreenChange() {
         let screens = currentScreenFrames()
+        guard !screens.isEmpty else { return }
+
+        let fallback = NSScreen.main?.visibleFrame ?? .zero
+        isApplyingProgrammaticFrame = true
+        defer { isApplyingProgrammaticFrame = false }
         for kind in open {
             guard let panel = panels[kind] else { continue }
             let clamped = WidgetPlacement.clamped(frame: panel.frame, screens: screens, fallback: fallback)
             if clamped != panel.frame {
                 panel.setFrame(clamped, display: true)
-                persistence.setFrame(clamped, for: kind)
             }
         }
     }
 
     private func currentScreenFrames() -> [CGRect] {
-        NSScreen.screens.map(\.visibleFrame)
+        screenFramesProvider()
     }
 }

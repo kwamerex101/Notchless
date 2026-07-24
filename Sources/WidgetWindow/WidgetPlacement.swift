@@ -13,6 +13,15 @@ enum WidgetPlacement {
     /// placed.
     private static let rescueInset: CGFloat = 40
 
+    /// The smallest size a rescued frame may end up at. `fallback` can
+    /// legitimately be `.zero` — `NSScreen.screens` reports empty mid
+    /// display-reconfiguration (sleep/wake, clamshell, an external monitor
+    /// dropping and returning) — and without a floor, `min(frame.size,
+    /// .zero)` collapses the rescue to a 0x0 frame that then gets applied
+    /// and persisted, bricking the widget behind an unreachable, invisible
+    /// panel even once a real screen comes back.
+    static let minimumSize = CGSize(width: 240, height: 200)
+
     /// Returns `frame` unchanged when it is sufficiently visible on one of
     /// `screens` (a widget dragged mostly off-screen but still grabbable is
     /// left alone), otherwise a frame moved onto `fallback` (a widget on a
@@ -32,8 +41,12 @@ enum WidgetPlacement {
     /// corner by `rescueInset`, preserving `frame`'s size but shrinking it
     /// to fit if it's larger than `fallback`.
     private static func rescue(frame: CGRect, onto fallback: CGRect) -> CGRect {
-        let width = min(frame.width, fallback.width)
-        let height = min(frame.height, fallback.height)
+        // Shrink to fit `fallback` as before, but never below
+        // `minimumSize` — even when `fallback` itself is smaller (including
+        // `.zero`). A rescued widget overflowing a tiny fallback is still
+        // usable; a 0x0 one is not.
+        let width = max(minimumSize.width, min(frame.width, fallback.width))
+        let height = max(minimumSize.height, min(frame.height, fallback.height))
         let x = fallback.minX + rescueInset
         let y = fallback.maxY - rescueInset - height
         let clampedX = min(max(x, fallback.minX), fallback.maxX - width)

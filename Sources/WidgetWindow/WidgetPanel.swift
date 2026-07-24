@@ -24,6 +24,17 @@ final class WidgetPanel: NSPanel {
         ignoresMouseEvents = false
         level = .floating
 
+        // configureAsOverlayPanel() sets hasShadow = false, right for the
+        // notch/HUD (drawn flush to their own edges) but wrong here: this
+        // panel is sized exactly to WidgetCardView's rounded card, and that
+        // card draws a SwiftUI `.shadow(...)` that falls outside the window
+        // bounds and gets clipped to nothing. Turning the AppKit window
+        // shadow on draws it around whatever's actually painted — since the
+        // window stays transparent (isOpaque = false, clear background),
+        // the shadow follows the card's rounded silhouette rather than a
+        // rectangular window edge, so the corners still read correctly.
+        hasShadow = true
+
         // Deliberately WITHOUT `.fullScreenAuxiliary`: widgets should not
         // ride over fullscreen apps the way the notch does. Multi-display
         // semantics (does a widget on display B stay visible while display A
@@ -58,11 +69,50 @@ final class WidgetPanel: NSPanel {
     /// Widgets don't borrow key focus just for being open (see the widget
     /// views' doc comments) — only when the user actually starts
     /// interacting with one. A click is the only way that starts, so borrow
-    /// here, then let the event continue on to whatever it hit (a text
-    /// field, a button, the list) so the click still does its normal job.
-    override func mouseDown(with event: NSEvent) {
-        focusCoordinator?.borrow(self)
-        super.mouseDown(with: event)
+    /// here.
+    ///
+    /// This overrides `sendEvent`, not `mouseDown`: AppKit dispatches
+    /// `mouseDown` straight to the hit-tested view, so a click landing on a
+    /// SwiftUI `TextField`/`Button`/`List` (all NSView-backed) never reaches
+    /// `NSWindow.mouseDown` at all — it's consumed before the responder
+    /// chain would bubble it up. `sendEvent` sees every event before
+    /// dispatch, so the borrow fires regardless of which view eats the
+    /// click. Then it falls through to `super.sendEvent` so the click still
+    /// does its normal job.
+    ///
+    /// One exception: the title-strip drag handle (`WidgetCardView`'s
+    /// `DragHandleView`) calls `performDrag(with:)` directly and never calls
+    /// `super.mouseDown`, so without this exclusion every window drag would
+    /// also borrow focus and activate the app out from under whatever the
+    /// user was working in. A click anywhere else — including a checkbox
+    /// tap that isn't text entry — still borrows; scoping the borrow to
+    /// text-input views specifically would mean walking SwiftUI's
+    /// hosting-view hierarchy looking for an `NSTextView`/`NSTextField`,
+    /// which is exactly the kind of hit-testing SwiftUI doesn't expose
+    /// reliably (the responder that ends up editing is nested inside
+    /// `NSHostingView` machinery, not a plain subview you can spot from
+    /// here). The always-borrow-except-drag rule is simple and correct for
+    /// the case that actually bit us; its known downside is that clicking
+    /// any non-text control in a widget (a checkbox, "Clear done") also
+    /// calls `NSApp.activate(ignoringOtherApps:)`, pulling activation away
+    /// from the user's frontmost app for an interaction that isn't typing.
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown, !eventHitsDragHandle(event) {
+            focusCoordinator?.borrow(self)
+        }
+        super.sendEvent(event)
+    }
+
+    /// Whether `event`'s hit-tested view is the drag handle, or nested
+    /// inside it — walks the superview chain because SwiftUI may report an
+    /// intermediate hosting view as the direct hit.
+    private func eventHitsDragHandle(_ event: NSEvent) -> Bool {
+        var view = contentView?.hitTest(event.locationInWindow)
+        while let current = view {
+            if current is NonBorrowingClickTarget { return true }
+            view = current.superview
+        }
+        return false
     }
 
     /// Mirrors the borrow above: once this panel is no longer key — the user

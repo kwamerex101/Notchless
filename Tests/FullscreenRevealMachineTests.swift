@@ -290,6 +290,53 @@ final class FullscreenRevealMachineTests: XCTestCase {
         XCTAssertEqual(output, .init(alpha: 0, allowsInteraction: false, graceDeadline: nil))
     }
 
+    // MARK: - Band top-edge inclusivity (Bug 2)
+
+    func test_cursorAtExactScreenMaxY_revealsNotch() {
+        // A cursor slammed to the top edge reports exactly screenFrame.maxY
+        // (the same gesture that summons the menu bar). `CGRect.contains` is
+        // half-open at maxY, so a naive `band.contains(cursor)` would miss
+        // this and never reveal.
+        var machine = FullscreenRevealMachine()
+        let output = machine.update(input(cursor: CGPoint(x: 500, y: 800)), now: base)
+        XCTAssertEqual(machine.state, .revealed)
+        XCTAssertEqual(output, .init(alpha: 1, allowsInteraction: true, graceDeadline: nil))
+    }
+
+    func test_cursorAtBandLowerBoundary_revealsNotch() {
+        // Band is [maxY - bandHeight, maxY] = [796, 800]; 796 is the inclusive
+        // lower boundary.
+        var machine = FullscreenRevealMachine()
+        let output = machine.update(input(cursor: CGPoint(x: 500, y: 796)), now: base)
+        XCTAssertEqual(machine.state, .revealed)
+        XCTAssertEqual(output, .init(alpha: 1, allowsInteraction: true, graceDeadline: nil))
+    }
+
+    func test_cursorJustBelowBandLowerBoundary_doesNotReveal() {
+        var machine = FullscreenRevealMachine()
+        let output = machine.update(input(cursor: CGPoint(x: 500, y: 795)), now: base)
+        XCTAssertEqual(machine.state, .hidden)
+        XCTAssertEqual(output.alpha, 0)
+        XCTAssertFalse(output.allowsInteraction)
+    }
+
+    func test_cursorAtExactMaxY_nonZeroOriginScreen_revealsNotch() {
+        // Same boundary check on a screen that isn't the main display, so
+        // nothing here is accidentally hardcoded to origin-(0,0) geometry.
+        // The cursor's x sits outside `notchRect` so this exercises the band
+        // check in isolation, not the (already-correct) notch-rect check.
+        var machine = FullscreenRevealMachine()
+        let shiftedScreen = CGRect(x: 1920, y: -200, width: 1000, height: 800)
+        let shiftedNotchRect = CGRect(x: 2320, y: 580, width: 200, height: 32)
+        // screenFrame.maxY = -200 + 800 = 600.
+        let output = machine.update(
+            input(cursor: CGPoint(x: 1920, y: 600), screenFrame: shiftedScreen, notchRect: shiftedNotchRect),
+            now: base
+        )
+        XCTAssertEqual(machine.state, .revealed)
+        XCTAssertEqual(output, .init(alpha: 1, allowsInteraction: true, graceDeadline: nil))
+    }
+
     // MARK: - Leaving fullscreen
 
     func test_leavingFullscreen_fromHidden_returnsToIdle_alphaOne() {

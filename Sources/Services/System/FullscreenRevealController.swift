@@ -53,9 +53,15 @@ final class FullscreenRevealController {
         self.model = model
     }
 
-    func evaluate(notchRect: CGRect? = nil) {
+    /// - Parameter hidingEnabledOverride: When non-nil, used instead of
+    ///   reading `settings.hideInFullscreen`. `EffectsController`'s
+    ///   `$hideInFullscreen` sink fires from `willSet`, before the setting's
+    ///   new value commits — reading the property at that instant would see
+    ///   the OLD value, so the sink passes its `on` value through here
+    ///   rather than let `input(hidingEnabled:)` re-read the stale property.
+    func evaluate(notchRect: CGRect? = nil, hidingEnabledOverride: Bool? = nil) {
         if let notchRect { lastNotchRect = notchRect }
-        apply(machine.update(input(hidingEnabled: settings.hideInFullscreen), now: Date()))
+        apply(machine.update(input(hidingEnabled: hidingEnabledOverride ?? settings.hideInFullscreen), now: Date()))
     }
 
     /// Drops the machine back to idle and restores full visibility. Called
