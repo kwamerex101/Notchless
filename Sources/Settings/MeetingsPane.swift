@@ -22,14 +22,10 @@ struct MeetingsPane: View {
     private var cliAvailable: Bool { ClaudeCLIMinutesClient.isAvailable() }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 13) {
             PaneHeader(section: .meetings)
 
-            Picker("", selection: $tab) {
-                ForEach(MeetingTab.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            SegmentedControl(options: MeetingTab.allCases, selection: $tab) { $0.title }
 
             switch tab {
             case .library:  libraryTab
@@ -49,47 +45,34 @@ struct MeetingsPane: View {
         SectionLabel("Recording")
         CardGroup {
             ToggleRow(title: "Enable meeting capture", isOn: enableBinding, systemImage: "record.circle")
-            Divider()
+            CardDivider()
             ToggleRow(title: "Delete audio after processing", isOn: $deleteAudio, systemImage: "trash")
-            Divider()
+            CardDivider()
             HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "headphones").foregroundStyle(.secondary).frame(width: 18)
-                Text("Start a meeting from the notch once enabled. Wear headphones for clean speaker separation — otherwise your mic captures everyone and all speech is labelled “You”.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Image(systemName: "headphones").foregroundStyle(SettingsTheme.textSecondary).frame(width: 18)
+                Footnote("Start a meeting from the notch once enabled. Wear headphones for clean speaker separation — otherwise your mic captures everyone and all speech is labelled “You”.")
             }
         }
 
         SectionLabel("AI summary")
         CardGroup {
-            LabeledRow("Summarize via") {
-                SettingsPicker(options: MeetingSummaryBackend.allCases,
-                               selection: backendBinding) { $0.title }
-            }
+            MenuRow(title: "Summarize via", options: MeetingSummaryBackend.allCases, selection: backendBinding) { $0.title }
             if backend == MeetingSummaryBackend.subscription.rawValue {
-                Divider()
+                CardDivider()
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: cliAvailable ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(cliAvailable ? Color.green : Color.orange).frame(width: 18)
-                    Text(cliAvailable
+                        .foregroundStyle(cliAvailable ? SettingsTheme.statusGranted : NotchTheme.warning).frame(width: 18)
+                    Footnote(cliAvailable
                          ? "Using your Claude subscription via the claude CLI — no API key or per-token cost."
                          : "The claude CLI wasn’t found. Install Claude Code and sign in, or switch to an Anthropic API key.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
-                Divider()
-                SecureField("Anthropic API key", text: keyBinding)
-                    .textFieldStyle(.roundedBorder)
-                Text("Stored in your Keychain, shared with Dictation’s AI cleanup. Billed per token to your Anthropic account.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                CardDivider()
+                FlatSecureField(placeholder: "Anthropic API key", text: keyBinding)
+                Footnote("Stored in your Keychain, shared with Dictation’s AI cleanup. Billed per token to your Anthropic account.")
             }
-            Divider()
-            LabeledRow("Model") {
-                SettingsPicker(options: ["claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-8"],
-                               selection: $model) { Self.modelName($0) }
-            }
+            CardDivider()
+            MenuRow(title: "Model", options: ["claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-8"], selection: $model) { Self.modelName($0) }
         }
     }
 
@@ -100,12 +83,12 @@ struct MeetingsPane: View {
             CardGroup {
                 VStack(spacing: 8) {
                     Image(systemName: "person.2.wave.2")
-                        .font(.system(size: 30)).foregroundStyle(.secondary)
-                    Text("No meetings yet").font(.headline)
+                        .font(.system(size: 30)).foregroundStyle(SettingsTheme.textSecondary)
+                    Text("No meetings yet").font(.system(size: 13, weight: .semibold)).foregroundStyle(SettingsTheme.text)
                     Text(enabled
                          ? "Start one from the notch — the record control is live."
                          : "Enable meeting capture in Settings, then start one from the notch.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 18)
@@ -113,7 +96,7 @@ struct MeetingsPane: View {
         } else {
             CardGroup {
                 ForEach(Array(meeting.records.enumerated()), id: \.element.id) { idx, rec in
-                    if idx > 0 { Divider() }
+                    if idx > 0 { CardDivider() }
                     meetingRow(rec)
                 }
             }
@@ -127,17 +110,17 @@ struct MeetingsPane: View {
         Button { selection = (selection == rec.id) ? nil : rec.id } label: {
             HStack(spacing: 10) {
                 Image(systemName: selection == rec.id ? "chevron.down" : "chevron.right")
-                    .font(.caption).foregroundStyle(.secondary).frame(width: 12)
+                    .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary).frame(width: 12)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(rec.title).foregroundStyle(.primary)
+                    Text(rec.title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                     Text("\(rec.date, style: .date) · \(durationText(rec.duration))")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
                 }
                 Spacer()
                 if rec.summaryFailed {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(NotchTheme.warning)
                 } else if rec.minutes != nil {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(SettingsTheme.statusGranted)
                 }
             }
             .contentShape(Rectangle())
@@ -151,33 +134,36 @@ struct MeetingsPane: View {
         SectionLabel("Summary")
         CardGroup {
             if let m = rec.minutes {
-                Text(m.summary).textSelection(.enabled)
+                Text(m.summary).font(.system(size: 13)).foregroundStyle(SettingsTheme.text).textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                 if !m.decisions.isEmpty {
-                    Divider()
-                    Text("DECISIONS").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    CardDivider()
+                    SectionLabel("Decisions")
                     ForEach(m.decisions.indices, id: \.self) { i in bullet(m.decisions[i]) }
                 }
                 if !m.actionItems.isEmpty {
-                    Divider()
-                    Text("ACTION ITEMS").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    CardDivider()
+                    SectionLabel("Action items")
                     ForEach(m.actionItems.indices, id: \.self) { i in
                         let a = m.actionItems[i]
                         bullet(a.text + (a.owner.map { " — \($0.displayName(rec.speakerNames))" } ?? ""))
                     }
                 }
             } else if rec.summaryFailed {
-                Label("Summary failed", systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                Label("Summary failed", systemImage: "exclamationmark.triangle")
+                    .font(.system(size: 13)).foregroundStyle(NotchTheme.warning)
                 if let reason = meeting.summaryError {
-                    Text(reason).font(.caption).foregroundStyle(.orange).textSelection(.enabled)
+                    Text(reason).font(.system(size: 11)).foregroundStyle(NotchTheme.warning).textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text("The transcript is saved. Fix the cause (or switch backend in Settings) and Re-run below.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Footnote("The transcript is saved. Fix the cause (or switch backend in Settings) and Re-run below.")
             } else if meeting.phase == .summarizing {
-                HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Summarizing…").foregroundStyle(.secondary) }
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Summarizing…").font(.system(size: 13)).foregroundStyle(SettingsTheme.textSecondary)
+                }
             } else {
-                Text("No summary yet.").foregroundStyle(.secondary)
+                Text("No summary yet.").font(.system(size: 13)).foregroundStyle(SettingsTheme.textSecondary)
             }
         }
 
@@ -189,23 +175,21 @@ struct MeetingsPane: View {
                 let s = rec.transcript.segments[i]
                 HStack(alignment: .top, spacing: 10) {
                     Text(s.speaker.displayName(rec.speakerNames))
-                        .font(.caption.weight(.semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(speakerColor(s.speaker))
                         .frame(width: 68, alignment: .leading)
-                    Text(s.text).font(.callout).textSelection(.enabled)
+                    Text(s.text).font(.system(size: 13)).foregroundStyle(SettingsTheme.text).textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
             }
         }
 
-        HStack(spacing: 10) {
-            Button { meeting.rerunSummary(id: id) } label: { Label("Re-run summary", systemImage: "arrow.clockwise") }
-            Button { export(rec) } label: { Label("Export Markdown", systemImage: "square.and.arrow.up") }
+        HStack(spacing: 8) {
+            FlatButton(title: "Re-run summary") { meeting.rerunSummary(id: id) }
+            FlatButton(title: "Export Markdown") { export(rec) }
             Spacer()
-            Button(role: .destructive) { meeting.delete(id: id); selection = nil } label: {
-                Label("Delete", systemImage: "trash")
-            }
+            FlatButton(title: "Delete", style: .destructive) { meeting.delete(id: id); selection = nil }
         }
         .padding(.top, 2)
     }
@@ -218,16 +202,16 @@ struct MeetingsPane: View {
             SectionLabel("Speakers")
             CardGroup {
                 ForEach(remoteIds.indices, id: \.self) { i in
-                    if i > 0 { Divider() }
+                    if i > 0 { CardDivider() }
                     let rid = remoteIds[i]
                     HStack(spacing: 10) {
                         Circle().fill(speakerColor(.remote(id: rid, name: nil))).frame(width: 8, height: 8)
                         Text(Speaker.remote(id: rid, name: nil).displayName(rec.speakerNames))
-                            .frame(width: 78, alignment: .leading).foregroundStyle(.secondary)
-                        TextField("Name", text: Binding(
+                            .font(.system(size: 12))
+                            .frame(width: 78, alignment: .leading).foregroundStyle(SettingsTheme.textSecondary)
+                        FlatTextField(placeholder: "Name", text: Binding(
                             get: { rec.speakerNames[rid] ?? "" },
                             set: { meeting.rename(id: rec.id, remoteId: rid, to: $0) }))
-                            .textFieldStyle(.roundedBorder)
                     }
                 }
             }
@@ -252,19 +236,22 @@ struct MeetingsPane: View {
 
     private func bullet(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 6) {
-            Text("•").foregroundStyle(.secondary)
-            Text(text).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            Text("•").font(.system(size: 13)).foregroundStyle(SettingsTheme.textSecondary)
+            Text(text).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
+                .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
             Spacer(minLength: 0)
         }
     }
 
+    /// Distinguishes speakers by hue — not a semantic colour from the token
+    /// set, but a legend that needs several visually-distinct values.
     private func speakerColor(_ s: Speaker) -> Color {
-        if case .you = s { return .blue }
+        if case .you = s { return NotchTheme.link }
         if case let .remote(id, _) = s {
-            let palette: [Color] = [.green, .orange, .purple, .pink, .teal, .indigo]
+            let palette: [Color] = [NotchTheme.positive, NotchTheme.warning, NotchTheme.focus, .pink, .teal, .indigo]
             return palette[abs(id.hashValue) % palette.count]
         }
-        return .secondary
+        return SettingsTheme.textSecondary
     }
 
     private func durationText(_ d: TimeInterval) -> String {
@@ -294,18 +281,30 @@ struct MeetingConsentSheet: View {
     let onCancel: () -> Void
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Meeting capture", systemImage: "person.2.wave.2.fill").font(.headline)
+            Label("Meeting capture", systemImage: "person.2.wave.2.fill")
+                .font(.system(size: 14, weight: .semibold)).foregroundStyle(SettingsTheme.text)
             Text("This records audio from your microphone and everyone else on the call. "
                + "Recording other people may require their consent depending on where you and "
                + "they are located. You are responsible for obtaining any required consent.")
+                .font(.system(size: 13)).foregroundStyle(SettingsTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
                 Button("Cancel", action: onCancel)
-                Button("I understand", action: onAgree).keyboardShortcut(.defaultAction)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(SettingsTheme.text)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.button))
+                Button("I understand", action: onAgree)
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(SettingsTheme.onPrimary)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.primaryFill))
             }
         }
         .padding(24)
         .frame(width: 420)
+        .background(SettingsTheme.windowBody)
     }
 }

@@ -12,7 +12,7 @@ struct TodoExpandedView: View {
     @Environment(\.notchKeyFocus) private var keyFocus
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 8) {
                 Text("Tasks").notchSectionHeader()
                 Spacer()
@@ -20,18 +20,18 @@ struct TodoExpandedView: View {
                     Button("Clear done") { withAnimation(NotchMotion.quick) { store.clearCompleted() } }
                         .buttonStyle(.plain)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(NotchTheme.textSecondary)
                 }
                 if store.openCount > 0 {
                     Text("\(store.openCount) left")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(NotchTheme.textSecondary)
                 }
             }
 
             if store.items.isEmpty {
                 Text("All clear ✓ — add a task below.")
-                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.5))
+                    .font(.system(size: 12)).foregroundStyle(NotchTheme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 List {
@@ -61,9 +61,9 @@ struct TodoExpandedView: View {
     private func row(_ todo: Todo) -> some View {
         HStack(spacing: 10) {
             Button { withAnimation(NotchMotion.micro) { store.setDone(todo.id, !todo.isDone) } } label: {
-                Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
+                Image(systemName: todo.isDone ? "checkmark.circle" : "circle")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))
+                    .foregroundStyle(todo.isDone ? NotchTheme.positive : NotchTheme.textPrimary.opacity(0.6))
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(NotchButtonStyle())
@@ -71,8 +71,9 @@ struct TodoExpandedView: View {
 
             Text(todo.title)
                 .font(.system(size: 13))
-                .foregroundStyle(todo.isDone ? .white.opacity(0.4) : .white)
-                .strikethrough(todo.isDone, color: .white.opacity(0.5))
+                .foregroundStyle(todo.isDone ? NotchTheme.textSecondary : NotchTheme.textPrimary)
+                .strikethrough(todo.isDone, color: NotchTheme.textSecondary)
+                .animation(.easeInOut(duration: 0.15), value: todo.isDone)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -80,12 +81,12 @@ struct TodoExpandedView: View {
             if todo.subtaskProgress.total > 0 {
                 Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
                     .font(.system(size: 11, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(NotchTheme.textSecondary)
             }
             if todo.hasNotes {
                 Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(NotchTheme.textSecondary)
             }
         }
     }
@@ -93,16 +94,16 @@ struct TodoExpandedView: View {
     private var quickAdd: some View {
         HStack(spacing: 8) {
             Image(systemName: "plus.circle.fill")
-                .font(.system(size: 14)).foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 14)).foregroundStyle(NotchTheme.textSecondary)
             TextField("Add a task…", text: $newTitle)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
-                .foregroundStyle(.white)
+                .foregroundStyle(NotchTheme.textPrimary)
                 .focused($addFocused)
                 .onSubmit(submit)
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: NotchDesign.chipRadius).fill(NotchTheme.inset))
     }
 
     private func submit() {

@@ -9,7 +9,6 @@ enum NotchDesign {
     static let chipRadius: CGFloat = 8
     /// Section-header text (the "Tasks" / "Goals" / "Clipboard" titles).
     static let headerFont = Font.system(size: 12, weight: .semibold)
-    static let headerOpacity: Double = 0.7
     /// Shared soft-glow radius for tinted chips/indicators.
     static let glowRadius: CGFloat = 5
 }
@@ -17,7 +16,7 @@ enum NotchDesign {
 extension View {
     /// Applies the standard expanded-panel section-header styling.
     func notchSectionHeader() -> some View {
-        font(NotchDesign.headerFont).foregroundStyle(.white.opacity(NotchDesign.headerOpacity))
+        font(NotchDesign.headerFont).foregroundStyle(NotchTheme.textSecondary)
     }
 
     /// Tags album artwork so it morphs between the compact sliver and the

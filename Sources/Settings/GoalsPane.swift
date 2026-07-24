@@ -11,28 +11,33 @@ struct GoalsPane: View {
     @State private var newDeadline = Date().addingTimeInterval(90 * 86_400)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 13) {
             PaneHeader(section: .goals)
 
+            SectionLabel("Goals")
             CardGroup {
                 ToggleRow(title: "Enable Goals", isOn: $settings.goalsEnabled)
-                Divider()
-                HStack {
-                    Text("Currency")
+                CardDivider()
+                // Spec calls for two currency chips; the underlying setting is
+                // free text (no fixed currency list to pick from), so this
+                // stays a pair of inset fields rather than a fabricated picker.
+                HStack(spacing: 10) {
+                    Text("Currency").font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                     Spacer()
-                    TextField("Code", text: $settings.currencyCode).frame(width: 70)
-                    TextField("Symbol", text: $settings.currencySymbol).frame(width: 50)
+                    FlatTextField(placeholder: "Code", text: $settings.currencyCode).frame(width: 70)
+                    FlatTextField(placeholder: "Symbol", text: $settings.currencySymbol).frame(width: 50)
                 }
             }
 
             SectionLabel("New goal")
             CardGroup {
-                TextField("Name (e.g. End-of-year savings)", text: $newName)
-                HStack {
-                    TextField("Target amount", text: $newTarget).frame(width: 140)
-                    DatePicker("Deadline", selection: $newDeadline, in: Date()..., displayedComponents: .date).labelsHidden()
+                FlatTextField(placeholder: "Name (e.g. End-of-year savings)", text: $newName)
+                HStack(spacing: 8) {
+                    FlatTextField(placeholder: "Target amount", text: $newTarget).frame(width: 140)
+                    DatePicker("", selection: $newDeadline, in: Date()..., displayedComponents: .date)
+                        .labelsHidden()
                     Spacer()
-                    Button("Add") { addGoal() }.disabled(!canAdd)
+                    FlatButton(title: "Add") { addGoal() }.disabled(!canAdd)
                 }
             }
 
@@ -62,14 +67,14 @@ struct GoalsPane: View {
 
     private func completedRow(_ goal: Goal) -> some View {
         CardGroup {
-            HStack {
-                Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
-                Text(goal.name)
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill").foregroundStyle(SettingsTheme.statusGranted)
+                Text(goal.name).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                 Spacer()
-                Button("Restore") { store.restore(goal.id) }.buttonStyle(.borderless)
-                Button(role: .destructive) { store.deleteGoal(goal.id) } label: {
-                    Image(systemName: "trash")
-                }.buttonStyle(.borderless)
+                FlatButton(title: "Restore") { store.restore(goal.id) }
+                Button { store.deleteGoal(goal.id) } label: {
+                    Image(systemName: "trash").foregroundStyle(SettingsTheme.destructiveText)
+                }.buttonStyle(.plain)
             }
         }
     }
@@ -96,55 +101,55 @@ private struct GoalSettingsCard: View {
 
     var body: some View {
         CardGroup {
-            HStack {
-                Text(live.name).font(.headline)
+            HStack(spacing: 8) {
+                Text(live.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(SettingsTheme.text)
                 Spacer()
                 Button { store.setPinned(live.id) } label: {
                     Image(systemName: live.id == store.pinnedID ? "pin.fill" : "pin")
-                        .foregroundStyle(live.id == store.pinnedID ? .red : .secondary)
-                }.buttonStyle(.borderless).help("Pin as the notch cue")
-                Button(role: .destructive) { store.deleteGoal(live.id) } label: {
-                    Image(systemName: "trash")
-                }.buttonStyle(.borderless)
+                        .foregroundStyle(live.id == store.pinnedID ? NotchTheme.recording : SettingsTheme.textSecondary)
+                }.buttonStyle(.plain).help("Pin as the notch cue")
+                Button { store.deleteGoal(live.id) } label: {
+                    Image(systemName: "trash").foregroundStyle(SettingsTheme.destructiveText)
+                }.buttonStyle(.plain)
             }
             Text("\(goalFormatAmount(live.current, symbol: symbol)) / \(goalFormatAmount(live.target, symbol: symbol)) · \(live.percent)%")
-                .font(.callout).foregroundStyle(.secondary)
+                .font(.system(size: 12)).foregroundStyle(SettingsTheme.textSecondary)
+
+            GoalProgressBar(fraction: live.fraction)
 
             // Timeline: editable start + end, months left, and the catch-up rate.
-            HStack(spacing: 10) {
-                DatePicker("", selection: dateBinding(\.startDate), displayedComponents: .date)
-                    .labelsHidden()
-                Text("→").foregroundStyle(.secondary)
-                DatePicker("", selection: dateBinding(\.deadline), displayedComponents: .date)
-                    .labelsHidden()
+            HStack(spacing: 8) {
+                dateChip(dateBinding(\.startDate))
+                Text("→").font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
+                dateChip(dateBinding(\.deadline))
                 Spacer()
                 Text("\(Int(live.monthsRemaining(now: Date()).rounded())) mo left")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
             }
-            if let need = live.neededPerMonth(now: Date()) {
+            if case .behind = live.pace(now: Date()), let need = live.neededPerMonth(now: Date()) {
                 Text("Save \(goalFormatAmount(need, symbol: symbol))/mo to finish on time")
-                    .font(.caption.weight(.medium)).foregroundStyle(.orange)
+                    .font(.system(size: 11, weight: .medium)).foregroundStyle(NotchTheme.warning)
             }
 
             // Quick-log: add a contribution (amount + label) right here.
             HStack(spacing: 6) {
-                TextField("Amount", text: $amountText).frame(width: 90)
-                TextField("Label (e.g. Salary, MTN)", text: $labelText)
-                    .onSubmit(log)
-                Button("Log", action: log).disabled(!canLog)
+                FlatTextField(placeholder: "Amount", text: $amountText).frame(width: 80)
+                FlatTextField(placeholder: "Label (e.g. Salary, MTN)", text: $labelText, onSubmit: log)
+                FlatButton(title: "Log", action: log).disabled(!canLog)
             }
 
             if !live.contributions.isEmpty {
-                Divider()
+                CardDivider()
                 ForEach(live.contributions) { c in
                     HStack {
-                        Text(c.label)
+                        Text(c.label).font(.system(size: 11)).foregroundStyle(SettingsTheme.text)
                         Spacer()
-                        Text(goalFormatAmount(c.amount, symbol: symbol)).foregroundStyle(.secondary)
+                        Text(goalFormatAmount(c.amount, symbol: symbol))
+                            .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
                         Button { store.removeContribution(goalID: live.id, contributionID: c.id) } label: {
-                            Image(systemName: "minus.circle")
-                        }.buttonStyle(.borderless)
-                    }.font(.caption)
+                            Image(systemName: "minus.circle").foregroundStyle(SettingsTheme.textSecondary)
+                        }.buttonStyle(.plain)
+                    }
                 }
             }
         }
@@ -157,6 +162,15 @@ private struct GoalSettingsCard: View {
         amountText = ""; labelText = ""
     }
 
+    /// A date-picker wrapped in the control-chip look, spec §5 "date chips".
+    private func dateChip(_ binding: Binding<Date>) -> some View {
+        DatePicker("", selection: binding, displayedComponents: .date)
+            .labelsHidden()
+            .font(.system(size: 11))
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.controlChip))
+    }
+
     /// Edits a date field on the goal and persists via `updateGoal`.
     private func dateBinding(_ keyPath: WritableKeyPath<Goal, Date>) -> Binding<Date> {
         Binding(
@@ -167,5 +181,21 @@ private struct GoalSettingsCard: View {
                 store.updateGoal(g)
             }
         )
+    }
+}
+
+/// The 4pt goal progress bar, spec §5 goal card.
+private struct GoalProgressBar: View {
+    let fraction: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(SettingsTheme.switchOff).frame(height: 4)
+                Capsule().fill(SettingsTheme.statusGranted)
+                    .frame(width: max(0, min(geo.size.width, geo.size.width * fraction)), height: 4)
+            }
+        }
+        .frame(height: 4)
     }
 }

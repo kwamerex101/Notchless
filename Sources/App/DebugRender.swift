@@ -121,8 +121,8 @@ enum DebugRender {
                     case .clipboard: ClipboardExpandedView(metrics: metrics)
                     case .todos: TodoExpandedView(metrics: metrics)
                     case .privacy: PrivacyExpandedView(privacy: nil, metrics: metrics)
-                    case .claudeUsage: ClaudeStatsExpandedView(stats: nil, metrics: metrics)
-                    case .goals: GoalExpandedView(metrics: metrics)
+                    case .claudeUsage: ClaudeStatsExpandedView(stats: nil, metrics: metrics, settings: .shared)
+                    case .goals: GoalExpandedView(metrics: metrics, settings: .shared)
                     case .meeting: Color.clear
                     }
                 case .fileTray(let expanded):

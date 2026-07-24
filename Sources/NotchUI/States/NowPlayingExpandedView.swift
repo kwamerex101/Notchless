@@ -14,6 +14,7 @@ struct NowPlayingExpandedView: View {
     @State private var scrubbing = false
     @State private var scrubValue: Double = 0
     @State private var scrubHovering = false
+    @State private var showingOutputPicker = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -34,16 +35,18 @@ struct NowPlayingExpandedView: View {
             artwork
             VStack(alignment: .leading, spacing: 2) {
                 MarqueeText(text: info?.title ?? "Not Playing",
-                            font: .system(size: 14, weight: .semibold))
+                            font: .system(size: 14, weight: .semibold),
+                            color: NotchTheme.textPrimary)
                     .frame(height: 18)
                 Text(info?.artist ?? "—")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(NotchTheme.textSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: 6)
-            VisualizerBars(isPlaying: info?.isPlaying ?? false, color: glow ?? .white,
-                           barCount: 7, height: 18, spectrum: audio.musicSpectrum)
+            // Monochrome white — the album-art glow no longer tints content (flat-dark spec §1).
+            VisualizerBars(isPlaying: info?.isPlaying ?? false, color: .white,
+                           barCount: 5, height: 18, spectrum: audio.musicSpectrum)
                 .frame(width: 44)
         }
     }
@@ -53,8 +56,8 @@ struct NowPlayingExpandedView: View {
             if let art = info?.artwork {
                 Image(nsImage: art).resizable().aspectRatio(contentMode: .fill)
             } else {
-                RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.12))
-                    .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.6)))
+                RoundedRectangle(cornerRadius: 8).fill(NotchTheme.artworkPlaceholder)
+                    .overlay(Image(systemName: "music.note").foregroundStyle(NotchTheme.textSecondary))
             }
         }
         .frame(width: 44, height: 44)
@@ -90,20 +93,19 @@ struct NowPlayingExpandedView: View {
         let trackHeight: CGFloat = (scrubHovering || scrubbing) ? 9 : 6
         return HStack(spacing: 8) {
             Text(info?.elapsedText(at: now) ?? "0:00")
-                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(NotchTheme.textSecondary)
                 .frame(width: 34, alignment: .leading)
                 .contentTransition(.numericText())
             GeometryReader { geo in
                 let fillWidth = geo.size.width * CGFloat(progress)
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.2))
-                    Capsule().fill(Color.white).frame(width: fillWidth)
+                    Capsule().fill(NotchTheme.track)
+                    Capsule().fill(NotchTheme.fill).frame(width: fillWidth)
                         // Non-scrubbing progress glides between the 2 Hz updates.
                         .animation(scrubbing ? nil : .linear(duration: 0.5), value: fillWidth)
                     // A grab knob at the fill edge while hovering/scrubbing.
                     if scrubHovering || scrubbing {
-                        Circle().fill(.white).frame(width: 11, height: 11)
-                            .shadow(color: .black.opacity(0.3), radius: 2)
+                        Circle().fill(NotchTheme.fill).frame(width: 11, height: 11)
                             .offset(x: min(max(fillWidth - 5.5, 0), geo.size.width - 11))
                     }
                 }
@@ -127,7 +129,7 @@ struct NowPlayingExpandedView: View {
             .animation(NotchMotion.micro, value: trackHeight)
             .onHover { scrubHovering = $0 }
             Text(info?.remainingText(at: now) ?? "-0:00")
-                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(NotchTheme.textSecondary)
                 .frame(width: 40, alignment: .trailing)
                 .contentTransition(.numericText())
         }
@@ -161,10 +163,10 @@ struct NowPlayingExpandedView: View {
             Button { onCommand(.playPause) } label: {
                 Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(NotchTheme.textPrimary)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(Color.white.opacity(0.14)))
+                    .background(Circle().fill(NotchTheme.chip))
             }
             .buttonStyle(NotchButtonStyle())
             .accessibilityLabel((info?.isPlaying ?? false) ? "Pause" : "Play")
@@ -179,13 +181,35 @@ struct NowPlayingExpandedView: View {
         }
     }
 
+    // A plain `Button` + `.popover`, not `Menu` — `Menu`'s label is NSMenu-backed
+    // and `ImageRenderer`'s single synchronous offscreen pass can't draw it,
+    // painting a broken-image glyph instead (independent of the symbol name;
+    // confirmed by swapping in a bare `Image`, which renders correctly). This
+    // keeps the same "reach the output device from the transport row"
+    // capability without a control offscreen rendering can't paint.
     private var outputPicker: some View {
-        Menu {
-            let service = AudioOutputService.shared
-            let current = service.currentDefault()
+        Button {
+            showingOutputPicker = true
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Audio output")
+        .popover(isPresented: $showingOutputPicker, arrowEdge: .bottom) {
+            outputDeviceList
+        }
+    }
+
+    private var outputDeviceList: some View {
+        let service = AudioOutputService.shared
+        let current = service.currentDefault()
+        return VStack(alignment: .leading, spacing: 2) {
             ForEach(service.devices()) { device in
                 Button {
                     service.setDefault(device.id)
+                    showingOutputPicker = false
                 } label: {
                     if device.id == current {
                         Label(device.name, systemImage: "checkmark")
@@ -193,15 +217,10 @@ struct NowPlayingExpandedView: View {
                         Text(device.name)
                     }
                 }
+                .buttonStyle(.plain)
             }
-        } label: {
-            Image(systemName: "hifispeaker")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
+        .padding(8)
     }
 
     private func transportButton(_ name: String, size: CGFloat, label: String,
@@ -209,7 +228,7 @@ struct NowPlayingExpandedView: View {
         Button(action: action) {
             Image(systemName: name)
                 .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
         }
         .buttonStyle(NotchButtonStyle())
         .accessibilityLabel(label)

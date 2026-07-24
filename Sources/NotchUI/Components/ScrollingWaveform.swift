@@ -9,12 +9,12 @@ struct ScrollingWaveform: View {
     var isRecording: Bool
     var reduceMotion: Bool
 
-    private let barCount = 48
+    private let barCount = 44
     private let barWidth: CGFloat = 2
     private let maxHeight: CGFloat = 24
     private let floor: CGFloat = 0.04
 
-    @State private var buffer = WaveformBuffer(capacity: 48, floor: 0.04)
+    @State private var buffer = WaveformBuffer(capacity: 44, floor: 0.04)
     private let tick = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -31,7 +31,7 @@ struct ScrollingWaveform: View {
                 let x = slot * CGFloat(i) + (slot - barWidth) / 2
                 let rect = CGRect(x: x, y: mid - h / 2, width: barWidth, height: h)
                 ctx.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2),
-                         with: .color(.white.opacity(0.9)))
+                         with: .color(NotchTheme.textPrimary.opacity(0.85)))
             }
         }
         .frame(height: maxHeight)
@@ -48,8 +48,8 @@ struct ScrollingWaveform: View {
     private var edgeFade: some View {
         LinearGradient(stops: [
             .init(color: .clear, location: 0.0),
-            .init(color: .black, location: 0.12),
-            .init(color: .black, location: 0.88),
+            .init(color: .white, location: 0.12),
+            .init(color: .white, location: 0.88),
             .init(color: .clear, location: 1.0),
         ], startPoint: .leading, endPoint: .trailing)
     }

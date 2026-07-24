@@ -137,6 +137,16 @@ final class MeetingController: ObservableObject {
         }
     }
 
+    /// Debug-harness only: drives `phase`/`elapsed` directly, without touching
+    /// `capture` — so `DebugStateDump` can render the `.recording` states
+    /// (red pulsing dot, elapsed readout) without starting a real system-audio
+    /// tap. Not gated behind `#if DEBUG` because the dump harness runs in
+    /// release builds too; the seam is a plain no-op unless a caller invokes it.
+    func debugSetRecording(elapsed: TimeInterval) {
+        phase = .recording
+        self.elapsed = elapsed
+    }
+
     private func reload() { records = (try? store.load()) ?? [] }
     private static func defaultTitle() -> String {
         let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short

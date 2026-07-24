@@ -9,22 +9,22 @@ struct MirrorView: View {
     var onClose: () -> Void = {}
 
     var body: some View {
-        VStack(spacing: 0) {
-            Color.clear.frame(height: metrics.notchHeight)
+        ZStack(alignment: .topTrailing) {
             CameraPreview(session: CameraSession.shared.session)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(alignment: .topTrailing) {
-                    Button(action: onClose) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.white.opacity(0.85))
-                            .shadow(radius: 2)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(8)
-                }
-                .padding(.horizontal, 14)
+                .padding(.top, 40)
+                .padding(.leading, 12)
+                .padding(.trailing, 12)
                 .padding(.bottom, 12)
+
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(NotchTheme.textPrimary.opacity(0.6))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 38)
+            .padding(.trailing, 16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { CameraSession.shared.start() }

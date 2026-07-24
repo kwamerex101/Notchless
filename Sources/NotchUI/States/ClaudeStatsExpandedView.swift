@@ -1,95 +1,110 @@
 import SwiftUI
 
-/// The expanded Claude usage panel. Which sections show — session, weekly,
-/// daily spend, chart, token legend — is driven by the Claude Usage settings.
+/// The expanded Claude usage panel. Spec §3 "Expanded · Claude usage": donut,
+/// legend, and a Today/Week footer only. The trend chart, session countdown,
+/// and daily-spend breakdown that used to live here are settings-pane-only
+/// now (see `claudeShowChart` / `claudeShowSession` / `claudeShowSpend`).
 struct ClaudeStatsExpandedView: View {
     let stats: ClaudeUsageStats?
     let metrics: NotchMetrics
-
-    private var settings: SettingsStore { .shared }
+    /// Injected rather than read from `.shared` so the debug-dump harness's
+    /// isolated settings drive these display toggles too (see
+    /// `DebugStateDump.makeIsolatedSettings`).
+    let settings: SettingsStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Text("Claude usage")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.6))
-                Spacer()
-                Text("\(ClaudeUsageStats.format(stats?.total ?? 0)) tokens")
-                    .font(.system(size: 11, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-
-            if settings.claudeShowChart {
-                MiniLineChart(values: chartValues, color: settings.claudeChartCost ? .orange : .green)
-                    .frame(height: 42)
-            }
-
-            if settings.claudeShowSession {
-                windowRow(title: "Session", cost: stats?.sessionCost ?? 0, reset: stats?.sessionResetIn)
-            }
-            if settings.claudeShowWeek {
-                windowRow(title: "This week", cost: stats?.weekCost ?? 0, reset: nil)
-            }
-
-            if settings.claudeShowSpend {
-                Divider().overlay(Color.white.opacity(0.08))
-                spendRow("Today", stats?.todayCost ?? 0)
-                spendRow("Yesterday", stats?.yesterdayCost ?? 0)
-                spendRow("Last 30 days", stats?.last30Cost ?? 0)
-            }
-
-            if settings.claudeShowLegend {
-                HStack(spacing: 12) {
-                    ForEach(stats?.slices ?? [], id: \.label) { slice in
-                        HStack(spacing: 4) {
-                            Circle().fill(slice.color).frame(width: 6, height: 6)
-                            Text(ClaudeUsageStats.format(slice.value))
-                                .font(.system(size: 10, weight: .medium).monospacedDigit())
-                                .foregroundStyle(.white.opacity(0.7))
-                        }
-                    }
-                    Spacer()
-                    Text("est.").font(.system(size: 9)).foregroundStyle(.white.opacity(0.35))
+        // Spec §3 "Expanded · Claude usage": donut + legend + Today/Week
+        // footer only — the trend chart, session countdown, and
+        // yesterday/last-30-days spend breakdown overflowed the 196pt panel
+        // and were cut per the user's decision. Their settings toggles
+        // (`claudeShowChart`, `claudeShowSession`, `claudeShowSpend`) still
+        // exist and gate other surfaces; they're simply not read here.
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 20) {
+                donut
+                if settings.claudeShowLegend {
+                    legend
                 }
-                .padding(.top, 1)
             }
+
+            footer
         }
         .padding(.top, metrics.notchHeight + 8)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    /// The daily series sliced to the user's window, as tokens or cost.
-    private var chartValues: [Double] {
-        let days = min(settings.claudeChartDays, stats?.daily.count ?? 0)
-        let series = Array((stats?.daily ?? []).suffix(days))
-        return series.map { settings.claudeChartCost ? $0.cost : Double($0.tokens) }
+    /// Three-segment donut — input / output / cache — shaded on the white
+    /// opacity ramp rather than distinct hues.
+    private var donut: some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let radius: CGFloat = 30
+            let total = Double(stats?.total ?? 0)
+            guard total > 0 else {
+                var track = Path()
+                track.addArc(center: center, radius: radius, startAngle: .degrees(0), endAngle: .degrees(360), clockwise: false)
+                context.stroke(track, with: .color(NotchTheme.ringTrack), style: StrokeStyle(lineWidth: 10))
+                return
+            }
+            var start = Angle.degrees(-90)
+            for segment in donutSegments where segment.value > 0 {
+                let sweep = Angle.degrees(segment.value / total * 360)
+                let end = start + sweep
+                var path = Path()
+                path.addArc(center: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
+                context.stroke(path, with: .color(.white.opacity(segment.opacity)), style: StrokeStyle(lineWidth: 10))
+                start = end
+            }
+        }
+        .frame(width: 76, height: 76)
     }
 
-    private func windowRow(title: String, cost: Double, reset: TimeInterval?) -> some View {
-        HStack {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundStyle(.white)
-            Spacer()
-            if let reset {
-                Text("Resets in \(ClaudeUsageStats.countdown(reset))")
-                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.5))
-            }
-            Text(ClaudeUsageStats.money(cost))
-                .font(.system(size: 12, weight: .semibold).monospacedDigit())
-                .foregroundStyle(.white)
-                .frame(width: 74, alignment: .trailing)
+    /// (token count, ramp opacity) for input / output / cache, in that order.
+    private var donutSegments: [(value: Double, opacity: Double)] {
+        [
+            (Double(stats?.input ?? 0), 0.9),
+            (Double(stats?.output ?? 0), 0.45),
+            (Double(stats?.cache ?? 0), 0.2)
+        ]
+    }
+
+    private var legend: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            legendRow(label: "Input", value: stats?.input ?? 0, opacity: 0.9)
+            legendRow(label: "Output", value: stats?.output ?? 0, opacity: 0.45)
+            legendRow(label: "Cache", value: stats?.cache ?? 0, opacity: 0.2)
         }
     }
 
-    private func spendRow(_ title: String, _ cost: Double) -> some View {
-        HStack {
-            Text(title).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
-            Spacer()
-            Text("\(ClaudeUsageStats.money(cost)) est.")
+    private func legendRow(label: String, value: Int, opacity: Double) -> some View {
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.white.opacity(opacity))
+                .frame(width: 8, height: 8)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(NotchTheme.textBrightSecondary)
+            Spacer(minLength: 10)
+            Text(ClaudeUsageStats.format(value))
                 .font(.system(size: 11, weight: .medium).monospacedDigit())
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(NotchTheme.textPrimary)
+        }
+    }
+
+    /// `Today $x` · `Week $x` — Today always shows per spec; Week honours
+    /// the "This week" settings toggle, same as it gated the row before.
+    private var footer: some View {
+        HStack(spacing: 12) {
+            Text("Today \(ClaudeUsageStats.money(stats?.todayCost ?? 0))")
+                .font(.system(size: 11))
+                .foregroundStyle(NotchTheme.textSecondary)
+            if settings.claudeShowWeek {
+                Text("Week \(ClaudeUsageStats.money(stats?.weekCost ?? 0))")
+                    .font(.system(size: 11))
+                    .foregroundStyle(NotchTheme.textSecondary)
+            }
         }
     }
 }

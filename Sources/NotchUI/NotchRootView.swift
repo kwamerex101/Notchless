@@ -13,6 +13,42 @@ extension EnvironmentValues {
     }
 }
 
+/// Debug-only: suppresses the panel's `.onDrop` file-drop target registration.
+/// `ImageRenderer` renders an `onDrop`-registered view with AppKit's default
+/// drag-destination highlight permanently painted in — a bright accent-colored
+/// halo hugging the view's frame — instead of only while a drag is active.
+/// `DebugStateDump` sets this so notch captures don't carry that artifact;
+/// the real running app never sets it, so file-tray drag & drop is untouched.
+private struct NotchDropTargetDisabledKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var notchDropTargetDisabled: Bool {
+        get { self[NotchDropTargetDisabledKey.self] }
+        set { self[NotchDropTargetDisabledKey.self] = newValue }
+    }
+}
+
+/// Applies `.onDrop` only when `disabled` is false. Structural, not just an
+/// empty file-type list — `ImageRenderer` still paints AppKit's default
+/// drag-destination highlight around a view registered with `.onDrop(of: [],
+/// ...)`, so the modifier itself has to be absent from the tree for the
+/// debug-dump harness to get a clean capture.
+private struct OptionalDropTarget: ViewModifier {
+    let disabled: Bool
+    let isTargeted: Binding<Bool>
+    let onDrop: ([NSItemProvider]) -> Bool
+
+    func body(content: Content) -> some View {
+        if disabled {
+            content
+        } else {
+            content.onDrop(of: [.fileURL], isTargeted: isTargeted) { providers in onDrop(providers) }
+        }
+    }
+}
+
 /// Root content hosted in the notch panel. Renders the resolved `NotchContent`
 /// inside the morphing black shape, and routes hover / tap / right-click.
 struct NotchRootView: View {
@@ -22,6 +58,7 @@ struct NotchRootView: View {
     var onOpenSettings: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.notchDropTargetDisabled) private var dropTargetDisabled
     /// Shared namespace so album art morphs between the compact sliver and the
     /// expanded tile instead of cross-fading.
     @Namespace private var artworkNamespace
@@ -47,7 +84,7 @@ struct NotchRootView: View {
 
         return VStack(spacing: 0) {
             NotchShape(topCornerRadius: sizing.topRadius, bottomCornerRadius: sizing.bottomRadius)
-                .fill(Color.black)
+                .fill(model.settings.notchTint.color)
                 .frame(width: sizing.width, height: panelHeight)
                 .background {
                     if expanded, model.settings.progressiveBlur {
@@ -76,9 +113,22 @@ struct NotchRootView: View {
                             .transition(.opacity)
                     }
                 }
+                // Flat-dark hairline — a 0.5pt stroke that follows the same
+                // morphing radii as the fill, sitting beneath the content overlay.
                 .overlay {
-                    contentView(content)
+                    NotchShape(topCornerRadius: sizing.topRadius, bottomCornerRadius: sizing.bottomRadius)
+                        .stroke(NotchTheme.hairline, lineWidth: NotchTheme.hairlineWidth)
                         .frame(width: sizing.width, height: panelHeight)
+                        .allowsHitTesting(false)
+                }
+                .overlay(alignment: .top) {
+                    // Content taller than the fixed `NotchSizing` height (e.g. a
+                    // panel whose body doesn't fit at `panelHeight`) must anchor to
+                    // the top and only overflow off the bottom — `.frame` without an
+                    // explicit alignment centers the oversized content inside the
+                    // clip rect, which crops the TOP (wings strip / header) instead.
+                    contentView(content)
+                        .frame(width: sizing.width, height: panelHeight, alignment: .top)
                         .clipShape(NotchShape(topCornerRadius: sizing.topRadius,
                                               bottomCornerRadius: sizing.bottomRadius))
                         // Key on the content's identity so a state change actually
@@ -96,9 +146,9 @@ struct NotchRootView: View {
                                          bottomCornerRadius: sizing.bottomRadius))
                 .onTapGesture { model.tapped() }
                 .contextMenu { menu }
-                .onDrop(of: [.fileURL], isTargeted: dropTargetBinding) { providers in
-                    handleDrop(providers)
-                }
+                .modifier(OptionalDropTarget(disabled: dropTargetDisabled,
+                                             isTargeted: dropTargetBinding,
+                                             onDrop: handleDrop))
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -167,6 +217,7 @@ struct NotchRootView: View {
                             stats: model.stats, audio: model.audio,
                             timer: model.notchTimer, privacy: model.privacy,
                             claudeStats: model.claudeStats, meetingPhase: model.meeting?.phase,
+                            meetingElapsed: model.meeting?.elapsed,
                             glow: glowColor,
                             liveActivities: model.carouselActivities, metrics: metrics,
                             artworkNamespace: artworkNamespace)
@@ -240,9 +291,9 @@ struct NotchRootView: View {
         case .privacy:
             PrivacyExpandedView(privacy: model.privacy, metrics: metrics)
         case .claudeUsage:
-            ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics)
+            ClaudeStatsExpandedView(stats: model.claudeStats, metrics: metrics, settings: model.settings)
         case .goals:
-            GoalExpandedView(metrics: metrics)
+            GoalExpandedView(metrics: metrics, settings: model.settings)
         case .meeting:
             if let meeting = model.meeting {
                 MeetingExpandedView(meeting: meeting, metrics: metrics)

@@ -10,22 +10,24 @@ struct ModeEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(mode.isBuiltIn ? "Edit \(mode.name)" : "Edit Mode").font(.headline)
+            Text(mode.isBuiltIn ? "Edit \(mode.name)" : "Edit Mode")
+                .font(.system(size: 14, weight: .semibold)).foregroundStyle(SettingsTheme.text)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Identity
                     HStack {
-                        TextField("Name", text: $mode.name).textFieldStyle(.roundedBorder)
+                        FlatTextField(placeholder: "Name", text: $mode.name)
                         IconPicker(selection: $mode.systemImage)
                     }
 
-                    Text("INSTRUCTION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    SectionLabel("Instruction")
                     TextEditor(text: instructionBinding)
-                        .font(.body).frame(height: 90)
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.3)))
-                    Text("Added to the cleanup prompt for this mode. Leave empty to inherit.")
-                        .font(.caption2).foregroundStyle(.secondary)
+                        .font(.system(size: 13)).frame(height: 90)
+                        .scrollContentBackground(.hidden)
+                        .padding(6)
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.insetField))
+                    Footnote("Added to the cleanup prompt for this mode. Leave empty to inherit.")
 
                     // Overrides
                     OverrideRow("Output", isSet: mode.output != nil, onToggle: { mode.output = $0 ? .pasteActiveApp : nil }) {
@@ -58,21 +60,20 @@ struct ModeEditorSheet: View {
                                 ForEach(availableHotkeys(for: mode, main: DictationSettings.shared.hotkey, modes: ModeStore.shared.modes)) { Text($0.title).tag($0) }
                             }.labelsHidden()
                         }
-                        Text("Hold this combo to dictate straight into \(mode.name). Only combos free of your main hotkey and other modes are shown.")
-                            .font(.caption2).foregroundStyle(.secondary)
+                        Footnote("Hold this combo to dictate straight into \(mode.name). Only combos free of your main hotkey and other modes are shown.")
                     }
                     OverrideToggleRow("Voice commands", value: $mode.voiceCommands)
                     OverrideToggleRow("Smart formatting", value: $mode.smartFormatting)
                     OverrideToggleRow("Auto-capitalize", value: $mode.autoCapitalize)
 
                     // App binding
-                    Text("AUTO-SELECT FOR APPS").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    SectionLabel("Auto-select for apps")
                     ForEach(mode.boundBundleIDs, id: \.self) { bid in
                         HStack {
-                            Text(appName(bid)).font(.callout)
+                            Text(appName(bid)).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                             Spacer()
                             Button { mode.boundBundleIDs.removeAll { $0 == bid } } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(SettingsTheme.textSecondary)
                             }.buttonStyle(.plain)
                         }
                     }
@@ -90,10 +91,20 @@ struct ModeEditorSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Done") { store.save(mode); dismiss() }.keyboardShortcut(.defaultAction)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(SettingsTheme.text)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.button))
+                Button("Done") { store.save(mode); dismiss() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(SettingsTheme.onPrimary)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.primaryFill))
             }
         }
         .padding(20)
+        .background(SettingsTheme.windowBody)
     }
 
     private var instructionBinding: Binding<String> {
@@ -122,7 +133,7 @@ private struct OverrideRow<Content: View>: View {
     }
     var body: some View {
         HStack {
-            Toggle(isOn: Binding(get: { isSet }, set: onToggle)) { Text(title) }
+            Toggle(isOn: Binding(get: { isSet }, set: onToggle)) { Text(title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text) }
                 .toggleStyle(.checkbox)
             Spacer()
             if isSet { content }
@@ -137,11 +148,11 @@ private struct OverrideToggleRow: View {
     init(_ title: String, value: Binding<Bool?>) { self.title = title; self._value = value }
     var body: some View {
         HStack {
-            Toggle(isOn: Binding(get: { value != nil }, set: { value = $0 ? true : nil })) { Text(title) }
+            Toggle(isOn: Binding(get: { value != nil }, set: { value = $0 ? true : nil })) { Text(title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text) }
                 .toggleStyle(.checkbox)
             Spacer()
             if value != nil {
-                Toggle("", isOn: Binding(get: { value ?? false }, set: { value = $0 })).labelsHidden().toggleStyle(.switch).tint(.green)
+                FlatSwitch(isOn: Binding(get: { value ?? false }, set: { value = $0 }), label: title)
             }
         }
     }

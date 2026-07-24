@@ -4,6 +4,9 @@ import Foundation
 struct PowerState: Equatable {
     var isCharging: Bool
     var percent: Int
+    /// Minutes until fully charged, or nil while IOKit is still calculating the
+    /// estimate (kIOPSTimeToFullChargeKey reports -1) or when unavailable.
+    var timeToFullMinutes: Int?
 }
 
 /// Watches battery charge/charging state via IOKit power sources and reports
@@ -50,8 +53,23 @@ final class PowerService {
             let state = desc[kIOPSPowerSourceStateKey] as? String
             let charging = state == kIOPSACPowerValue
             let percent = max > 0 ? Int((Double(current) / Double(max)) * 100) : current
-            return PowerState(isCharging: charging, percent: percent)
+            let toFull = desc[kIOPSTimeToFullChargeKey] as? Int ?? -1
+            return PowerState(isCharging: charging, percent: percent,
+                               timeToFullMinutes: toFull > 0 ? toFull : nil)
         }
         return nil
+    }
+
+    /// The Mac's configured computer name (e.g. "Rex's MacBook Pro"), used as the
+    /// device label in the charging banner. There's no public API for the bare
+    /// marketing model name ("MacBook Pro") short of parsing `system_profiler`, so
+    /// this reuses the stable, already-available host name instead.
+    static var deviceName: String {
+        Host.current().localizedName ?? "This Mac"
+    }
+
+    /// Formats minutes as `h:mm` (e.g. 134 → "2:14").
+    static func formatTimeToFull(_ minutes: Int) -> String {
+        String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 }

@@ -14,8 +14,8 @@ struct DictationControlRow: View {
             if let modeName {
                 Text(modeName)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-                Text("·").foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(NotchTheme.textPrimary)
+                Text("·").foregroundStyle(NotchTheme.textTertiary)
             }
 
             if let target, !target.name.isEmpty {
@@ -25,7 +25,7 @@ struct DictationControlRow: View {
                     }
                     Text(target.name)
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(NotchTheme.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -35,7 +35,7 @@ struct DictationControlRow: View {
             if let startedAt {
                 Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
                     .font(.system(size: 11, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(NotchTheme.textSecondary)
                     .fixedSize()
             }
 
@@ -43,11 +43,12 @@ struct DictationControlRow: View {
                 HStack(spacing: 4) {
                     Text("esc")
                         .font(.system(size: 9, weight: .semibold))
-                        .padding(.horizontal, 5).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.12)))
+                        .padding(.horizontal, 5).padding(.vertical, 3)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(NotchTheme.chip))
+                        .foregroundStyle(NotchTheme.textPrimary)
                     Text("Cancel")
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(NotchTheme.textSecondary)
                 }
             }
             .buttonStyle(.plain)

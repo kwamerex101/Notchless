@@ -15,8 +15,8 @@ struct NotchTabBar: View {
     /// (left) and battery (right) stay in the wings, clear of the camera.
     var notchWidth: CGFloat = 200
 
-    /// Reserved height of the strip.
-    static let height: CGFloat = 22
+    /// Reserved height of the strip. Spec §2 "Wings tab strip".
+    static let height: CGFloat = 32
 
     /// Up to three pages centred on the active one — [prev, active, next],
     /// wrapping around the carousel. Shows all when there are three or fewer.
@@ -33,12 +33,24 @@ struct NotchTabBar: View {
         HStack(spacing: 12) {
             ForEach(window, id: \.self) { activity in
                 Button { onSelect(activity) } label: {
-                    Image(systemName: activity.tabGlyph)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .opacity(activity == active ? 1.0 : 0.35)
-                        .frame(width: 18, height: 18)
-                        .contentShape(Rectangle())
+                    // Glyph is 12x12 per spec; the button keeps the original
+                    // 18x18 hit target so tapping a neighbour doesn't shrink.
+                    ZStack {
+                        Image(systemName: activity.tabGlyph)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(NotchTheme.textPrimary)
+                            .opacity(activity == active ? 1.0 : 0.35)
+                            .frame(width: 12, height: 12)
+                        if activity == active {
+                            // 3x3 dot, centred 2pt below the glyph.
+                            Circle()
+                                .fill(NotchTheme.textPrimary)
+                                .frame(width: 3, height: 3)
+                                .offset(y: 9.5)
+                        }
+                    }
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(NotchButtonStyle())
                 .accessibilityLabel(Text(activity.tabLabel))
@@ -48,8 +60,10 @@ struct NotchTabBar: View {
             if let battery {
                 Text("\(battery.level)%")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(NotchTheme.textSecondary)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .contentTransition(.numericText())
                     .animation(.default, value: battery.level)
             }

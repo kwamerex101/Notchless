@@ -64,7 +64,7 @@ struct NotchSizing: Equatable {
                 // Same reasoning as .battery — CPU can read "100%".
                 return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .timer:
-                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+                return NotchSizing(width: w + 138, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .clipboard:
                 return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .todos:
@@ -72,7 +72,7 @@ struct NotchSizing: Equatable {
             case .privacy:
                 return NotchSizing(width: w + 130, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .claudeUsage:
-                return NotchSizing(width: w + 120, height: h + 2, topRadius: 8, bottomRadius: 11)
+                return NotchSizing(width: w + 154, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .goals:
                 // Each wing must clear the notch: the leading ring + percent (up
                 // to "100%") needs ~64pt past the edge inset, so the notch's left
@@ -90,10 +90,10 @@ struct NotchSizing: Equatable {
             // calling it directly without hopping actors.
             let options = MainActor.assumeIsolated { HUDOptions(from: SettingsStore.shared) }
             let width = hudWidth(base: w + 250, kind: kind, options: options)
-            return NotchSizing(width: width, height: h + 28, topRadius: 9, bottomRadius: 18)
+            return NotchSizing(width: width, height: h + 36, topRadius: 9, bottomRadius: 18)
 
         case .notification:
-            return NotchSizing(width: w + 300, height: h + 30, topRadius: 9, bottomRadius: 20)
+            return NotchSizing(width: w + 300, height: h + 38, topRadius: 9, bottomRadius: 20)
 
         case .mirror:
             return NotchSizing(width: max(w + 40, 360), height: 250, topRadius: 10, bottomRadius: 24)
@@ -130,11 +130,11 @@ struct NotchSizing: Equatable {
             case .calendar:
                 return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .duo:
-                return NotchSizing(width: max(w + 40, 560), height: 158, topRadius: 10, bottomRadius: 24)
+                return NotchSizing(width: max(w + 40, 540), height: 158, topRadius: 10, bottomRadius: 24)
             case .dictation:
                 return NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
             case .battery:
-                return NotchSizing(width: max(w + 40, 360), height: 128, topRadius: 10, bottomRadius: 24)
+                return NotchSizing(width: max(w + 40, 360), height: 110, topRadius: 10, bottomRadius: 24)
             case .stats:
                 return NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
             case .timer:
@@ -142,7 +142,7 @@ struct NotchSizing: Equatable {
             case .clipboard:
                 return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             case .todos:
-                return NotchSizing(width: max(w + 40, 420), height: 220, topRadius: 10, bottomRadius: 24)
+                return NotchSizing(width: max(w + 40, 420), height: 210, topRadius: 10, bottomRadius: 24)
             case .privacy:
                 return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:

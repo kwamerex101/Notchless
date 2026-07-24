@@ -12,15 +12,21 @@ struct DuoExpandedView: View {
         snapshot ?? CalendarSnapshot(date: Date(), events: [])
     }
 
+    private static let timeRangeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
+
     var body: some View {
-        HStack(alignment: .top, spacing: 18) {
+        HStack(alignment: .top, spacing: 20) {
             playerColumn
-            Divider().overlay(Color.white.opacity(0.12))
+            Rectangle().fill(NotchTheme.divider).frame(width: 1).frame(maxHeight: .infinity)
             eventsColumn
         }
         .padding(.top, metrics.notchHeight + 8)
-        .padding(.horizontal, 26)
-        .padding(.bottom, 14)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -30,44 +36,43 @@ struct DuoExpandedView: View {
                 artwork
                 VStack(alignment: .leading, spacing: 2) {
                     MarqueeText(text: info?.title ?? "Not Playing",
-                                font: .system(size: 13, weight: .semibold))
+                                font: .system(size: 13, weight: .semibold),
+                                color: NotchTheme.textPrimary)
                         .frame(width: 150, height: 16)
                     Text(info?.artist ?? "—").font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                        .foregroundStyle(NotchTheme.textSecondary).lineLimit(1)
                 }
             }
-            HStack(spacing: 22) {
-                button("backward.fill", 13) { onCommand(.previous) }
-                button((info?.isPlaying ?? false) ? "pause.fill" : "play.fill", 15) { onCommand(.playPause) }
-                button("forward.fill", 13) { onCommand(.next) }
+            HStack(spacing: 20) {
+                button("backward.fill", 12) { onCommand(.previous) }
+                playPauseButton
+                button("forward.fill", 12) { onCommand(.next) }
             }
         }
-        .frame(width: 210, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var eventsColumn: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(snap.weekdayCaps).font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Color(nsColor: .systemPink))
-                Spacer()
-                Text(snap.dayNumber).font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
+            Text(snap.weekdayCaps + " " + snap.dayNumber)
+                .font(.system(size: 10, weight: .bold))
+                .tracking(0.6)
+                .foregroundStyle(NotchTheme.textSecondary)
             if snap.events.isEmpty {
-                Text("No events today").font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
-            } else {
-                ForEach(snap.events.prefix(3)) { ev in
-                    HStack(spacing: 6) {
-                        Circle().fill(ev.color).frame(width: 6, height: 6)
-                        Text(ev.title).font(.system(size: 11)).foregroundStyle(.white)
-                            .lineLimit(1)
-                    }
-                }
+                Text("No events today").font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NotchTheme.textPrimary)
+            } else if let first = snap.events.first {
+                Text(first.title).font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NotchTheme.textPrimary).lineLimit(1)
+                // No location field on `NotchEvent` — the mock's "· Zoom" suffix
+                // has no data source, so this shows the time range only.
+                Text(Self.timeRangeFormatter.string(from: first.start) + " – "
+                     + Self.timeRangeFormatter.string(from: first.end))
+                    .font(.system(size: 11))
+                    .foregroundStyle(NotchTheme.textSecondary).lineLimit(1)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: 190, alignment: .leading)
     }
 
     private var artwork: some View {
@@ -75,18 +80,28 @@ struct DuoExpandedView: View {
             if let art = info?.artwork {
                 Image(nsImage: art).resizable().aspectRatio(contentMode: .fill)
             } else {
-                RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.12))
-                    .overlay(Image(systemName: "music.note").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)))
+                RoundedRectangle(cornerRadius: 8).fill(NotchTheme.artworkPlaceholder)
+                    .overlay(Image(systemName: "music.note").font(.system(size: 11)).foregroundStyle(NotchTheme.textSecondary))
             }
         }
-        .frame(width: 38, height: 38)
-        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .frame(width: 36, height: 36)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var playPauseButton: some View {
+        Button { onCommand(.playPause) } label: {
+            Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchTheme.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(NotchTheme.chip))
+        }.buttonStyle(.plain)
     }
 
     private func button(_ name: String, _ size: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: name).font(.system(size: size, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
         }.buttonStyle(.plain)
     }
 }
