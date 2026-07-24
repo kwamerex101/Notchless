@@ -114,32 +114,49 @@ func goalFormatDate(_ date: Date) -> String {
     return f.string(from: date)
 }
 
-/// Full grouped amount with the currency symbol suffixed, no decimals.
-/// e.g. goalFormatAmount(42000, symbol: "₵") == "42,000 ₵"
-func goalFormatAmount(_ amount: Decimal, symbol: String) -> String {
+/// Grouped digits only, no symbol — shared core for the amount formatters.
+private func goalGroupedDigits(_ amount: Decimal) -> String {
     let f = NumberFormatter()
     f.numberStyle = .decimal
     f.maximumFractionDigits = 0
     f.groupingSeparator = ","
     f.usesGroupingSeparator = true
     f.locale = Locale(identifier: "en_US_POSIX")
-    let n = f.string(from: amount as NSDecimalNumber) ?? "0"
-    return "\(n) \(symbol)"
+    return f.string(from: amount as NSDecimalNumber) ?? "0"
 }
 
-/// Compact amount for the notch cue. 1_000→"1k", 1_500→"1.5k", 1_200_000→"1.2m".
-func goalAbbreviate(_ amount: Decimal, symbol: String) -> String {
+/// Full grouped amount with the currency symbol suffixed, no decimals.
+/// e.g. goalFormatAmount(42000, symbol: "₵") == "42,000 ₵"
+func goalFormatAmount(_ amount: Decimal, symbol: String) -> String {
+    "\(goalGroupedDigits(amount)) \(symbol)"
+}
+
+/// Grouped amount with the symbol PREFIXED and no space — the hero style.
+/// e.g. goalFormatAmountPrefixed(41263, symbol: "₵") == "₵41,263"
+func goalFormatAmountPrefixed(_ amount: Decimal, symbol: String) -> String {
+    "\(symbol)\(goalGroupedDigits(amount))"
+}
+
+/// Grouped digits with no currency symbol — for the "of 100,000" secondary and
+/// the "/mo" pace figure, where the symbol already sits on the hero.
+func goalFormatPlain(_ amount: Decimal) -> String { goalGroupedDigits(amount) }
+
+/// Compact amount WITHOUT the currency symbol. 1_000→"1k", 1_500→"1.5k", 1_200_000→"1.2m".
+func goalAbbreviateBare(_ amount: Decimal) -> String {
     let value = (amount as NSDecimalNumber).doubleValue
     func trim(_ d: Double) -> String {
         // one decimal, drop a trailing ".0"
         let s = String(format: "%.1f", d)
         return s.hasSuffix(".0") ? String(s.dropLast(2)) : s
     }
-    let body: String
-    if abs(value) >= 1_000_000 { body = "\(trim(value / 1_000_000))m" }
-    else if abs(value) >= 1_000 { body = "\(trim(value / 1_000))k" }
-    else { body = String(Int(value.rounded())) }
-    return "\(body) \(symbol)"
+    if abs(value) >= 1_000_000 { return "\(trim(value / 1_000_000))m" }
+    if abs(value) >= 1_000 { return "\(trim(value / 1_000))k" }
+    return String(Int(value.rounded()))
+}
+
+/// Compact amount for the notch cue, symbol suffixed. e.g. "1.5k ₵".
+func goalAbbreviate(_ amount: Decimal, symbol: String) -> String {
+    "\(goalAbbreviateBare(amount)) \(symbol)"
 }
 
 /// Owns the user's goals and archived (completed) goals. Persists as JSON in

@@ -34,11 +34,14 @@ struct GoalWidgetView: View {
                                 GoalProgressView(goal: goal, metrics: .widget, symbol: symbol)
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .top)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     quickLog
                 }
             }
             .padding(16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .frame(width: Self.width, height: Self.height)
         // Unlike GoalExpandedView, the widget doesn't borrow key focus on

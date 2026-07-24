@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import SwiftUI
 
 /// A borderless, non-activating floating panel that hosts one popped-out
@@ -22,6 +23,10 @@ final class WidgetPanel: NSPanel {
 
         // Widgets are interactive surfaces, not pass-through overlays.
         ignoresMouseEvents = false
+
+        // Default level; WidgetController applies the user's desktop-vs-floating
+        // preference (the "Widgets on desktop" setting) via applyDesktopPlacement
+        // the moment it creates the panel, and again whenever that setting changes.
         level = .floating
 
         // configureAsOverlayPanel() sets hasShadow = false, right for the
@@ -50,6 +55,19 @@ final class WidgetPanel: NSPanel {
         // AppKit resolves overlapping drag claims via
         // mouseDownCanMoveWindow, whose behavior inside NSHostingView
         // content is version-dependent and historically unreliable.
+    }
+
+    /// Places the panel on the desktop — above the wallpaper and desktop icons
+    /// but BELOW every normal app window and the Dock, like a native macOS
+    /// desktop widget — when `onDesktop` is true, or floating above everything
+    /// when false. Called when WidgetController creates the panel and whenever
+    /// the "Widgets on desktop" preference changes. At desktop level the widget
+    /// is hidden behind open windows and shows through when the desktop is
+    /// revealed.
+    func applyDesktopPlacement(_ onDesktop: Bool) {
+        level = onDesktop
+            ? NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)))
+            : .floating
     }
 
     /// Whether the panel may currently become key. False by default;

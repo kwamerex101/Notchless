@@ -28,29 +28,27 @@ struct WidgetCardView<Content: View>: View {
     }
 
     private var titleStrip: some View {
-        ZStack {
-            // Behind the strip's row so a click on the close button hits the
-            // button rather than starting a window drag underneath it.
-            WindowDragHandle()
-
-            HStack(spacing: 8) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
-                Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .frame(width: 20, height: 20)
-                        .background(Circle().fill(Color.white.opacity(0.1)))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Close")
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+            Spacer()
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(Color.white.opacity(0.1)))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 11)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close")
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        // Drag handle sits BEHIND the row (as a background, not a greedy ZStack
+        // sibling) so the row's natural height governs the strip. A click on the
+        // close button still hits the button — it's in front of this handle.
+        .background(WindowDragHandle())
     }
 }
 

@@ -50,6 +50,13 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Published var forceSimulatedNotch: Bool { didSet { persist(Keys.forceSimulatedNotch, forceSimulatedNotch, oldValue != forceSimulatedNotch) } }
     @Published var simulatedDisplay: SimulatedDisplay { didSet { persist(Keys.simulatedDisplay, simulatedDisplay.rawValue, oldValue != simulatedDisplay) } }
 
+    /// When true, section widgets sit on the desktop (behind app windows, above
+    /// the wallpaper) like a native macOS desktop widget; when false they float
+    /// above everything. Device-local — widget placement is per-Mac, so it is
+    /// deliberately NOT iCloud-synced (hence @Stored, not the @Published+persist
+    /// pattern the iCloud-mirrored settings above use).
+    @Stored("widgetsOnDesktop", default: true) var widgetsOnDesktop: Bool
+
     // Idle activity
     @Published var idleActivity: NotchActivity { didSet { persist(Keys.idleActivity, idleActivity.rawValue, oldValue != idleActivity) } }
     @Published var idleMostRecent: Bool { didSet { persist(Keys.idleMostRecent, idleMostRecent, oldValue != idleMostRecent) } }
