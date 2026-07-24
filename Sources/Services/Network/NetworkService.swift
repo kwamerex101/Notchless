@@ -20,6 +20,12 @@ final class NetworkService {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.rexdanquah.Notchless.network")
     private var lastConnectivity: NetworkConnectivity?
+    /// Pending confirmation of a `.noInternet` classification. A path that is
+    /// `.satisfied` but has no route is the normal state for a brief moment
+    /// during a reconnect, so we hold the banner for `noInternetDebounce`
+    /// before committing it. Any new path event cancels it.
+    private var debounceTask: Task<Void, Never>?
+    private let noInternetDebounce: Duration = .milliseconds(1500)
 
     func start() {
         // Created once on the main actor and captured by value below — CFType
@@ -28,20 +34,49 @@ final class NetworkService {
         let reachability = Self.makeReachability()
 
         monitor.pathUpdateHandler = { [weak self] path in
-            let connectivity: NetworkConnectivity
-            if path.status == .satisfied {
-                connectivity = Self.hasInternet(reachability) ? .online : .noInternet
-            } else {
-                connectivity = .offline
-            }
+            let satisfied = path.status == .satisfied
             Task { @MainActor in
-                guard let self, self.lastConnectivity != connectivity else { return }
-                let hadPrevious = self.lastConnectivity != nil
-                self.lastConnectivity = connectivity
-                if hadPrevious { self.onChange?(connectivity) }   // skip the first snapshot
+                self?.handlePath(satisfied: satisfied, reachability: reachability)
             }
         }
         monitor.start(queue: queue)
+    }
+
+    /// Classifies one path update. `.offline` and `.online` commit
+    /// immediately; `.noInternet` is deferred (see `debounceTask`) so a normal
+    /// reconnect — where `NWPath` flips to `.satisfied` a tick before the route
+    /// resolves — doesn't post a transient "No Internet" then "Back online".
+    private func handlePath(satisfied: Bool, reachability: SCNetworkReachability?) {
+        // Any fresh path event supersedes a pending "no internet" confirmation.
+        debounceTask?.cancel()
+        debounceTask = nil
+
+        guard satisfied else {
+            commit(.offline)
+            return
+        }
+        if Self.hasInternet(reachability) {
+            commit(.online)
+            return
+        }
+        // Path is up but there's no route yet. Wait, then re-check: if the
+        // route resolved within the window it was just reconnect lag → go
+        // straight to `.online` with no banner; otherwise it's really down.
+        debounceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: self?.noInternetDebounce ?? .milliseconds(1500))
+            guard let self, !Task.isCancelled else { return }
+            self.debounceTask = nil
+            self.commit(Self.hasInternet(reachability) ? .online : .noInternet)
+        }
+    }
+
+    /// Applies a settled classification, emitting only real transitions and
+    /// swallowing the very first snapshot (so launch never fires a banner).
+    private func commit(_ connectivity: NetworkConnectivity) {
+        guard lastConnectivity != connectivity else { return }
+        let hadPrevious = lastConnectivity != nil
+        lastConnectivity = connectivity
+        if hadPrevious { onChange?(connectivity) }
     }
 
     nonisolated private static func makeReachability() -> SCNetworkReachability? {

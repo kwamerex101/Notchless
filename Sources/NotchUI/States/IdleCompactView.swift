@@ -193,6 +193,8 @@ struct IdleCompactView: View {
                 Text(Self.meetingElapsedLabel(meetingElapsed ?? 0))
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .foregroundStyle(NotchTheme.textBrightSecondary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             case .transcribing, .summarizing:
                 ProgressView().controlSize(.small).tint(NotchTheme.textPrimary)
             case .some(.ready):

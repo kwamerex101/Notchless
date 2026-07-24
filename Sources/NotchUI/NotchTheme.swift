@@ -41,9 +41,9 @@ enum NotchTheme {
 
     // Text
     static let textPrimary = Color(hex: 0xF2_F3_F5)
-    static let textSecondary = Color(red: 235 / 255, green: 238 / 255, blue: 245 / 255).opacity(0.55)
-    static let textTertiary = Color(red: 235 / 255, green: 238 / 255, blue: 245 / 255).opacity(0.45)
-    static let textBrightSecondary = Color(red: 235 / 255, green: 238 / 255, blue: 245 / 255).opacity(0.75)
+    static let textSecondary = Color(hex: 0xEB_EE_F5).opacity(0.55)
+    static let textTertiary = Color(hex: 0xEB_EE_F5).opacity(0.45)
+    static let textBrightSecondary = Color(hex: 0xEB_EE_F5).opacity(0.75)
 
     // Fills
     static let track = Color.white.opacity(0.16)

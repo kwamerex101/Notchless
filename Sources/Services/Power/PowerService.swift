@@ -54,8 +54,13 @@ final class PowerService {
             let charging = state == kIOPSACPowerValue
             let percent = max > 0 ? Int((Double(current) / Double(max)) * 100) : current
             let toFull = desc[kIOPSTimeToFullChargeKey] as? Int ?? -1
+            // IOKit reports -1 while still calculating, and can transiently
+            // report absurd minute counts (e.g. 1092) right after plug-in.
+            // Only trust a plausible estimate (under 24h); anything else is
+            // treated as "calculating" (nil → device-name-only subtitle).
+            let plausibleToFull = (0 < toFull && toFull < 1440) ? toFull : nil
             return PowerState(isCharging: charging, percent: percent,
-                               timeToFullMinutes: toFull > 0 ? toFull : nil)
+                               timeToFullMinutes: plausibleToFull)
         }
         return nil
     }

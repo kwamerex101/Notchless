@@ -80,7 +80,11 @@ struct NotchSizing: Equatable {
                 // 3-digit percent fully visible; w + 150 clipped it into the notch.
                 return NotchSizing(width: w + 190, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .meeting:
-                return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // +160 (not +128): the recording elapsed can read up to
+                // `h:mm:ss` (7 chars), so each wing needs the same clearance
+                // the 4-char "100%" battery readout does (+150) plus a hair,
+                // else the leading digits fall into the physical notch cutout.
+                return NotchSizing(width: w + 160, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case let .hud(kind):

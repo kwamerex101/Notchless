@@ -339,19 +339,29 @@ struct SegmentedCards<Option: Hashable>: View {
         LazyVGrid(columns: columns, spacing: 8) {
             ForEach(options, id: \.self) { option in
                 let selected = option == selection
-                Text(title(option))
-                    .font(.system(size: 11, weight: selected ? .semibold : .regular))
-                    .foregroundStyle(selected ? SettingsTheme.onPrimary : SettingsTheme.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9).padding(.horizontal, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selected ? SettingsTheme.primaryFill : SettingsTheme.card)
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture { selection = option }
+                // A real `Button` (not a bare `.onTapGesture`) so each chip
+                // carries the button trait for VoiceOver, matching its sibling
+                // `SegmentedControl`. Visuals are unchanged — the styling lives
+                // on the label, `.plain` adds no chrome.
+                Button {
+                    selection = option
+                } label: {
+                    Text(title(option))
+                        .font(.system(size: 11, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(selected ? SettingsTheme.onPrimary : SettingsTheme.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9).padding(.horizontal, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(selected ? SettingsTheme.primaryFill : SettingsTheme.card)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(title(option))
+                .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
             }
         }
     }
@@ -437,7 +447,7 @@ struct MenuRow<Option: Hashable>: View {
                 HStack(spacing: 8) {
                     Text(label(selection))
                         .font(.system(size: 12))
-                        .foregroundStyle(Color(red: 235 / 255, green: 238 / 255, blue: 245 / 255).opacity(0.8))
+                        .foregroundStyle(SettingsTheme.menuValue)
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(SettingsTheme.textSecondary)
@@ -552,7 +562,7 @@ private struct TintSwatchRow: View {
                             .frame(width: 40, height: 26)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                                    .strokeBorder(SettingsTheme.swatchBorder, lineWidth: 0.5)
                             )
                             .overlay {
                                 if selected {
@@ -572,7 +582,7 @@ private struct TintSwatchRow: View {
                             .font(.system(size: 10))
                             .foregroundStyle(
                                 selected
-                                    ? Color(red: 235 / 255, green: 238 / 255, blue: 245 / 255).opacity(0.7)
+                                    ? SettingsTheme.swatchCaptionSelected
                                     : SettingsTheme.textTertiary
                             )
                     }

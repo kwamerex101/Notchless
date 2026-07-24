@@ -14,7 +14,6 @@ struct NowPlayingExpandedView: View {
     @State private var scrubbing = false
     @State private var scrubValue: Double = 0
     @State private var scrubHovering = false
-    @State private var showingOutputPicker = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -181,35 +180,18 @@ struct NowPlayingExpandedView: View {
         }
     }
 
-    // A plain `Button` + `.popover`, not `Menu` — `Menu`'s label is NSMenu-backed
-    // and `ImageRenderer`'s single synchronous offscreen pass can't draw it,
-    // painting a broken-image glyph instead (independent of the symbol name;
-    // confirmed by swapping in a bare `Image`, which renders correctly). This
-    // keeps the same "reach the output device from the transport row"
-    // capability without a control offscreen rendering can't paint.
+    // The proven runtime output picker: a `Menu` on the non-activating
+    // `NSPanel`. This lives on the transport row and, unlike a `.popover`, the
+    // window-backed `cacheDisplay` harness path can rasterize it — so it's the
+    // canonical control again (the `.popover` detour was only to satisfy the
+    // old `ImageRenderer`-based dump path, which no longer renders notch states).
     private var outputPicker: some View {
-        Button {
-            showingOutputPicker = true
-        } label: {
-            Image(systemName: "speaker.wave.2.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Audio output")
-        .popover(isPresented: $showingOutputPicker, arrowEdge: .bottom) {
-            outputDeviceList
-        }
-    }
-
-    private var outputDeviceList: some View {
-        let service = AudioOutputService.shared
-        let current = service.currentDefault()
-        return VStack(alignment: .leading, spacing: 2) {
+        Menu {
+            let service = AudioOutputService.shared
+            let current = service.currentDefault()
             ForEach(service.devices()) { device in
                 Button {
                     service.setDefault(device.id)
-                    showingOutputPicker = false
                 } label: {
                     if device.id == current {
                         Label(device.name, systemImage: "checkmark")
@@ -217,10 +199,16 @@ struct NowPlayingExpandedView: View {
                         Text(device.name)
                     }
                 }
-                .buttonStyle(.plain)
             }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
         }
-        .padding(8)
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .accessibilityLabel("Audio output")
     }
 
     private func transportButton(_ name: String, size: CGFloat, label: String,

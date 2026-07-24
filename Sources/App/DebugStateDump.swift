@@ -108,11 +108,25 @@ enum DebugStateDump {
     // MARK: - Seed data
 
     /// A UserDefaults suite private to this run, so the harness never reads or
-    /// mutates the signed-in user's real settings.
+    /// mutates the signed-in user's real settings — and a no-op iCloud store so
+    /// neither the `@Stored` setters nor `SettingsStore.persist` can leak a
+    /// write into `NSUbiquitousKeyValueStore.default`. See the two guards
+    /// below for why no cloud write can happen during a dump.
     private static func makeIsolatedSettings() -> SettingsStore {
-        let suite = "com.rexdanquah.Notchless.debug-dump.\(UUID().uuidString)"
+        // A single fixed suite (cleared each run) rather than a per-run
+        // `.<UUID>` name, so repeated dumps don't leave a trail of stray
+        // plists behind.
+        let suite = "com.rexdanquah.Notchless.debug-dump"
         let defaults = UserDefaults(suiteName: suite) ?? .standard
-        let settings = SettingsStore(defaults: defaults)
+        defaults.removePersistentDomain(forName: suite)
+        // Start with iCloud sync OFF *before* the store loads it, so
+        // `SettingsStore.persist`'s hardcoded-`cloud` write path (gated on
+        // `syncViaICloud`) never fires for any seeded @Published change.
+        defaults.set(false, forKey: "syncViaICloud")
+        // Inject a no-op KVS so the `@Stored` setters — which write to `kvs`
+        // unconditionally (no `syncViaICloud` gate) — can't reach real iCloud
+        // either. `hudShowPercentageLabel = true` in `seed` hits this path.
+        let settings = SettingsStore(defaults: defaults, kvs: NoOpKeyValueStore())
         // `ProgressiveBlur` is an `NSViewRepresentable` — `ImageRenderer` can't
         // rasterize it (same class of issue as the Mirror camera preview, see
         // `partial:` below). Off for the harness only, so expanded captures
@@ -351,4 +365,14 @@ enum DebugStateDump {
             return 0
         }
     }
+}
+
+/// A `KeyValueStore` that drops every write, injected into the harness's
+/// `SettingsStore` so its `@Stored` setters (which mirror to `kvs`
+/// unconditionally) can never touch the real `NSUbiquitousKeyValueStore.default`
+/// during a `--dump-states` run.
+private final class NoOpKeyValueStore: KeyValueStore {
+    func object(forKey key: String) -> Any? { nil }
+    func set(_ value: Any?, forKey key: String) {}
+    @discardableResult func synchronize() -> Bool { true }
 }
