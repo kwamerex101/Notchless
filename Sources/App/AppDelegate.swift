@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return MeetingSummarizer(client: client, model: model)
         })
     private var effects: EffectsController?
+    private var reveal: FullscreenRevealController?
     private lazy var trackpadFeedback = TrackpadFeedbackController(settings: model.settings)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -99,7 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.updateAudioTap() }
             .store(in: &settingsObservers)
         updateAudioTap()
-        effects = EffectsController(settings: model.settings, panel: panel, model: model)
+        let reveal = FullscreenRevealController(panel: panel, settings: model.settings, model: model)
+        self.reveal = reveal
+        mouseTracker?.reveal = reveal
+        effects = EffectsController(settings: model.settings, panel: panel, model: model, reveal: reveal)
         effects?.start()
 
         // Services that trigger system permission prompts wait until the user
@@ -215,6 +219,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         mouseTracker?.metrics = metrics
         currentScreenFrame = screen.frame
+        // Reset before refresh: fullscreen state (and the reveal band) is
+        // per-screen, so a panel moving off a fullscreen screen onto a normal
+        // one must not carry over a stale `.hidden` — reset drops it to idle
+        // before refresh() re-derives real state for the new screen.
+        reveal?.reset()
         effects?.refresh()   // fullscreen state is per-screen; re-evaluate on the new one
     }
 

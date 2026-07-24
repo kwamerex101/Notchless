@@ -38,11 +38,13 @@ struct NotchRootView: View {
         // A real notch resting bare covers only its own hardware cutout, but a
         // simulated one is still a black pill over fullscreen content — fade it
         // out entirely there. Hover still revives it: the mouse tracker's band
-        // follows content, not visibility.
+        // follows content, not visibility. Suppressed while revealActive so a
+        // revealed simulated notch isn't faded to nothing right after the
+        // FullscreenRevealController just faded its alpha back in.
         let hiddenInFullscreen = {
             guard case .bare = content else { return false }
             return !metrics.hasRealNotch && model.fullscreenActive
-                && model.settings.collapseInFullscreen
+                && model.settings.collapseInFullscreen && !model.revealActive
         }()
 
         return VStack(spacing: 0) {

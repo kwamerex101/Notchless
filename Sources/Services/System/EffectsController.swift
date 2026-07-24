@@ -8,12 +8,16 @@ final class EffectsController {
     private let settings: SettingsStore
     private weak var panel: NSPanel?
     private weak var model: NotchViewModel?
+    /// Owns panel alpha/interactivity in fullscreen; applyFullscreenState()
+    /// hands off to it instead of writing alphaValue itself.
+    private weak var reveal: FullscreenRevealController?
     private var cancellables: Set<AnyCancellable> = []
 
-    init(settings: SettingsStore, panel: NSPanel?, model: NotchViewModel? = nil) {
+    init(settings: SettingsStore, panel: NSPanel?, model: NotchViewModel? = nil, reveal: FullscreenRevealController? = nil) {
         self.settings = settings
         self.panel = panel
         self.model = model
+        self.reveal = reveal
     }
 
     func start() {
@@ -46,8 +50,12 @@ final class EffectsController {
         // back immediately (and re-evaluate when turned on).
         settings.$hideInFullscreen
             .sink { [weak self] on in
-                guard let self, let panel = self.panel else { return }
-                if on { self.refreshFullscreenState() } else { panel.animator().alphaValue = 1 }
+                guard let self else { return }
+                // Turning off: reset the controller rather than writing alpha
+                // behind its back, so its state doesn't desync from actual
+                // alpha (it stays desynced until the next fullscreen
+                // transition otherwise, mis-driving the next reveal).
+                if on { self.refreshFullscreenState() } else { self.reveal?.reset() }
             }
             .store(in: &cancellables)
         refreshFullscreenState()
@@ -76,8 +84,12 @@ final class EffectsController {
         if let model, model.fullscreenActive != fullscreen {
             model.fullscreenActive = fullscreen
         }
-        guard settings.hideInFullscreen, let panel else { return }
-        panel.animator().alphaValue = fullscreen ? 0 : 1
+        // Hand off to the reveal controller instead of writing alpha
+        // directly. No `hideInFullscreen` guard needed here: when hiding is
+        // off the machine returns idle/alpha 1 on its own (see
+        // FullscreenRevealMachine.update's leading guard), which is the same
+        // behavior the old direct write produced.
+        reveal?.evaluate()
     }
 
     /// Whether window content on the notch's own screen can reach the top edge
