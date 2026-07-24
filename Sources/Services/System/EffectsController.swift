@@ -104,37 +104,43 @@ final class EffectsController {
     }
 
     /// Whether window content on the notch's own screen can reach the top edge
-    /// (a fullscreen Space, or a maximized window under a hidden menu bar) —
-    /// exactly the situations where the resting notch would cover it.
+    /// AND spans essentially the full screen width (a fullscreen Space, or a
+    /// maximized window under a hidden menu bar) — exactly the situations
+    /// where the resting notch would cover it.
     private func isFullscreenSpaceActive() -> Bool {
         guard let screen = panel?.screen ?? NSScreen.main,
               let primary = NSScreen.screens.first else { return false }
-        // The menu bar reserves the top of `visibleFrame` whenever it's showing
-        // on this screen; only a fullscreen Space (or a hidden menu bar) lets
-        // the visible frame reach the top edge.
-        guard screen.visibleFrame.maxY >= screen.frame.maxY - 1 else { return false }
 
-        // ...and require actual window content up there. A fullscreen app can be
-        // several stacked CG windows (e.g. Chrome's tab strip above its content
-        // view), none of them screen-height, so look for any normal-level window
-        // touching the screen's top band rather than one full-height window.
+        // We deliberately do NOT gate on visibleFrame/the menu bar: on external
+        // displays NSScreen.visibleFrame keeps a menu-bar reservation even inside a
+        // fullscreen Space (Notchless itself lives in the desktop Space), so that
+        // heuristic false-negatives there. Instead, look at what's actually on the
+        // screen — a normal-level (layer 0) window that reaches the top edge and
+        // spans the screen width is a fullscreen Space, or a maximized window under
+        // a hidden menu bar: exactly the cases where the resting notch covers real
+        // content.
         let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
         guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]]
         else { return false }
-        // CGWindow bounds are global top-left-origin; flip the screen's top band
-        // (AppKit bottom-left-origin) into that space before comparing.
+
+        // The screen's top edge in CGWindow global (top-left origin) coordinates,
+        // widened to a 3pt band to tolerate sub-pixel/rounding at the very top.
         let topBand = CGRect(
             x: screen.frame.minX,
             y: primary.frame.maxY - screen.frame.maxY,
             width: screen.frame.width,
-            height: 2
+            height: 3
         )
         for info in list {
             guard let layer = info[kCGWindowLayer as String] as? Int, layer == 0,
                   let boundsDict = info[kCGWindowBounds as String] as? [String: Any],
                   let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
             else { continue }
-            if bounds.intersects(topBand) { return true }
+            // Must reach the top edge AND cover most of the width — a small window
+            // parked at the top must not count as fullscreen.
+            if bounds.intersects(topBand), bounds.width >= screen.frame.width * 0.8 {
+                return true
+            }
         }
         return false
     }
