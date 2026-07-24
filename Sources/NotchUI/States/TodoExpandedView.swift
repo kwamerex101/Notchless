@@ -5,6 +5,7 @@ import SwiftUI
 /// the bottom. Completed tasks are cleared in bulk via the header's "Clear done".
 struct TodoExpandedView: View {
     @ObservedObject private var store = TodoStore.shared
+    @ObservedObject private var widgets = WidgetController.shared
     let metrics: NotchMetrics
 
     @State private var newTitle = ""
@@ -27,6 +28,7 @@ struct TodoExpandedView: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.white.opacity(0.5))
                 }
+                popOutButton
             }
 
             if store.items.isEmpty {
@@ -56,6 +58,18 @@ struct TodoExpandedView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { keyFocus(true); addFocused = true }
         .onDisappear { keyFocus(false) }
+    }
+
+    /// Pops the To-Dos widget open/closed. Tinted green — matching the
+    /// checkmark/progress accent used elsewhere — while the widget is open.
+    private var popOutButton: some View {
+        Button { widgets.toggle(.todos) } label: {
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(widgets.isOpen(.todos) ? .green : .white.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(widgets.isOpen(.todos) ? "Close Tasks widget" : "Open Tasks widget")
     }
 
     private var quickAdd: some View {

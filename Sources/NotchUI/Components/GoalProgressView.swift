@@ -19,6 +19,12 @@ struct GoalProgressMetrics {
     static let notch = GoalProgressMetrics(
         nameSize: 12, pinIndicatorSize: 9, pinButtonSize: 10, amountSize: 10, percentSize: 10, paceSize: 10,
         metaSize: 9, breakdownSize: 10, padding: 10, cornerRadius: 8, spacing: 5)
+
+    /// Sizing used inside a floating widget card, read at arm's length rather
+    /// than at the notch's close range.
+    static let widget = GoalProgressMetrics(
+        nameSize: 16, pinIndicatorSize: 12, pinButtonSize: 13, amountSize: 13, percentSize: 13, paceSize: 13,
+        metaSize: 12, breakdownSize: 13, padding: 14, cornerRadius: 12, spacing: 7)
 }
 
 /// One goal's card: name + pin toggle, progress bar, amount/percent/pace line,

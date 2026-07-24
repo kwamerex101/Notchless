@@ -49,6 +49,32 @@ final class WidgetPanel: NSPanel {
     override var canBecomeKey: Bool { wantsKey }
     override var canBecomeMain: Bool { false }
 
+    /// Set once by `WidgetController` when it creates the panel. Weak
+    /// because the coordinator's own lifetime is owned by `AppDelegate`, not
+    /// by the panel — mirroring `holder` on the coordinator side being weak
+    /// too, so neither end keeps the other alive.
+    weak var focusCoordinator: WidgetFocusCoordinator?
+
+    /// Widgets don't borrow key focus just for being open (see the widget
+    /// views' doc comments) — only when the user actually starts
+    /// interacting with one. A click is the only way that starts, so borrow
+    /// here, then let the event continue on to whatever it hit (a text
+    /// field, a button, the list) so the click still does its normal job.
+    override func mouseDown(with event: NSEvent) {
+        focusCoordinator?.borrow(self)
+        super.mouseDown(with: event)
+    }
+
+    /// Mirrors the borrow above: once this panel is no longer key — the user
+    /// clicked back into another app, or another widget/the notch borrowed
+    /// focus instead — it has no business holding the borrow. Releasing here
+    /// (rather than waiting for the widget to close) is what hands focus
+    /// straight back to whatever the user clicked into.
+    override func resignKey() {
+        super.resignKey()
+        focusCoordinator?.release(self)
+    }
+
     /// The single hosting view reused across `setContent` calls. Recreating
     /// this mid-gesture (e.g. during a drag-to-reorder that calls
     /// `setContent` on every update) tears out AppKit's in-flight mouse

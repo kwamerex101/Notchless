@@ -11,21 +11,40 @@ import SwiftUI
 /// through `contentProvider`. Until that's wired up, `show(_:)` opens an
 /// empty panel.
 @MainActor final class WidgetController: ObservableObject {
+    /// Reached the same way `TodoStore`/`GoalStore` are — a singleton — so
+    /// SwiftUI views deep in the notch hierarchy (the pop-out buttons) can
+    /// read/toggle open state without a dependency-injection seam of their
+    /// own.
+    static let shared = WidgetController()
+
     @Published private(set) var open: Set<WidgetKind> = []
 
     private var panels: [WidgetKind: WidgetPanel] = [:]
     private let persistence: WidgetPersistence
     private var screenParamsObserver: NSObjectProtocol?
 
-    /// Placeholder intrinsic size used only for `WidgetPlacement.defaultFrame`
-    /// when a widget has no remembered frame yet. The real per-widget sizing
-    /// arrives with the widget views themselves.
-    private let defaultSize = CGSize(width: 320, height: 400)
+    /// Default intrinsic size used for `WidgetPlacement.defaultFrame` when a
+    /// widget has no remembered frame yet, sized to what each widget's real
+    /// SwiftUI content needs. `.meeting` has no view yet (phase 3) so it
+    /// keeps a nominal placeholder — nothing opens it today.
+    private func defaultSize(for kind: WidgetKind) -> CGSize {
+        switch kind {
+        case .todos:   return CGSize(width: 340, height: 440)
+        case .goals:   return CGSize(width: 360, height: 460)
+        case .meeting: return CGSize(width: 320, height: 400)
+        }
+    }
 
-    /// Supplies the SwiftUI content for a widget when it's shown. Left
-    /// unset here deliberately — this file has no dependency on any widget
-    /// view; the next step wires real views in.
-    var contentProvider: ((WidgetKind) -> AnyView)?
+    /// Supplies the SwiftUI content for a widget when it's shown, given the
+    /// panel it will be hosted in — callers need the panel to wire that
+    /// widget's own key-focus borrow/release (see `WidgetFocusCoordinator`).
+    var contentProvider: ((WidgetKind, WidgetPanel) -> AnyView)?
+
+    /// Handed to every panel this controller creates, so each one can borrow
+    /// key focus on click and release it on resign-key (see
+    /// `WidgetPanel.mouseDown`/`resignKey`). `AppDelegate` sets this once,
+    /// before restoring any previously-open widgets.
+    weak var focusCoordinator: WidgetFocusCoordinator?
 
     init(defaults: UserDefaults = .standard) {
         persistence = WidgetPersistence(defaults: defaults)
@@ -62,11 +81,11 @@ import SwiftUI
     func show(_ kind: WidgetKind) {
         let panel = panel(for: kind)
         if let provider = contentProvider {
-            panel.setContent(provider(kind))
+            panel.setContent(provider(kind, panel))
         }
 
         let fallback = NSScreen.main?.visibleFrame ?? .zero
-        let target = persistence.frame(for: kind) ?? WidgetPlacement.defaultFrame(size: defaultSize, on: fallback)
+        let target = persistence.frame(for: kind) ?? WidgetPlacement.defaultFrame(size: defaultSize(for: kind), on: fallback)
         let frame = WidgetPlacement.clamped(frame: target, screens: currentScreenFrames(), fallback: fallback)
 
         panel.setFrame(frame, display: true)
@@ -80,6 +99,11 @@ import SwiftUI
     func close(_ kind: WidgetKind) {
         guard let panel = panels[kind] else { return }
         persistence.setFrame(panel.frame, for: kind)
+        // Release before ordering out: a panel closed while it still holds
+        // the borrow would otherwise leave the app activated with no
+        // holder — nothing left to hand focus back on resign-key, since the
+        // panel is gone.
+        focusCoordinator?.release(panel)
         panel.orderOut(nil)
 
         open.remove(kind)
@@ -91,9 +115,17 @@ import SwiftUI
     private func panel(for kind: WidgetKind) -> WidgetPanel {
         if let existing = panels[kind] { return existing }
         let created = WidgetPanel(kind: kind)
+        created.focusCoordinator = focusCoordinator
         panels[kind] = created
         return created
     }
+
+    /// Test seam: exposes the backing panel for an already-open widget.
+    /// Production code never needs a panel reference directly — it goes
+    /// through `show`/`close`/`toggle` — but tests exercising the
+    /// coordinator handoff (e.g. close-while-holding) need one to borrow
+    /// against.
+    func existingPanel(for kind: WidgetKind) -> WidgetPanel? { panels[kind] }
 
     /// Reopens every widget the persisted open set records, clamping each
     /// remembered frame onto a live screen. Call once at launch.

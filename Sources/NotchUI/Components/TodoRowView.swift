@@ -10,6 +10,10 @@ struct TodoRowMetrics {
 
     /// Sizing used inside the notch drawer.
     static let notch = TodoRowMetrics(checkSize: 15, titleSize: 13, signalSize: 11, spacing: 10)
+
+    /// Sizing used inside a floating widget card, read at arm's length rather
+    /// than at the notch's close range.
+    static let widget = TodoRowMetrics(checkSize: 20, titleSize: 16, signalSize: 14, spacing: 13)
 }
 
 /// One row of the task checklist: the check-off button (toggles done,

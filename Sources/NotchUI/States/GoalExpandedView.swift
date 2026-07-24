@@ -4,6 +4,7 @@ import SwiftUI
 /// per-label breakdown, plus a quick-log row for the focused goal.
 struct GoalExpandedView: View {
     @ObservedObject private var store = GoalStore.shared
+    @ObservedObject private var widgets = WidgetController.shared
     let metrics: NotchMetrics
 
     @State private var amountText = ""
@@ -22,6 +23,7 @@ struct GoalExpandedView: View {
                 Text("Goals").notchSectionHeader()
                 Spacer()
                 Text("\(store.goals.count) active").font(.system(size: 11)).foregroundStyle(.white.opacity(0.5))
+                popOutButton
             }
 
             if store.goals.isEmpty {
@@ -45,6 +47,18 @@ struct GoalExpandedView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { keyFocus(true) }
         .onDisappear { keyFocus(false) }
+    }
+
+    /// Pops the Goals widget open/closed. Tinted green — matching the
+    /// progress-bar accent used elsewhere — while the widget is open.
+    private var popOutButton: some View {
+        Button { widgets.toggle(.goals) } label: {
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(widgets.isOpen(.goals) ? .green : .white.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(widgets.isOpen(.goals) ? "Close Goals widget" : "Open Goals widget")
     }
 
     private var quickLog: some View {
