@@ -48,13 +48,13 @@ final class WidgetPanel: NSPanel {
         // doc before relying on this across displays.
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
 
-        // isMovableByWindowBackground stays false (inherited from
-        // configureAsOverlayPanel()). Dragging is done by an explicit handle
-        // that calls performDrag(with:) instead, because background
-        // movability would fight the todo list's drag-to-reorder gesture —
-        // AppKit resolves overlapping drag claims via
-        // mouseDownCanMoveWindow, whose behavior inside NSHostingView
-        // content is version-dependent and historically unreliable.
+        // Drag-to-move from anywhere on the card, like a native macOS desktop
+        // widget. Excluded for Tasks: its list needs background drags for
+        // drag-to-reorder, so it keeps only the title-strip handle. Interactive
+        // controls still receive their clicks — AppKit's mouseDownCanMoveWindow
+        // returns false for NSControl-backed views, so only inert card
+        // background starts a window drag.
+        isMovableByWindowBackground = (kind != .todos)
     }
 
     /// Places the panel on the desktop — above the wallpaper and desktop icons
