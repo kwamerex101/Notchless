@@ -47,7 +47,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return MeetingSummarizer(client: client, model: model)
         })
     private var effects: EffectsController?
+    private var reveal: FullscreenRevealController?
     private lazy var trackpadFeedback = TrackpadFeedbackController(settings: model.settings)
+
+    /// Mediates key-window focus across the notch panel and any open widget
+    /// panels — see `WidgetFocusCoordinator`. One instance, shared by
+    /// `model.requestKeyFocus` (the notch) and every widget's content
+    /// wrapper (`widgetContent(for:panel:)`), so they transfer focus between
+    /// each other instead of fighting over `NSApp.activate`/`deactivate`.
+    private let widgetFocusCoordinator = WidgetFocusCoordinator()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if DEBUG
@@ -55,6 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
         NSApp.setActivationPolicy(.accessory)
         buildPanel()
+        setUpWidgets()
 
         // Permission-free services start immediately.
         media.start()
@@ -99,7 +108,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] _ in self?.updateAudioTap() }
             .store(in: &settingsObservers)
         updateAudioTap()
-        effects = EffectsController(settings: model.settings, panel: panel, model: model)
+        let reveal = FullscreenRevealController(panel: panel, settings: model.settings, model: model)
+        self.reveal = reveal
+        mouseTracker?.reveal = reveal
+        effects = EffectsController(settings: model.settings, panel: panel, model: model, reveal: reveal)
         effects?.start()
 
         // Services that trigger system permission prompts wait until the user
@@ -187,21 +199,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Let in-notch text fields borrow keyboard focus while editing. The app
         // is an accessory (no Dock icon); activating it briefly is the reliable
         // way for a non-activating panel to receive typing, and we hand focus
-        // back when editing ends.
-        model.requestKeyFocus = { [weak panel] want in
-            guard let panel else { return }
-            panel.wantsKey = want
+        // back when editing ends. Routed through the shared coordinator rather
+        // than activating/deactivating directly: with widgets able to hold key
+        // focus too, a direct NSApp.deactivate() here would steal focus back
+        // from a widget mid-transfer (see WidgetFocusCoordinator).
+        model.requestKeyFocus = { [weak self, weak panel] want in
+            guard let self, let panel else { return }
             if want {
-                NSApp.activate(ignoringOtherApps: true)
-                panel.makeKeyAndOrderFront(nil)
+                self.widgetFocusCoordinator.borrow(panel)
             } else {
-                NSApp.deactivate()
+                self.widgetFocusCoordinator.release(panel)
             }
         }
 
         let tracker = NotchMouseTracker(panel: panel, model: model, metrics: metrics)
         tracker.start()
         self.mouseTracker = tracker
+    }
+
+    /// Wires `WidgetController.shared` up with real content and reopens
+    /// whatever was open at last quit. Called after `buildPanel()` so the
+    /// notch panel — and `widgetFocusCoordinator`'s eventual notch holder —
+    /// already exist when widgets start restoring.
+    private func setUpWidgets() {
+        // Every panel `WidgetController` creates from here on borrows key
+        // focus through the same coordinator the notch uses (see
+        // `WidgetPanel.mouseDown`/`resignKey`), so transfers between the
+        // notch and a widget — or between two widgets — never fight.
+        WidgetController.shared.focusCoordinator = widgetFocusCoordinator
+        WidgetController.shared.contentProvider = { [weak self] kind, panel in
+            self?.widgetContent(for: kind, panel: panel) ?? AnyView(EmptyView())
+        }
+        WidgetController.shared.restore()
+    }
+
+    /// Builds the SwiftUI content for one widget panel. Unlike the notch's
+    /// expanded views, widgets don't negotiate focus through a SwiftUI
+    /// environment closure — `panel` already borrows/releases on its own
+    /// (see `WidgetPanel`), so `panel` itself is unused here beyond being
+    /// the seam `WidgetController` passes for future needs.
+    ///
+    /// `.meeting` has no widget view yet (phase 3, see the section-widgets
+    /// design doc) and no pop-out button reaches this case in the meantime,
+    /// so it returns an empty placeholder rather than crashing or guessing
+    /// at a layout.
+    private func widgetContent(for kind: WidgetKind, panel: WidgetPanel) -> AnyView {
+        switch kind {
+        case .todos:
+            return AnyView(TodoWidgetView())
+        case .goals:
+            return AnyView(GoalWidgetView())
+        case .meeting:
+            return AnyView(EmptyView())
+        }
     }
 
     /// Moves the panel to `screen` and refreshes its notch geometry.
@@ -215,6 +265,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         mouseTracker?.metrics = metrics
         currentScreenFrame = screen.frame
+        // Reset before refresh: fullscreen state (and the reveal band) is
+        // per-screen, so a panel moving off a fullscreen screen onto a normal
+        // one must not carry over a stale `.hidden` — reset drops it to idle
+        // before refresh() re-derives real state for the new screen.
+        reveal?.reset()
         effects?.refresh()   // fullscreen state is per-screen; re-evaluate on the new one
     }
 
