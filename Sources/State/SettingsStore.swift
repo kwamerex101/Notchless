@@ -185,6 +185,7 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Published var claudeChartCost: Bool { didSet { persist(Keys.claudeChartCost, claudeChartCost, oldValue != claudeChartCost) } }
 
     private var loading = false
+    private var protectLocallySetKeys = false
 
     init(defaults: UserDefaults = .standard, kvs: KeyValueStore = NSUbiquitousKeyValueStore.default) {
         self.defaults = defaults
@@ -357,9 +358,12 @@ final class SettingsStore: ObservableObject, StoredHost {
     /// held so the `didSet` observers don't echo the values straight back out.
     @objc private func cloudChanged(_ note: Notification) {
         guard syncViaICloud else { return }
+        let reason = note.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int
+        let initialSync = reason == NSUbiquitousKeyValueStoreInitialSyncChange
         Task { @MainActor in
             loading = true
-            defer { loading = false }
+            protectLocallySetKeys = initialSync
+            defer { loading = false; protectLocallySetKeys = false }
             // Nothing has synced yet if even the sentinel key is absent.
             guard cloud.object(forKey: Keys.launchAtLogin) != nil else { return }
 
@@ -430,15 +434,23 @@ final class SettingsStore: ObservableObject, StoredHost {
 
     // Per-key pulls that no-op when the key is absent from iCloud.
     private func pullBool(_ key: String, _ apply: (Bool) -> Void) {
+        // On the initial launch sync, never let the cloud snapshot revert a value
+        // this Mac has explicitly set — only adopt cloud for keys not set locally
+        // (a fresh install picking up your settings). Genuine remote edits arrive
+        // as ServerChange (protectLocallySetKeys == false) and always apply.
+        if protectLocallySetKeys, defaults.object(forKey: key) != nil { return }
         if cloud.object(forKey: key) != nil { apply(cloud.bool(forKey: key)) }
     }
     private func pullInt(_ key: String, _ apply: (Int) -> Void) {
+        if protectLocallySetKeys, defaults.object(forKey: key) != nil { return }
         if cloud.object(forKey: key) != nil { apply(Int(cloud.longLong(forKey: key))) }
     }
     private func pullDouble(_ key: String, _ apply: (Double) -> Void) {
+        if protectLocallySetKeys, defaults.object(forKey: key) != nil { return }
         if cloud.object(forKey: key) != nil { apply(cloud.double(forKey: key)) }
     }
     private func pullString(_ key: String, _ apply: (String) -> Void) {
+        if protectLocallySetKeys, defaults.object(forKey: key) != nil { return }
         if let s = cloud.string(forKey: key) { apply(s) }
     }
 
