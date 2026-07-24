@@ -1,0 +1,53 @@
+import SwiftUI
+
+/// Sizing for `TodoRowView` — lets the same row render at notch-drawer scale
+/// or larger inside a floating widget without duplicating the row's behavior.
+struct TodoRowMetrics {
+    var checkSize: CGFloat
+    var titleSize: CGFloat
+    var signalSize: CGFloat
+    var spacing: CGFloat
+
+    /// Sizing used inside the notch drawer.
+    static let notch = TodoRowMetrics(checkSize: 15, titleSize: 13, signalSize: 11, spacing: 10)
+}
+
+/// One row of the task checklist: the check-off button (toggles done,
+/// strike-through, symbol transition, accessibility label) plus read-only
+/// subtask/notes signals (checking/editing those happens in Settings).
+struct TodoRowView: View {
+    @ObservedObject private var store = TodoStore.shared
+    let todo: Todo
+    var metrics: TodoRowMetrics = .notch
+
+    var body: some View {
+        HStack(spacing: metrics.spacing) {
+            Button { withAnimation(NotchMotion.micro) { store.setDone(todo.id, !todo.isDone) } } label: {
+                Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: metrics.checkSize, weight: .semibold))
+                    .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(NotchButtonStyle())
+            .accessibilityLabel(todo.isDone ? "Mark incomplete" : "Complete task")
+
+            Text(todo.title)
+                .font(.system(size: metrics.titleSize))
+                .foregroundStyle(todo.isDone ? .white.opacity(0.4) : .white)
+                .strikethrough(todo.isDone, color: .white.opacity(0.5))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if todo.subtaskProgress.total > 0 {
+                Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
+                    .font(.system(size: metrics.signalSize, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.55))
+            }
+            if todo.hasNotes {
+                Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
+                    .font(.system(size: metrics.signalSize, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.55))
+            }
+        }
+    }
+}

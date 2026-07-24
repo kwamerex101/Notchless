@@ -36,7 +36,7 @@ struct TodoExpandedView: View {
             } else {
                 List {
                     ForEach(store.items) { todo in
-                        row(todo)
+                        TodoRowView(todo: todo, metrics: .notch)
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
@@ -56,38 +56,6 @@ struct TodoExpandedView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { keyFocus(true); addFocused = true }
         .onDisappear { keyFocus(false) }
-    }
-
-    private func row(_ todo: Todo) -> some View {
-        HStack(spacing: 10) {
-            Button { withAnimation(NotchMotion.micro) { store.setDone(todo.id, !todo.isDone) } } label: {
-                Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(todo.isDone ? .green : .white.opacity(0.85))
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(NotchButtonStyle())
-            .accessibilityLabel(todo.isDone ? "Mark incomplete" : "Complete task")
-
-            Text(todo.title)
-                .font(.system(size: 13))
-                .foregroundStyle(todo.isDone ? .white.opacity(0.4) : .white)
-                .strikethrough(todo.isDone, color: .white.opacity(0.5))
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Read-only signals (checking/editing happens in Settings).
-            if todo.subtaskProgress.total > 0 {
-                Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
-                    .font(.system(size: 11, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.55))
-            }
-            if todo.hasNotes {
-                Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.55))
-            }
-        }
     }
 
     private var quickAdd: some View {
