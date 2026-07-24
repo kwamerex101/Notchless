@@ -4,7 +4,7 @@
 
 <br/>
 
-[![Release](https://img.shields.io/badge/release-v1.6.0-6C63E8)](https://github.com/kwamerex101/Notchless/releases)
+[![Release](https://img.shields.io/badge/release-v1.7.3-6C63E8)](https://github.com/kwamerex101/Notchless/releases)
 [![Platform](https://img.shields.io/badge/macOS-14.0%2B-000000?logo=apple&logoColor=white)](#requirements)
 [![Swift](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![AI](https://img.shields.io/badge/AI-on--device-35C6CE)](#dictation-ported-from-a-standalone-app-fully-integrated)
@@ -43,7 +43,7 @@ notch — with an iOS-style, physics-driven feel, and the AI runs **on-device**.
 - **Calendar** — upcoming events and weather.
 - **File Tray** — drag files onto the notch to hold them, drag them back out anywhere.
 - **Todos** — a notch checklist with subtasks and free-text (URL-aware) notes; edits stay in sync between the notch and Settings.
-- **Goals** — savings goals with a target and deadline, logged contributions, a required monthly-pace calculation, and a progress ring; pin one to the notch.
+- **Goals** — savings goals with a target, deadline, and logged contributions. Each goal card leads with a progress ring, the saved amount as the headline figure, a pace verdict (ahead of / behind schedule), and the monthly amount needed to stay on track; log money with quick-add chips. Pin one to the notch.
 
 ### Dictation (ported from a standalone app, fully integrated)
 - Hold-to-talk anywhere; types into the focused app.
@@ -57,10 +57,11 @@ notch — with an iOS-style, physics-driven feel, and the AI runs **on-device**.
 
 ### System &amp; polish
 - **Follows your active display** across the built-in screen and external monitors.
-- **Stays visible over fullscreen** apps (optional).
+- **Fullscreen-aware** — auto-hides over fullscreen apps and reveals on a top-edge hover, or stays visible (your choice).
 - **Liquid Glass** theming (Clear / Tinted + intensity) on macOS 26; the primary accent follows your macOS accent colour.
 - iCloud-synced settings, launch-at-login, hide-from-screen-capture, and per-feature toggles.
 - Two-finger swipe gestures over the notch.
+- **Pop-out widgets** — float **Tasks** and **Goals** as standalone windows; keep them above everything or place them **on the desktop behind your app windows** (like native macOS desktop widgets), and drag them anywhere.
 
 ## Requirements
 
