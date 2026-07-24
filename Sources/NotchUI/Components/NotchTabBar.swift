@@ -18,6 +18,14 @@ struct NotchTabBar: View {
     /// Reserved height of the strip. Spec §2 "Wings tab strip".
     static let height: CGFloat = 32
 
+    /// The panel must be at least this wide for the strip to clear the centred
+    /// hardware notch: the left window (leading pad + three glyph buttons + gaps)
+    /// and the right battery each need a wing beside the cutout.
+    static func minPanelWidth(notchWidth: CGFloat) -> CGFloat {
+        let wing: CGFloat = 14 + (3 * 18) + (2 * 12) + 8   // pad + 3 glyphs + 2 gaps + margin = 100
+        return notchWidth + wing * 2
+    }
+
     /// Up to three pages centred on the active one — [prev, active, next],
     /// wrapping around the carousel. Shows all when there are three or fewer.
     private var window: [NotchActivity] {

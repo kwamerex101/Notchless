@@ -2,6 +2,29 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.7.0] — 2026-07-24
+
+### Changed
+- **Flat dark redesign.** The whole notch UI and the Settings window move to a
+  flat, tinted-dark language: one opaque surface, a hairline edge, and
+  monochrome white content, with colour kept for meaning (charge, alert, done).
+  No more glass, glow, or gradients.
+- **Settings window.** Rebuilt dark end to end — a monochrome sidebar
+  (selection is the only highlight), flat grouped cards, and a consistent set
+  of controls (switches, sliders, menus, segmented pickers, chip grids).
+
+### Added
+- **Notch surface tint.** Pick the notch's tint — Graphite, Blue, Purple,
+  Green, or Black — in Settings › General › Theme; it applies across every
+  state.
+- **Two-line notifications.** The charging banner shows time-to-full, and a
+  connected-but-no-route network state now reads "connected without
+  internet".
+
+### Fixed
+- Expanded panels now hold a minimum width so the tab strip stays clear of
+  the hardware notch on narrower panels (Meeting, Privacy, Timer, Battery).
+
 ## [1.6.0] — 2026-07-13
 
 ### Added

@@ -17,24 +17,24 @@ final class GoalPacePresentationTests: XCTestCase {
     func test_onTrack() {
         let g = goal(50_000)
         XCTAssertEqual(GoalPacePresentation.label(for: g, now: days(50), symbol: "₵"), "On track")
-        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), .white.opacity(0.6))
+        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), NotchTheme.positive)
     }
 
     func test_ahead() {
         let g = goal(53_000)
         XCTAssertEqual(GoalPacePresentation.label(for: g, now: days(50), symbol: "₵"), "Ahead 3k ₵")
-        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), .green)
+        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), NotchTheme.positive)
     }
 
     func test_behind() {
         let g = goal(40_000)
         XCTAssertEqual(GoalPacePresentation.label(for: g, now: days(50), symbol: "₵"), "Behind 10k ₵")
-        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), .orange)
+        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(50)), NotchTheme.warning)
     }
 
     func test_overdue() {
         let g = goal(90_000)
         XCTAssertEqual(GoalPacePresentation.label(for: g, now: days(101), symbol: "₵"), "Overdue")
-        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(101)), .red)
+        XCTAssertEqual(GoalPacePresentation.color(for: g, now: days(101)), NotchTheme.warning)
     }
 }

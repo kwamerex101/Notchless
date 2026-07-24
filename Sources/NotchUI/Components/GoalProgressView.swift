@@ -42,26 +42,26 @@ struct GoalProgressView: View {
         VStack(alignment: .leading, spacing: metrics.spacing) {
             HStack {
                 if goal.id == store.pinnedID {
-                    Image(systemName: "pin.fill").font(.system(size: metrics.pinIndicatorSize)).foregroundStyle(.red)
+                    Image(systemName: "pin.fill").font(.system(size: metrics.pinIndicatorSize)).foregroundStyle(NotchTheme.recording)
                 }
-                Text(goal.name).font(.system(size: metrics.nameSize, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
+                Text(goal.name).font(.system(size: metrics.nameSize, weight: .semibold)).foregroundStyle(NotchTheme.textPrimary).lineLimit(1)
                 Spacer()
                 Button { store.setPinned(goal.id) } label: {
                     Image(systemName: goal.id == store.pinnedID ? "pin.fill" : "pin")
                         .font(.system(size: metrics.pinButtonSize))
-                        .foregroundStyle(goal.id == store.pinnedID ? .red : .white.opacity(0.6))
+                        .foregroundStyle(goal.id == store.pinnedID ? NotchTheme.recording : NotchTheme.textSecondary)
                 }.buttonStyle(.plain)
             }
             ProgressView(value: goal.fraction)
-                .tint(.green)
+                .tint(NotchTheme.positive)
                 .animation(NotchMotion.fill, value: goal.fraction)
             HStack(spacing: 6) {
                 Text("\(goalFormatAmount(goal.current, symbol: symbol)) / \(goalFormatAmount(goal.target, symbol: symbol))")
-                    .font(.system(size: metrics.amountSize)).foregroundStyle(.white.opacity(0.6))
+                    .font(.system(size: metrics.amountSize)).foregroundStyle(NotchTheme.textSecondary)
                     .lineLimit(1).minimumScaleFactor(0.75)
                 Text("\(goal.percent)%")
                     .font(.system(size: metrics.percentSize, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(GoalCompactView.lightGreen)
+                    .foregroundStyle(NotchTheme.positive)
                 Spacer()
                 Text(GoalPacePresentation.label(for: goal, now: now, symbol: symbol))
                     .font(.system(size: metrics.paceSize, weight: .medium))
@@ -69,24 +69,24 @@ struct GoalProgressView: View {
             }
             HStack {
                 Text("Ends \(goalFormatDate(goal.deadline))")
-                    .font(.system(size: metrics.metaSize)).foregroundStyle(.white.opacity(0.45))
+                    .font(.system(size: metrics.metaSize)).foregroundStyle(NotchTheme.textTertiary)
                 Spacer()
                 if let need = goal.neededPerMonth(now: now) {
                     Text("Need \(goalFormatAmount(need, symbol: symbol))/mo")
-                        .font(.system(size: metrics.metaSize, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                        .font(.system(size: metrics.metaSize, weight: .medium)).foregroundStyle(NotchTheme.textSecondary)
                 }
             }
             if !goal.breakdown.isEmpty {
                 ForEach(goal.breakdown, id: \.label) { item in
                     HStack {
-                        Text(item.label).font(.system(size: metrics.breakdownSize)).foregroundStyle(.white.opacity(0.5))
+                        Text(item.label).font(.system(size: metrics.breakdownSize)).foregroundStyle(NotchTheme.textSecondary)
                         Spacer()
-                        Text(goalFormatAmount(item.total, symbol: symbol)).font(.system(size: metrics.breakdownSize)).foregroundStyle(.white.opacity(0.5))
+                        Text(goalFormatAmount(item.total, symbol: symbol)).font(.system(size: metrics.breakdownSize)).foregroundStyle(NotchTheme.textSecondary)
                     }
                 }
             }
         }
         .padding(metrics.padding)
-        .background(RoundedRectangle(cornerRadius: metrics.cornerRadius).fill(Color.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: metrics.cornerRadius).fill(NotchTheme.inset))
     }
 }

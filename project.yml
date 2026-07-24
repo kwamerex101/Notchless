@@ -20,8 +20,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"          # Phase 1 uses Swift 5 language mode; flip to 6 during hardening
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    MARKETING_VERSION: "1.6.0"
-    CURRENT_PROJECT_VERSION: "13"
+    MARKETING_VERSION: "1.7.0"
+    CURRENT_PROJECT_VERSION: "14"
 
 targets:
   Notchless:

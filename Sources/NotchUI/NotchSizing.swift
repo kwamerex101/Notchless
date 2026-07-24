@@ -128,35 +128,48 @@ struct NotchSizing: Equatable {
             }
 
         case let .expanded(activity):
+            let sizing: NotchSizing
             switch activity {
             case .playing, .none, .auto:
-                return NotchSizing(width: max(w + 40, 480), height: 178, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 480), height: 178, topRadius: 10, bottomRadius: 24)
             case .calendar:
-                return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .duo:
-                return NotchSizing(width: max(w + 40, 540), height: 158, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 540), height: 158, topRadius: 10, bottomRadius: 24)
             case .dictation:
-                return NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
             case .battery:
-                return NotchSizing(width: max(w + 40, 360), height: 110, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 360), height: 110, topRadius: 10, bottomRadius: 24)
             case .stats:
-                return NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
             case .timer:
-                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             case .clipboard:
-                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             case .todos:
-                return NotchSizing(width: max(w + 40, 420), height: 210, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 210, topRadius: 10, bottomRadius: 24)
             case .privacy:
-                return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:
-                return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .goals:
                 // Placeholder sizing until Task 7 ships the real expanded view.
-                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             case .meeting:
-                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             }
+
+            // The tab strip's left window (3 glyphs) and right battery sit in
+            // the wings beside the centred hardware notch. On narrower panels
+            // those wings can collide with the cutout, so floor the width —
+            // but only when the strip is actually shown (`showTabBar`).
+            let showStrip = MainActor.assumeIsolated { SettingsStore.shared.showTabBar }
+            let minWidth = NotchTabBar.minPanelWidth(notchWidth: w)
+            if showStrip, sizing.width < minWidth {
+                return NotchSizing(width: minWidth, height: sizing.height,
+                                   topRadius: sizing.topRadius, bottomRadius: sizing.bottomRadius)
+            }
+            return sizing
         }
     }
 }
