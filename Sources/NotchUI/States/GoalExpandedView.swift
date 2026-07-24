@@ -4,6 +4,7 @@ import SwiftUI
 /// per-label breakdown, plus a quick-log row for the focused goal.
 struct GoalExpandedView: View {
     @ObservedObject private var store = GoalStore.shared
+    @ObservedObject private var widgets = WidgetController.shared
     let metrics: NotchMetrics
 
     @State private var amountText = ""
@@ -22,6 +23,7 @@ struct GoalExpandedView: View {
                 Text("Goals").notchSectionHeader()
                 Spacer()
                 Text("\(store.goals.count) active").font(.system(size: 11)).foregroundStyle(.white.opacity(0.5))
+                popOutButton
             }
 
             if store.goals.isEmpty {
@@ -31,7 +33,9 @@ struct GoalExpandedView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 8) {
-                        ForEach(store.goals) { goal in row(goal) }
+                        ForEach(store.goals) { goal in
+                            GoalProgressView(goal: goal, metrics: .notch, symbol: symbol)
+                        }
                     }
                 }
                 quickLog
@@ -45,54 +49,16 @@ struct GoalExpandedView: View {
         .onDisappear { keyFocus(false) }
     }
 
-    private func row(_ goal: Goal) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack {
-                if goal.id == store.pinnedID {
-                    Image(systemName: "pin.fill").font(.system(size: 9)).foregroundStyle(.red)
-                }
-                Text(goal.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
-                Spacer()
-                Button { store.setPinned(goal.id) } label: {
-                    Image(systemName: goal.id == store.pinnedID ? "pin.fill" : "pin")
-                        .font(.system(size: 10))
-                        .foregroundStyle(goal.id == store.pinnedID ? .red : .white.opacity(0.6))
-                }.buttonStyle(.plain)
-            }
-            ProgressView(value: goal.fraction)
-                .tint(.green)
-                .animation(NotchMotion.fill, value: goal.fraction)
-            HStack(spacing: 6) {
-                Text("\(goalFormatAmount(goal.current, symbol: symbol)) / \(goalFormatAmount(goal.target, symbol: symbol))")
-                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1).minimumScaleFactor(0.75)
-                Text("\(goal.percent)%")
-                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(GoalCompactView.lightGreen)
-                Spacer()
-                Text(paceLabel(goal)).font(.system(size: 10, weight: .medium)).foregroundStyle(paceColor(goal))
-            }
-            HStack {
-                Text("Ends \(goalFormatDate(goal.deadline))")
-                    .font(.system(size: 9)).foregroundStyle(.white.opacity(0.45))
-                Spacer()
-                if let need = goal.neededPerMonth(now: Date()) {
-                    Text("Need \(goalFormatAmount(need, symbol: symbol))/mo")
-                        .font(.system(size: 9, weight: .medium)).foregroundStyle(.white.opacity(0.6))
-                }
-            }
-            if !goal.breakdown.isEmpty {
-                ForEach(goal.breakdown, id: \.label) { item in
-                    HStack {
-                        Text(item.label).font(.system(size: 10)).foregroundStyle(.white.opacity(0.5))
-                        Spacer()
-                        Text(goalFormatAmount(item.total, symbol: symbol)).font(.system(size: 10)).foregroundStyle(.white.opacity(0.5))
-                    }
-                }
-            }
+    /// Pops the Goals widget open/closed. Tinted green — matching the
+    /// progress-bar accent used elsewhere — while the widget is open.
+    private var popOutButton: some View {
+        Button { widgets.toggle(.goals) } label: {
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(widgets.isOpen(.goals) ? .green : .white.opacity(0.5))
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)))
+        .buttonStyle(.plain)
+        .accessibilityLabel(widgets.isOpen(.goals) ? "Close Goals widget" : "Open Goals widget")
     }
 
     private var quickLog: some View {
@@ -117,23 +83,5 @@ struct GoalExpandedView: View {
               !labelText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         withAnimation(NotchMotion.fill) { _ = store.logContribution(goalID: goal.id, amount: amount, label: labelText) }
         amountText = ""; labelText = ""
-    }
-
-    private func paceLabel(_ g: Goal) -> String {
-        switch g.pace(now: Date()) {
-        case .onTrack: return "On track"
-        case .ahead(let d): return "Ahead \(goalAbbreviate(d, symbol: symbol))"
-        case .behind(let d): return "Behind \(goalAbbreviate(d, symbol: symbol))"
-        case .overdue: return "Overdue"
-        }
-    }
-
-    private func paceColor(_ g: Goal) -> Color {
-        switch g.pace(now: Date()) {
-        case .onTrack: return .white.opacity(0.6)
-        case .ahead: return .green
-        case .behind: return .orange
-        case .overdue: return .red
-        }
     }
 }

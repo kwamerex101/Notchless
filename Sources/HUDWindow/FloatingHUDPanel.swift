@@ -17,17 +17,7 @@ final class FloatingHUDPanel: NSPanel {
             defer: false
         )
 
-        isFloatingPanel = true
-        level = .statusBar
-        backgroundColor = .clear
-        isOpaque = false
-        hasShadow = false
-        ignoresMouseEvents = true
-        acceptsMouseMovedEvents = true
-        isMovableByWindowBackground = false
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        configureAsOverlayPanel()
     }
 
     override var canBecomeKey: Bool { false }

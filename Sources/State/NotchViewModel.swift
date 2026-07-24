@@ -13,6 +13,11 @@ final class NotchViewModel: ObservableObject {
     /// Set by EffectsController; drives the collapse-to-bare-in-fullscreen rest.
     @Published var fullscreenActive = false
 
+    /// Set by FullscreenRevealController; true while the notch is revealed
+    /// over a fullscreen app. Suppresses the bare-rest override below so the
+    /// resting activity is what actually appears while revealed.
+    @Published var revealActive = false
+
     // Transient / top priority
     @Published var hud: HUDKind?
     @Published var notification: TransientNotification?
@@ -120,7 +125,9 @@ final class NotchViewModel: ObservableObject {
         // In fullscreen the menu bar is gone and window content reaches the top
         // edge, so resting wings would sit on top of it. Rest bare — the physical
         // cutout covers nothing — until the user hovers; transients above still show.
-        if settings.collapseInFullscreen, fullscreenActive, interaction == .collapsed {
+        // Suppressed while revealed: the edge-reveal hover would otherwise fade in
+        // a panel with nothing in it.
+        if settings.collapseInFullscreen, fullscreenActive, interaction == .collapsed, !revealActive {
             return .bare
         }
 
