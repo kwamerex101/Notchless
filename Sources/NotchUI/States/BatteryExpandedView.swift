@@ -6,6 +6,19 @@ struct BatteryExpandedView: View {
     let metrics: NotchMetrics
 
     var body: some View {
+        VStack(spacing: 0) {
+            // Fixed clearance for the wings strip — not part of the centred
+            // content, so the ring+text row below balances in what remains.
+            Color.clear.frame(height: metrics.notchHeight + 4)
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }
+        .padding(.horizontal, 30)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var content: some View {
         HStack(spacing: 16) {
             ring
             VStack(alignment: .leading, spacing: 4) {
@@ -21,10 +34,6 @@ struct BatteryExpandedView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 30)
-        .padding(.bottom, 16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var level: Double { Double(battery?.level ?? 0) / 100 }
@@ -44,14 +53,14 @@ struct BatteryExpandedView: View {
 
     private var ring: some View {
         Circle()
-            .stroke(NotchTheme.ringTrack, lineWidth: 7)
+            .stroke(NotchTheme.ringTrack, lineWidth: 6)
             .overlay(
                 Circle()
                     .trim(from: 0, to: level)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(NotchMotion.fill, value: level)
             )
-            .frame(width: 64, height: 64)
+            .frame(width: 46, height: 46)
     }
 }
