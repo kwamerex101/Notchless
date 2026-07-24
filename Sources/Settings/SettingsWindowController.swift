@@ -18,10 +18,16 @@ final class SettingsWindowController {
         let hosting = NSHostingController(rootView: SettingsView(settings: .shared, meeting: meeting))
         let window = NSWindow(contentViewController: hosting)
         window.title = "Notchless Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable]
-        // Native chrome: standard titlebar, and follow the system light/dark
-        // appearance instead of forcing a custom dark theme.
-        window.setContentSize(NSSize(width: 720, height: 560))
+        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+        // Flat-dark is a dark-only design (docs/flat-dark-spec.md §5) — force
+        // .darkAqua rather than following the system light/dark appearance.
+        // Traffic lights sit inside the dark sidebar, so the titlebar is
+        // transparent and its title hidden; the sidebar draws its own
+        // top padding to make room for them (spec §5 sidebar).
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.setContentSize(NSSize(width: 880, height: 620))
         window.isReleasedWhenClosed = false
         window.center()
         window.makeKeyAndOrderFront(nil)

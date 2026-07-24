@@ -16,7 +16,7 @@ struct TodoRowEditor: View {
             VStack(alignment: .leading, spacing: 8) {
                 subtaskList(todo)
                 addSubtaskField
-                Divider()
+                CardDivider()
                 notesSection(todo)
             }
             .padding(.leading, 8)
@@ -29,55 +29,50 @@ struct TodoRowEditor: View {
             HStack(spacing: 8) {
                 Button { store.toggleSubtask(sub.id, in: todoID) } label: {
                     Image(systemName: sub.isDone ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(sub.isDone ? .green : .secondary)
+                        .foregroundStyle(sub.isDone ? SettingsTheme.statusGranted : SettingsTheme.textSecondary)
                 }.buttonStyle(.plain)
 
-                TextField("Subtask", text: subtaskBinding(sub))
-                    .textFieldStyle(.plain)
+                FlatTextField(placeholder: "Subtask", text: subtaskBinding(sub))
                     .strikethrough(sub.isDone)
-                    .foregroundStyle(sub.isDone ? .secondary : .primary)
-
-                Spacer()
+                    .opacity(sub.isDone ? 0.6 : 1)
 
                 // Up/down reorder (a CardGroup VStack isn't a reorderable List;
                 // buttons call the same moveSubtask the store exposes).
                 Button { move(index, by: -1, in: todo) } label: {
                     Image(systemName: "chevron.up")
-                }.buttonStyle(.plain).disabled(index == 0).foregroundStyle(.secondary)
+                }.buttonStyle(.plain).disabled(index == 0).foregroundStyle(SettingsTheme.textSecondary)
                 Button { move(index, by: 1, in: todo) } label: {
                     Image(systemName: "chevron.down")
-                }.buttonStyle(.plain).disabled(index == todo.subtasks.count - 1).foregroundStyle(.secondary)
+                }.buttonStyle(.plain).disabled(index == todo.subtasks.count - 1).foregroundStyle(SettingsTheme.textSecondary)
 
                 Button { store.removeSubtask(sub.id, from: todoID) } label: {
-                    Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                    Image(systemName: "minus.circle.fill").foregroundStyle(SettingsTheme.textSecondary)
                 }.buttonStyle(.plain)
             }
-            .font(.callout)
+            .font(.system(size: 13))
         }
     }
 
     private var addSubtaskField: some View {
         HStack(spacing: 8) {
-            Image(systemName: "plus.circle").foregroundStyle(.secondary)
-            TextField("Add subtask…", text: $newSubtask)
-                .textFieldStyle(.plain)
-                .onSubmit {
-                    store.addSubtask(to: todoID, title: newSubtask)
-                    newSubtask = ""
-                }
+            Image(systemName: "plus.circle").foregroundStyle(SettingsTheme.textSecondary)
+            FlatTextField(placeholder: "Add subtask…", text: $newSubtask) {
+                store.addSubtask(to: todoID, title: newSubtask)
+                newSubtask = ""
+            }
         }
-        .font(.callout)
     }
 
     private func notesSection(_ todo: Todo) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Notes").font(.caption).foregroundStyle(.secondary)
+            Text("Notes").font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
             TextEditor(text: notesBinding)
-                .font(.callout)
+                .font(.system(size: 13))
+                .foregroundStyle(SettingsTheme.text)
                 .frame(minHeight: 54)
                 .scrollContentBackground(.hidden)
                 .padding(6)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.08)))
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.insetField))
 
             let links = LinkDetector.links(in: todo.notes)
             if !links.isEmpty {
@@ -88,10 +83,11 @@ struct TodoRowEditor: View {
                     ForEach(links, id: \.url) { link in
                         Button { NSWorkspace.shared.open(link.url) } label: {
                             Label(link.domain, systemImage: "link")
-                                .font(.caption)
+                                .font(.system(size: 11))
+                                .foregroundStyle(SettingsTheme.text)
                                 .lineLimit(1)
                                 .padding(.horizontal, 8).padding(.vertical, 4)
-                                .background(Capsule().fill(Color.secondary.opacity(0.15)))
+                                .background(Capsule().fill(SettingsTheme.controlChip))
                         }.buttonStyle(.plain)
                     }
                 }

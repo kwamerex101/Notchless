@@ -11,26 +11,23 @@ struct TodosPane: View {
     @State private var expanded: Set<UUID> = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 13) {
             PaneHeader(section: .tasks)
 
             SectionLabel("Notch")
             CardGroup {
                 ToggleRow(title: "Show tasks in the notch", isOn: $settings.todosEnabled)
             }
-            Text("Your next task rests in the notch when you have open tasks, and disappears when the list is clear. Check tasks off or add new ones from the notch, or manage the full list here.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Footnote("Your next task rests in the notch when you have open tasks, and disappears when the list is clear. Check tasks off or add new ones from the notch, or manage the full list here.")
 
             SectionLabel("Tasks")
             CardGroup {
                 HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill").foregroundStyle(.secondary)
-                    TextField("Add a task…", text: $newTitle)
-                        .textFieldStyle(.plain)
-                        .onSubmit(addTask)
+                    Image(systemName: "plus.circle.fill").foregroundStyle(SettingsTheme.textSecondary)
+                    FlatTextField(placeholder: "Add a task…", text: $newTitle, onSubmit: addTask)
                 }
                 if !store.items.isEmpty {
-                    Divider()
+                    CardDivider()
                     // Add / rename / delete here; drag-to-reorder is the notch's
                     // expanded list (a CardGroup isn't a reorderable List, and
                     // order = priority is most useful right where you glance at it).
@@ -39,43 +36,45 @@ struct TodosPane: View {
                             HStack(spacing: 8) {
                                 Button { toggleExpanded(todo.id) } label: {
                                     Image(systemName: expanded.contains(todo.id) ? "chevron.down" : "chevron.right")
-                                        .font(.caption).foregroundStyle(.secondary).frame(width: 12)
+                                        .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary).frame(width: 12)
                                 }.buttonStyle(.plain)
 
-                                TextField("Task", text: binding(for: todo))
-                                    .textFieldStyle(.plain)
-                                Spacer()
+                                FlatTextField(placeholder: "Task", text: binding(for: todo))
 
                                 if todo.subtaskProgress.total > 0 {
                                     Text("\(todo.subtaskProgress.done)/\(todo.subtaskProgress.total)")
-                                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                                        .font(.system(size: 11).monospacedDigit()).foregroundStyle(SettingsTheme.textSecondary)
                                 }
                                 if todo.hasNotes {
                                     Image(systemName: LinkDetector.links(in: todo.notes).isEmpty ? "note.text" : "link")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.system(size: 11)).foregroundStyle(SettingsTheme.textSecondary)
                                 }
                                 Button {
                                     store.remove(todo.id)
                                 } label: {
-                                    Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                                    Image(systemName: "minus.circle.fill").foregroundStyle(SettingsTheme.textSecondary)
                                 }.buttonStyle(.plain)
                             }
                             if expanded.contains(todo.id) {
                                 TodoRowEditor(todoID: todo.id)
                             }
                         }
-                        if todo.id != store.items.last?.id { Divider() }
+                        if todo.id != store.items.last?.id { CardDivider() }
                     }
                 }
             }
 
             if !store.items.isEmpty {
-                Button("Clear all tasks", role: .destructive) { confirmClear = true }
-                    .buttonStyle(.link)
-                    .confirmationDialog("Clear all tasks?", isPresented: $confirmClear) {
-                        Button("Clear all", role: .destructive) { store.clear() }
-                        Button("Cancel", role: .cancel) {}
-                    }
+                Button { confirmClear = true } label: {
+                    Text("Clear all tasks")
+                        .font(.system(size: 11))
+                        .foregroundStyle(SettingsTheme.destructiveText)
+                }
+                .buttonStyle(.plain)
+                .confirmationDialog("Clear all tasks?", isPresented: $confirmClear) {
+                    Button("Clear all", role: .destructive) { store.clear() }
+                    Button("Cancel", role: .cancel) {}
+                }
             }
             Spacer()
         }

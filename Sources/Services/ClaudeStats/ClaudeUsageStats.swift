@@ -62,10 +62,11 @@ struct ClaudeUsageStats: Equatable {
         return "$" + (f.string(from: NSNumber(value: v)) ?? String(format: "%.2f", v))
     }
 
-    /// Compact amount for the tiny notch cue, e.g. "$2.2K", "$8.30".
+    /// Compact amount for the tiny notch cue, e.g. "$5.5k", "$590", "$8.30".
     static func moneyCompact(_ v: Double) -> String {
-        if v >= 10_000 { return String(format: "$%.0fK", v / 1_000) }
-        if v >= 1_000 { return String(format: "$%.1fK", v / 1_000) }
+        if v >= 10_000 { return String(format: "$%.0fk", v / 1_000) }
+        if v >= 1_000 { return String(format: "$%.1fk", v / 1_000) }
+        if v >= 10 { return String(format: "$%.0f", v) }
         return String(format: "$%.2f", v)
     }
 

@@ -7,51 +7,48 @@ struct ModesTab: View {
     @State private var editingMode: Mode?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 13) {
             SectionLabel("Modes")
-            Text("Presets that override your dictation settings — a custom instruction, output, and formatting — chosen automatically by app or pinned from the notch menu.")
-                .font(.caption).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Footnote("Presets that override your dictation settings — a custom instruction, output, and formatting — chosen automatically by app or pinned from the notch menu.")
 
             CardGroup {
                 ForEach(store.modes) { mode in
                     HStack(spacing: 10) {
-                        Image(systemName: mode.systemImage).frame(width: 20).foregroundStyle(.secondary)
+                        Image(systemName: mode.systemImage).frame(width: 20).foregroundStyle(SettingsTheme.textSecondary)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(mode.name)
+                            Text(mode.name).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                             if !mode.boundBundleIDs.isEmpty {
                                 Text("^[\(mode.boundBundleIDs.count) app](inflect: true)")
-                                    .font(.caption2).foregroundStyle(.secondary)
+                                    .font(.system(size: 10)).foregroundStyle(SettingsTheme.textTertiary)
                             }
                         }
                         Spacer()
                         if mode.id != Mode.defaultID {
-                            Toggle("", isOn: enabledBinding(mode)).labelsHidden().toggleStyle(.switch).tint(.green)
+                            FlatSwitch(isOn: enabledBinding(mode), label: "\(mode.name) enabled")
                         }
                         let idx = store.modes.firstIndex(of: mode) ?? 0
                         Button { store.move(from: IndexSet(integer: idx), to: idx - 1) } label: {
-                            Image(systemName: "chevron.up").foregroundStyle(.secondary)
+                            Image(systemName: "chevron.up").foregroundStyle(SettingsTheme.textSecondary)
                         }.buttonStyle(.plain).disabled(idx == 0)
                         Button { store.move(from: IndexSet(integer: idx), to: idx + 2) } label: {
-                            Image(systemName: "chevron.down").foregroundStyle(.secondary)
+                            Image(systemName: "chevron.down").foregroundStyle(SettingsTheme.textSecondary)
                         }.buttonStyle(.plain).disabled(idx >= store.modes.count - 1)
                         Button { editingMode = mode } label: {
-                            Image(systemName: "pencil").foregroundStyle(.secondary)
+                            Image(systemName: "pencil").foregroundStyle(SettingsTheme.textSecondary)
                         }.buttonStyle(.plain)
                         if mode.id != Mode.defaultID {
                             Button { store.delete(mode) } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(SettingsTheme.textSecondary)
                             }.buttonStyle(.plain)
                         }
                     }
-                    if mode.id != store.modes.last?.id { Divider() }
+                    if mode.id != store.modes.last?.id { CardDivider() }
                 }
             }
 
-            Button {
+            FlatButton(title: "Add Mode") {
                 editingMode = Mode(name: "New Mode", systemImage: "wand.and.stars")
-            } label: { Label("Add Mode", systemImage: "plus") }
-                .buttonStyle(.link)
+            }
         }
         .sheet(item: $editingMode) { mode in
             ModeEditorSheet(mode: mode)   // defined in Task 7

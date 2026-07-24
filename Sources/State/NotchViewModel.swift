@@ -113,8 +113,12 @@ final class NotchViewModel: ObservableObject {
 
     // MARK: - Resolved presentation
 
+    /// Debug-only: forces `content` for the `--dump-states` render harness.
+    @Published var debugContentOverride: NotchContent?
+
     /// The single content the notch should render right now.
     var content: NotchContent {
+        if let debugContentOverride { return debugContentOverride }
         if let hud { return .hud(hud) }
         if let dictation { return .dictation(dictation) }
         if let notification { return .notification(notification) }

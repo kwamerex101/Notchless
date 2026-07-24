@@ -58,6 +58,7 @@ final class SettingsStore: ObservableObject, StoredHost {
     // Appearance
     @Published var glassStyle: GlassStyle { didSet { persist(Keys.glassStyle, glassStyle.rawValue, oldValue != glassStyle) } }
     @Published var glassIntensity: Double { didSet { persist(Keys.glassIntensity, glassIntensity, oldValue != glassIntensity) } }
+    @Published var notchTint: NotchTint { didSet { persist(Keys.notchTint, notchTint.rawValue, oldValue != notchTint) } }
 
     // Behaviour
     @Published var progressiveBlur: Bool { didSet { persist(Keys.progressiveBlur, progressiveBlur, oldValue != progressiveBlur) } }
@@ -145,9 +146,9 @@ final class SettingsStore: ObservableObject, StoredHost {
     @Published var swipeToSeek: Bool { didSet { persist(Keys.swipeToSeek, swipeToSeek, oldValue != swipeToSeek) } }
     @Published var swipeGesturesEnabled: Bool { didSet { persist(Keys.swipeGesturesEnabled, swipeGesturesEnabled, oldValue != swipeGesturesEnabled) } }
     @Published var showTabBar: Bool { didSet { persist(Keys.showTabBar, showTabBar, oldValue != showTabBar) } }
-    /// MediaMate parity: transport row button configuration. Defaults
-    /// reproduce the current fixed row (shuffle, previous, play/pause, next).
-    @Stored("npShowShuffle", default: true) var npShowShuffle: Bool
+    /// MediaMate parity: transport row button configuration. Flat-dark spec
+    /// §5 "Now Playing" pane lists shuffle as off by default.
+    @Stored("npShowShuffle", default: false) var npShowShuffle: Bool
     @Stored("npShowSkip15", default: false) var npShowSkip15: Bool
     /// MediaMate parity: restrict the Now Playing widget to specific apps.
     /// `.systemWide` (default) shows every app — no behavior change.
@@ -202,11 +203,12 @@ final class SettingsStore: ObservableObject, StoredHost {
             Keys.idleActivity: NotchActivity.auto.rawValue,
             Keys.glassStyle: GlassStyle.clear.rawValue,
             Keys.glassIntensity: 0.5,
+            Keys.notchTint: NotchTint.graphite.rawValue,
             Keys.idleMostRecent: false,
             Keys.forceEnableActivity: true,
             Keys.progressiveBlur: true,
             Keys.hapticFeedback: false,
-            Keys.albumArtGlow: true,
+            Keys.albumArtGlow: false,
             Keys.trackpadFeedbackEnabled: false,
             Keys.trackpadHapticsEnabled: true,
             Keys.trackpadSoundEnabled: true,
@@ -268,6 +270,7 @@ final class SettingsStore: ObservableObject, StoredHost {
         idleActivity = NotchActivity(rawValue: defaults.string(forKey: Keys.idleActivity) ?? "") ?? .playing
         glassStyle = GlassStyle(rawValue: defaults.string(forKey: Keys.glassStyle) ?? "") ?? .clear
         glassIntensity = defaults.double(forKey: Keys.glassIntensity)
+        notchTint = NotchTint(rawValue: defaults.string(forKey: Keys.notchTint) ?? "") ?? .graphite
         idleMostRecent = defaults.bool(forKey: Keys.idleMostRecent)
         forceEnableActivity = defaults.bool(forKey: Keys.forceEnableActivity)
         progressiveBlur = defaults.bool(forKey: Keys.progressiveBlur)
@@ -375,6 +378,7 @@ final class SettingsStore: ObservableObject, StoredHost {
             pullString(Keys.idleActivity) { idleActivity = NotchActivity(rawValue: $0) ?? idleActivity }
             pullString(Keys.glassStyle) { glassStyle = GlassStyle(rawValue: $0) ?? glassStyle }
             pullDouble(Keys.glassIntensity) { glassIntensity = $0 }
+            pullString(Keys.notchTint) { notchTint = NotchTint(rawValue: $0) ?? notchTint }
             pullBool(Keys.idleMostRecent) { idleMostRecent = $0 }
             pullBool(Keys.forceEnableActivity) { forceEnableActivity = $0 }
             pullBool(Keys.progressiveBlur) { progressiveBlur = $0 }
@@ -450,6 +454,7 @@ final class SettingsStore: ObservableObject, StoredHost {
         static let idleActivity = "idleActivity"
         static let glassStyle = "glassStyle"
         static let glassIntensity = "glassIntensity"
+        static let notchTint = "notchTint"
         static let idleMostRecent = "idleMostRecent"
         static let forceEnableActivity = "forceEnableActivity"
         static let progressiveBlur = "progressiveBlur"

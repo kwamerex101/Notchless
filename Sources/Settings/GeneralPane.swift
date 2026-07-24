@@ -5,25 +5,25 @@ struct GeneralPane: View {
     @ObservedObject var settings: SettingsStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 13) {
             PaneHeader(section: .general)
 
             // Core toggles
             CardGroup {
                 ToggleRow(title: "Launch at login", isOn: $settings.launchAtLogin)
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Sync settings via iCloud", isOn: $settings.syncViaICloud)
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Hide in fullscreen", isOn: $settings.hideInFullscreen)
                 if !settings.hideInFullscreen {
-                    Divider()
+                    CardDivider()
                     ToggleRow(title: "Collapse activities in fullscreen", isOn: $settings.collapseInFullscreen)
                 }
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Hide in mission control", isOn: $settings.hideInMissionControl)
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Hide from screen capture", isOn: $settings.hideFromScreenCapture)
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Force simulated notch", isOn: $settings.forceSimulatedNotch)
                 SegmentedCards(
                     options: SimulatedDisplay.allCases,
@@ -31,52 +31,39 @@ struct GeneralPane: View {
                     title: { $0.title },
                     systemImage: { $0.systemImage }
                 )
-                .padding(.top, 4)
             }
 
             // Idle activity
             SectionLabel("Idle Activity")
             CardGroup {
-                ToggleRow(title: "Most Recent", isOn: $settings.idleMostRecent, systemImage: "clock")
+                ToggleRow(title: "Most Recent", isOn: $settings.idleMostRecent)
                 SegmentedCards(
                     options: NotchActivity.allCases.filter { $0 != .privacy && $0 != .meeting },
                     selection: $settings.idleActivity,
                     title: { $0.pickerTitle },
                     systemImage: { $0.pickerImage }
                 )
-                .padding(.top, 4)
                 if settings.idleActivity == .duo {
-                    Divider()
+                    CardDivider()
                     ToggleRow(title: "Force enable activity", isOn: $settings.forceEnableActivity)
                 }
             }
 
-            // Appearance
-            SectionLabel("Liquid Glass")
+            // Theme — the notch surface tint picker
+            SectionLabel("Theme")
             CardGroup {
-                SegmentedCards(
-                    options: GlassStyle.allCases,
-                    selection: $settings.glassStyle,
-                    title: { $0.title },
-                    systemImage: { $0 == .clear ? "circle.dotted" : "circle.fill" }
-                )
-                Divider()
-                HStack {
-                    Text("Intensity")
-                    Spacer()
-                    Slider(value: $settings.glassIntensity, in: 0...1).frame(width: 160)
-                    Text("\(Int(settings.glassIntensity * 100))%").frame(width: 42, alignment: .trailing)
-                }
-                Text("Choose a Clear or Tinted glass look for the notch and Settings, and how strong it is.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("Notch surface tint")
+                    .font(.system(size: 13))
+                    .foregroundStyle(SettingsTheme.text)
+                TintSwatchRow(selection: $settings.notchTint)
+                Footnote("Tints the notch surface across every state.")
             }
 
             // Behaviour
             SectionLabel("Behaviour")
             CardGroup {
                 ToggleRow(title: "Progressive blur", isOn: $settings.progressiveBlur)
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Haptic feedback", isOn: $settings.hapticFeedback)
             }
 
@@ -144,26 +131,24 @@ struct TrackpadFeedbackSection: View {
     var body: some View {
         CardGroup {
             ToggleRow(title: "Trackpad feedback", isOn: $settings.trackpadFeedbackEnabled)
-            Text("Feel and hear a subtle click as you scroll and click anywhere — spaced naturally with your scroll speed.")
-                .font(.caption).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Footnote("Feel and hear a subtle click as you scroll and click anywhere — spaced naturally with your scroll speed.")
 
             if settings.trackpadFeedbackEnabled {
                 if !accessibilityGranted {
-                    Divider()
+                    CardDivider()
                     HStack {
-                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(SettingsTheme.textSecondary)
                         Text("Needs Accessibility to detect scrolling")
+                            .font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
                         Spacer()
-                        Button("Grant…") { promptForAccessibility() }
+                        FlatButton(title: "Grant…") { promptForAccessibility() }
                     }
                 }
 
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Haptics", isOn: $settings.trackpadHapticsEnabled, systemImage: "hand.tap")
                 if !hapticsAvailable {
-                    Text("Haptics need a built-in Force Touch trackpad — sound still works.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Footnote("Haptics need a built-in Force Touch trackpad — sound still works.")
                 } else if settings.trackpadHapticsEnabled {
                     SegmentedCards(
                         options: HapticStrength.allCases,
@@ -173,7 +158,7 @@ struct TrackpadFeedbackSection: View {
                     )
                 }
 
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Sound", isOn: $settings.trackpadSoundEnabled, systemImage: "speaker.wave.2")
                 if settings.trackpadSoundEnabled {
                     SegmentedCards(
@@ -185,35 +170,26 @@ struct TrackpadFeedbackSection: View {
                         title: { $0.displayName },
                         systemImage: { _ in "waveform" }
                     )
-                    HStack {
-                        Text("Volume")
-                        Spacer()
-                        Slider(value: $settings.trackpadSoundVolume, in: 0...1).frame(width: 160)
-                        Text("\(Int(settings.trackpadSoundVolume * 100))%").frame(width: 42, alignment: .trailing)
-                    }
+                    SliderRow(title: "Volume", value: $settings.trackpadSoundVolume)
                 }
 
-                Divider()
+                CardDivider()
                 ToggleRow(title: "While scrolling", isOn: $settings.trackpadFeedbackScroll, systemImage: "scroll")
                 ToggleRow(title: "While clicking", isOn: $settings.trackpadFeedbackClick, systemImage: "cursorarrow.click")
 
-                Divider()
+                CardDivider()
                 ToggleRow(title: "Multi-finger gestures", isOn: $settings.trackpadGesturesEnabled, systemImage: "hand.draw")
                 if !gesturesAvailable {
-                    Text("Multi-finger gestures aren't available on this Mac.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Footnote("Multi-finger gestures aren't available on this Mac.")
                 } else {
-                    Text("A tick when you swipe between spaces, open Mission Control, or pinch to Launchpad.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Footnote("A tick when you swipe between spaces, open Mission Control, or pinch to Launchpad.")
                 }
 
-                Divider()
+                CardDivider()
                 HStack {
-                    Text("Try the current feel")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Footnote("Try the current feel")
                     Spacer()
-                    Button("Test") {
+                    FlatButton(title: "Test") {
                         NotificationCenter.default.post(
                             name: TrackpadFeedbackController.testFeedbackNotification, object: nil)
                     }
@@ -241,28 +217,47 @@ struct TrackpadFeedbackSection: View {
 
 // MARK: - Shared building blocks
 
+/// Uppercase section header above a `CardGroup`. See spec §5 "Pane body".
 struct SectionLabel: View {
     @Environment(\.paneTint) private var tint
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
         Text(text.uppercased())
-            .font(.caption.weight(.semibold))
-            .kerning(0.5)
-            .foregroundStyle(tint)
+            .font(.system(size: 10, weight: .semibold))
+            .kerning(0.6)
+            .foregroundStyle(SettingsTheme.textTertiary)
     }
 }
 
+/// Flat card surface — no material, no border, no shadow. See spec §5 "Card".
+///
+/// The `VStack`'s `spacing` is 4, not the spec's headline "vertical gap 9" —
+/// a `CardDivider` between two rows adds its own 1pt line, and the `VStack`
+/// inserts this `spacing` on *both* sides of it (4 + 1 + 4 = 9), so a
+/// divided pair of rows ends up the spec's 9pt apart. That 9 is a property
+/// of the gap as a whole, including the hairline, not of `spacing` alone —
+/// using 9 for `spacing` here double-counted it (9 + 1 + 9 = 19) and bloated
+/// the row pitch to ~39pt instead of the spec's ~30. Call sites with no
+/// divider between two elements (e.g. a label followed straight by a
+/// control row) fall back to this 4pt spacing and should pad up to 9
+/// themselves if they need the full card gap.
 struct CardGroup<Content: View>: View {
     @Environment(\.paneTint) private var tint
     @ViewBuilder var content: Content
-    private let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+    private let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
     var body: some View {
-        VStack(spacing: 10) { content }
-            .padding(14)
-            .liquidGlass(in: shape, fallback: .regularMaterial)
-            .overlay(shape.strokeBorder(tint.opacity(0.12), lineWidth: 1))
-            .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
+        VStack(alignment: .leading, spacing: 4) { content }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .background(shape.fill(SettingsTheme.card))
+    }
+}
+
+/// A 1pt hairline separating rows inside a `CardGroup`. See `CardGroup` for
+/// why the surrounding spacing is 4, not 9.
+struct CardDivider: View {
+    var body: some View {
+        Rectangle().fill(SettingsTheme.cardDivider).frame(height: 1)
     }
 }
 
@@ -272,13 +267,13 @@ struct ToggleRow: View {
     var systemImage: String? = nil
 
     var body: some View {
-        HStack {
+        HStack(spacing: 10) {
             if let systemImage {
-                Image(systemName: systemImage).foregroundStyle(.secondary).frame(width: 18)
+                Image(systemName: systemImage).foregroundStyle(SettingsTheme.textSecondary).frame(width: 18)
             }
-            Text(title)
+            Text(title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
             Spacer()
-            Toggle("", isOn: $isOn).labelsHidden().toggleStyle(.switch).tint(.green)
+            FlatSwitch(isOn: $isOn, label: title)
         }
     }
 }
@@ -291,7 +286,35 @@ struct ToggleCard: View {
     }
 }
 
-/// The segmented card picker used for display target and idle activity.
+/// Flat replacement for the native `Toggle` — 34x20, spec §5 "Switch".
+/// Keeps the same accessibility contract a `Toggle` would carry.
+struct FlatSwitch: View {
+    @Binding var isOn: Bool
+    var label: String
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isOn ? SettingsTheme.switchOn : SettingsTheme.switchOff)
+                Circle()
+                    .fill(isOn ? SettingsTheme.switchKnobOn : SettingsTheme.switchKnobOff)
+                    .frame(width: 16, height: 16)
+                    .padding(2)
+            }
+            .frame(width: 34, height: 20)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityValue(isOn ? "On" : "Off")
+    }
+}
+
+/// The chip-grid picker used for display target and idle activity.
+/// Spec §5 "Chip grid picker": 5-column grid, text-only chips.
 struct SegmentedCards<Option: Hashable>: View {
     let options: [Option]
     @Binding var selection: Option
@@ -299,30 +322,296 @@ struct SegmentedCards<Option: Hashable>: View {
     let systemImage: (Option) -> String
     @Environment(\.paneTint) private var tint
 
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
+
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 74), spacing: 8)], spacing: 8) {
+        LazyVGrid(columns: columns, spacing: 8) {
             ForEach(options, id: \.self) { option in
                 let selected = option == selection
-                VStack(spacing: 6) {
-                    Image(systemName: systemImage(option))
-                        .font(.system(size: 16))
-                        .foregroundStyle(selected ? .white : .secondary)
+                // A real `Button` (not a bare `.onTapGesture`) so each chip
+                // carries the button trait for VoiceOver, matching its sibling
+                // `SegmentedControl`. Visuals are unchanged — the styling lives
+                // on the label, `.plain` adds no chrome.
+                Button {
+                    selection = option
+                } label: {
                     Text(title(option))
-                        .font(.caption)
-                        .foregroundStyle(selected ? .white : .secondary)
+                        .font(.system(size: 11, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(selected ? SettingsTheme.onPrimary : SettingsTheme.textSecondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9).padding(.horizontal, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(selected ? SettingsTheme.primaryFill : SettingsTheme.card)
+                        )
+                        .contentShape(Rectangle())
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(selected ? tint : Color.primary.opacity(0.04))
-                        .shadow(color: selected ? tint.opacity(0.4) : .clear, radius: 5, y: 2)
-                )
-                .contentShape(Rectangle())
-                .onTapGesture { selection = option }
+                .buttonStyle(.plain)
+                .accessibilityLabel(title(option))
+                .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
             }
         }
+    }
+}
+
+/// Label + flat track slider, spec §5 "Slider".
+struct SliderRow: View {
+    let title: String
+    @Binding var value: Double
+    var range: ClosedRange<Double> = 0...1
+    /// Snaps dragged values to this increment; `nil` keeps the old continuous
+    /// drag. See spec §5 "Slider" — the discrete steps predate the flat-dark
+    /// conversion and are restored per call site.
+    var step: Double? = nil
+    var valueText: (Double) -> String = { "\(Int($0 * 100))%" }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
+            Spacer()
+            FlatSlider(value: $value, range: range, step: step).frame(width: 130)
+            Text(valueText(value))
+                .font(.system(size: 12))
+                .foregroundStyle(SettingsTheme.textSecondary)
+                .frame(width: 38, alignment: .trailing)
+        }
+    }
+}
+
+/// The 130x4 track backing `SliderRow`.
+private struct FlatSlider: View {
+    @Binding var value: Double
+    var range: ClosedRange<Double>
+    var step: Double? = nil
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let span = range.upperBound - range.lowerBound
+            let fraction = span == 0 ? 0 : CGFloat((value - range.lowerBound) / span)
+            let fillWidth = max(0, min(width, width * fraction))
+            ZStack(alignment: .leading) {
+                Capsule().fill(SettingsTheme.switchOff).frame(height: 4)
+                Capsule().fill(SettingsTheme.primaryFill).frame(width: fillWidth, height: 4)
+                Circle().fill(Color.white).frame(width: 13, height: 13)
+                    .offset(x: fillWidth - 6.5)
+            }
+            .frame(height: 20)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0).onChanged { g in
+                    guard width > 0 else { return }
+                    let f = min(max(0, g.location.x / width), 1)
+                    var next = range.lowerBound + Double(f) * span
+                    if let step, step > 0 {
+                        next = (next / step).rounded() * step
+                        next = min(max(next, range.lowerBound), range.upperBound)
+                    }
+                    value = next
+                }
+            )
+        }
+        .frame(height: 20)
+    }
+}
+
+/// Label + inline picker chip, spec §5 "Menu picker".
+struct MenuRow<Option: Hashable>: View {
+    let title: String
+    let options: [Option]
+    @Binding var selection: Option
+    let label: (Option) -> String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(title).font(.system(size: 13)).foregroundStyle(SettingsTheme.text)
+            Spacer()
+            Menu {
+                ForEach(options, id: \.self) { option in
+                    Button(label(option)) { selection = option }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(label(selection))
+                        .font(.system(size: 12))
+                        .foregroundStyle(SettingsTheme.menuValue)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(SettingsTheme.textSecondary)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(SettingsTheme.controlChip))
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+        }
+    }
+}
+
+/// Leading-aligned pill picker, spec §5 "Segmented control".
+struct SegmentedControl<Option: Hashable>: View {
+    let options: [Option]
+    @Binding var selection: Option
+    let title: (Option) -> String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(options, id: \.self) { option in
+                let selected = option == selection
+                Button {
+                    selection = option
+                } label: {
+                    Text(title(option))
+                        .font(.system(size: 12, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(selected ? SettingsTheme.onPrimary : SettingsTheme.textSecondary)
+                        .padding(.horizontal, 14).padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(selected ? SettingsTheme.primaryFill : .clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(SettingsTheme.card))
+        .fixedSize()
+    }
+}
+
+/// The visual weight a `FlatButton` reads as. Spec §5 "Controls".
+enum FlatButtonStyle {
+    case secondary, primary, destructive
+}
+
+/// Flat pill button in secondary / primary / destructive weights.
+struct FlatButton: View {
+    let title: String
+    var style: FlatButtonStyle = .secondary
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: style == .secondary ? .medium : .semibold))
+                .foregroundStyle(foreground)
+                .padding(.horizontal, 12).padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(background))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var background: Color {
+        switch style {
+        case .secondary: return SettingsTheme.button
+        case .primary: return SettingsTheme.primaryFill
+        case .destructive: return SettingsTheme.destructiveBg
+        }
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .secondary: return SettingsTheme.text
+        case .primary: return SettingsTheme.onPrimary
+        case .destructive: return SettingsTheme.destructiveText
+        }
+    }
+}
+
+/// 11pt caption text with generous line spacing, spec §5 "Footnote".
+struct Footnote: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11))
+            .foregroundStyle(SettingsTheme.textTertiary)
+            .lineSpacing(5.5) // ~1.5x line height at 11pt
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// The notch-tint swatch row for the General pane's THEME section.
+/// Spec §5 "New control — Theme".
+private struct TintSwatchRow: View {
+    @Binding var selection: NotchTint
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(NotchTint.allCases) { tint in
+                TintSwatch(tint: tint, selected: tint == selection) {
+                    selection = tint
+                }
+            }
+        }
+    }
+}
+
+/// A single swatch button in `TintSwatchRow` — its own view so hover state
+/// (`@State`, via `.onHover`) is scoped per-swatch rather than shared across
+/// the row.
+private struct TintSwatch: View {
+    let tint: NotchTint
+    let selected: Bool
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(tint.color)
+                    .frame(width: 44, height: 30)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder(SettingsTheme.swatchBorder, lineWidth: 0.5)
+                    )
+                    .overlay {
+                        if hovering && !selected {
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .strokeBorder(SettingsTheme.swatchBorder.opacity(0.9), lineWidth: 1)
+                        }
+                    }
+                    .overlay {
+                        if selected {
+                            // Thin gap ring underneath, so the accent ring
+                            // reads cleanly against any tint colour.
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .inset(by: -2)
+                                .stroke(SettingsTheme.windowBody, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                .inset(by: -3)
+                                .stroke(SettingsTheme.primaryFill, lineWidth: 2)
+                        }
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if selected {
+                            Circle()
+                                .fill(SettingsTheme.primaryFill)
+                                .frame(width: 14, height: 14)
+                                .overlay(
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(SettingsTheme.onPrimary)
+                                )
+                                .offset(x: 5, y: -5)
+                        }
+                    }
+                    .scaleEffect(hovering ? 1.06 : 1)
+                    .brightness(hovering ? 0.06 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.7), value: hovering)
+                Text(tint.displayName)
+                    .font(.system(size: 10, weight: selected ? .medium : .regular))
+                    .foregroundStyle(selected ? SettingsTheme.text : SettingsTheme.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityLabel("\(tint.displayName) tint")
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 }

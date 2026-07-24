@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Mini month grid: Monday-first week header, dimmed weekends / other-month
-/// days, today circled in pink, month label in pink (see PLAN.md §1.1).
+/// days, today as a filled white circle — docs/flat-dark-spec.md §3.
 struct MonthGrid: View {
     let date: Date
     var calendar: Calendar = {
@@ -10,16 +10,16 @@ struct MonthGrid: View {
         return c
     }()
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 3), count: 7)
     private let weekdaySymbols = ["M", "T", "W", "T", "F", "S", "S"]
 
     var body: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 2) {
+            HStack(spacing: 3) {
                 ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { idx, s in
                     Text(s)
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(idx >= 5 ? .white.opacity(0.35) : .white.opacity(0.55))
+                        .foregroundStyle(NotchTheme.textSecondary)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -37,16 +37,18 @@ struct MonthGrid: View {
         return Text("\(calendar.component(.day, from: day.date))")
             .font(.system(size: 10, weight: isToday ? .bold : .regular))
             .foregroundStyle(cellColor(inMonth: day.inMonth, weekend: weekend, isToday: isToday))
-            .frame(maxWidth: .infinity, minHeight: 15)
+            .frame(width: 16, height: 16)
             .background(
                 Circle()
-                    .fill(isToday ? Color(nsColor: .systemPink) : .clear)
-                    .frame(width: 18, height: 18)
+                    .fill(isToday ? NotchTheme.textPrimary : .clear)
             )
+            .frame(maxWidth: .infinity)
     }
 
+    // Today gets the graphite-tint literal per docs/flat-dark-spec.md §3, since
+    // the filled circle is always white regardless of the user's surface tint.
     private func cellColor(inMonth: Bool, weekend: Bool, isToday: Bool) -> Color {
-        if isToday { return .white }
+        if isToday { return Color(hex: 0x17_1A_22) }
         if !inMonth { return .white.opacity(0.18) }
         if weekend { return .white.opacity(0.4) }
         return .white.opacity(0.85)

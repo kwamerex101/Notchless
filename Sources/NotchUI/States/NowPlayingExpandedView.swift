@@ -34,16 +34,18 @@ struct NowPlayingExpandedView: View {
             artwork
             VStack(alignment: .leading, spacing: 2) {
                 MarqueeText(text: info?.title ?? "Not Playing",
-                            font: .system(size: 14, weight: .semibold))
+                            font: .system(size: 14, weight: .semibold),
+                            color: NotchTheme.textPrimary)
                     .frame(height: 18)
                 Text(info?.artist ?? "—")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(NotchTheme.textSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: 6)
-            VisualizerBars(isPlaying: info?.isPlaying ?? false, color: glow ?? .white,
-                           barCount: 7, height: 18, spectrum: audio.musicSpectrum)
+            // Monochrome white — the album-art glow no longer tints content (flat-dark spec §1).
+            VisualizerBars(isPlaying: info?.isPlaying ?? false, color: .white,
+                           barCount: 5, height: 18, spectrum: audio.musicSpectrum)
                 .frame(width: 44)
         }
     }
@@ -53,8 +55,8 @@ struct NowPlayingExpandedView: View {
             if let art = info?.artwork {
                 Image(nsImage: art).resizable().aspectRatio(contentMode: .fill)
             } else {
-                RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.12))
-                    .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.6)))
+                RoundedRectangle(cornerRadius: 8).fill(NotchTheme.artworkPlaceholder)
+                    .overlay(Image(systemName: "music.note").foregroundStyle(NotchTheme.textSecondary))
             }
         }
         .frame(width: 44, height: 44)
@@ -90,20 +92,19 @@ struct NowPlayingExpandedView: View {
         let trackHeight: CGFloat = (scrubHovering || scrubbing) ? 9 : 6
         return HStack(spacing: 8) {
             Text(info?.elapsedText(at: now) ?? "0:00")
-                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(NotchTheme.textSecondary)
                 .frame(width: 34, alignment: .leading)
                 .contentTransition(.numericText())
             GeometryReader { geo in
                 let fillWidth = geo.size.width * CGFloat(progress)
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.2))
-                    Capsule().fill(Color.white).frame(width: fillWidth)
+                    Capsule().fill(NotchTheme.track)
+                    Capsule().fill(NotchTheme.fill).frame(width: fillWidth)
                         // Non-scrubbing progress glides between the 2 Hz updates.
                         .animation(scrubbing ? nil : .linear(duration: 0.5), value: fillWidth)
                     // A grab knob at the fill edge while hovering/scrubbing.
                     if scrubHovering || scrubbing {
-                        Circle().fill(.white).frame(width: 11, height: 11)
-                            .shadow(color: .black.opacity(0.3), radius: 2)
+                        Circle().fill(NotchTheme.fill).frame(width: 11, height: 11)
                             .offset(x: min(max(fillWidth - 5.5, 0), geo.size.width - 11))
                     }
                 }
@@ -127,7 +128,7 @@ struct NowPlayingExpandedView: View {
             .animation(NotchMotion.micro, value: trackHeight)
             .onHover { scrubHovering = $0 }
             Text(info?.remainingText(at: now) ?? "-0:00")
-                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium).monospacedDigit()).foregroundStyle(NotchTheme.textSecondary)
                 .frame(width: 40, alignment: .trailing)
                 .contentTransition(.numericText())
         }
@@ -161,10 +162,10 @@ struct NowPlayingExpandedView: View {
             Button { onCommand(.playPause) } label: {
                 Image(systemName: (info?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(NotchTheme.textPrimary)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(Color.white.opacity(0.14)))
+                    .background(Circle().fill(NotchTheme.chip))
             }
             .buttonStyle(NotchButtonStyle())
             .accessibilityLabel((info?.isPlaying ?? false) ? "Pause" : "Play")
@@ -179,6 +180,11 @@ struct NowPlayingExpandedView: View {
         }
     }
 
+    // The proven runtime output picker: a `Menu` on the non-activating
+    // `NSPanel`. This lives on the transport row and, unlike a `.popover`, the
+    // window-backed `cacheDisplay` harness path can rasterize it — so it's the
+    // canonical control again (the `.popover` detour was only to satisfy the
+    // old `ImageRenderer`-based dump path, which no longer renders notch states).
     private var outputPicker: some View {
         Menu {
             let service = AudioOutputService.shared
@@ -195,13 +201,14 @@ struct NowPlayingExpandedView: View {
                 }
             }
         } label: {
-            Image(systemName: "hifispeaker")
+            Image(systemName: "speaker.wave.2.fill")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+        .accessibilityLabel("Audio output")
     }
 
     private func transportButton(_ name: String, size: CGFloat, label: String,
@@ -209,7 +216,7 @@ struct NowPlayingExpandedView: View {
         Button(action: action) {
             Image(systemName: name)
                 .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.85))
         }
         .buttonStyle(NotchButtonStyle())
         .accessibilityLabel(label)

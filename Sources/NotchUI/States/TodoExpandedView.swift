@@ -13,7 +13,7 @@ struct TodoExpandedView: View {
     @Environment(\.notchKeyFocus) private var keyFocus
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 8) {
                 Text("Tasks").notchSectionHeader()
                 Spacer()
@@ -21,19 +21,19 @@ struct TodoExpandedView: View {
                     Button("Clear done") { withAnimation(NotchMotion.quick) { store.clearCompleted() } }
                         .buttonStyle(.plain)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(NotchTheme.textSecondary)
                 }
                 if store.openCount > 0 {
                     Text("\(store.openCount) left")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(NotchTheme.textSecondary)
                 }
                 popOutButton
             }
 
             if store.items.isEmpty {
                 Text("All clear ✓ — add a task below.")
-                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.5))
+                    .font(.system(size: 12)).foregroundStyle(NotchTheme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 List {
@@ -60,13 +60,14 @@ struct TodoExpandedView: View {
         .onDisappear { keyFocus(false) }
     }
 
-    /// Pops the To-Dos widget open/closed. Tinted green — matching the
-    /// checkmark/progress accent used elsewhere — while the widget is open.
+    /// Pops the To-Dos widget open/closed. Tinted with the positive token —
+    /// matching the checkmark/progress accent used elsewhere — while the
+    /// widget is open.
     private var popOutButton: some View {
         Button { widgets.toggle(.todos) } label: {
             Image(systemName: "rectangle.portrait.and.arrow.right")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(widgets.isOpen(.todos) ? .green : .white.opacity(0.5))
+                .foregroundStyle(widgets.isOpen(.todos) ? NotchTheme.positive : NotchTheme.textSecondary)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(widgets.isOpen(.todos) ? "Close Tasks widget" : "Open Tasks widget")
@@ -75,16 +76,16 @@ struct TodoExpandedView: View {
     private var quickAdd: some View {
         HStack(spacing: 8) {
             Image(systemName: "plus.circle.fill")
-                .font(.system(size: 14)).foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 14)).foregroundStyle(NotchTheme.textSecondary)
             TextField("Add a task…", text: $newTitle)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
-                .foregroundStyle(.white)
+                .foregroundStyle(NotchTheme.textPrimary)
                 .focused($addFocused)
                 .onSubmit(submit)
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: NotchDesign.chipRadius).fill(NotchTheme.inset))
     }
 
     private func submit() {

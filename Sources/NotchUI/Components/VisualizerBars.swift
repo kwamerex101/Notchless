@@ -44,7 +44,7 @@ struct VisualizerBars: View {
     }
 }
 
-/// The bar row itself. One group-level glow instead of a shadow per capsule.
+/// The bar row itself. Flat-dark: plain fill, no glow (see docs/flat-dark-spec.md §3).
 private struct BarStack: View {
     let levels: [CGFloat]
     let color: Color
@@ -54,13 +54,12 @@ private struct BarStack: View {
     var body: some View {
         HStack(alignment: .center, spacing: 2.5) {
             ForEach(levels.indices, id: \.self) { i in
-                Capsule()
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(color.opacity(isPlaying ? 1 : 0.55))
                     .frame(width: 3.5, height: max(3, height * levels[i]))
             }
         }
         .frame(height: height)
-        .shadow(color: color.opacity(isPlaying ? 0.5 : 0), radius: 3)
     }
 }
 

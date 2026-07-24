@@ -14,12 +14,12 @@ enum GoalPacePresentation {
         }
     }
 
+    // These panels are monochrome except `positive` (on/ahead of pace) and
+    // `warning` (behind/overdue) — flat-dark spec §1 allows no other colour here.
     static func color(for goal: Goal, now: Date) -> Color {
         switch goal.pace(now: now) {
-        case .onTrack: return .white.opacity(0.6)
-        case .ahead: return .green
-        case .behind: return .orange
-        case .overdue: return .red
+        case .onTrack, .ahead: return NotchTheme.positive
+        case .behind, .overdue: return NotchTheme.warning
         }
     }
 }

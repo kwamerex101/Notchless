@@ -21,12 +21,12 @@ struct FileTrayView: View {
             HStack {
                 Label("File Tray", systemImage: "tray.fill")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(NotchTheme.textSecondary)
                 Spacer()
                 if !store.isEmpty {
                     Button { withAnimation(NotchMotion.quick) { store.clear() } } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.white.opacity(0.5))
+                            .foregroundStyle(NotchTheme.textPrimary.opacity(0.4))
                     }
                     .buttonStyle(NotchButtonStyle())
                     .accessibilityLabel("Clear file tray")
@@ -35,7 +35,7 @@ struct FileTrayView: View {
             if store.isEmpty {
                 Text("Drop files here")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(NotchTheme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -62,12 +62,12 @@ struct FileTrayView: View {
                 .frame(width: 34, height: 34)
             Text(url.lastPathComponent)
                 .font(.system(size: 9))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(NotchTheme.textSecondary)
                 .lineLimit(1)
                 .frame(maxWidth: 60)
         }
         .padding(6)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(NotchTheme.inset))
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
         .contextMenu {
             ShareLink(item: url) { Label("Share… (AirDrop)", systemImage: "square.and.arrow.up") }
@@ -80,13 +80,13 @@ struct FileTrayView: View {
     private var compactPill: some View {
         HStack(spacing: 6) {
             Image(systemName: "tray.full.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(.white)
+                .font(.system(size: 13))
+                .foregroundStyle(NotchTheme.textPrimary.opacity(0.9))
             Text("\(store.count)")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                .foregroundStyle(NotchTheme.textPrimary)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }

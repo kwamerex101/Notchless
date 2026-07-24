@@ -64,7 +64,7 @@ struct NotchSizing: Equatable {
                 // Same reasoning as .battery — CPU can read "100%".
                 return NotchSizing(width: w + 150, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .timer:
-                return NotchSizing(width: w + 110, height: h + 2, topRadius: 8, bottomRadius: 11)
+                return NotchSizing(width: w + 138, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .clipboard:
                 return NotchSizing(width: w + 96, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .todos:
@@ -72,7 +72,7 @@ struct NotchSizing: Equatable {
             case .privacy:
                 return NotchSizing(width: w + 130, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .claudeUsage:
-                return NotchSizing(width: w + 120, height: h + 2, topRadius: 8, bottomRadius: 11)
+                return NotchSizing(width: w + 154, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .goals:
                 // Each wing must clear the notch: the leading ring + percent (up
                 // to "100%") needs ~64pt past the edge inset, so the notch's left
@@ -80,7 +80,11 @@ struct NotchSizing: Equatable {
                 // 3-digit percent fully visible; w + 150 clipped it into the notch.
                 return NotchSizing(width: w + 190, height: h + 2, topRadius: 8, bottomRadius: 11)
             case .meeting:
-                return NotchSizing(width: w + 128, height: h + 2, topRadius: 8, bottomRadius: 11)
+                // +160 (not +128): the recording elapsed can read up to
+                // `h:mm:ss` (7 chars), so each wing needs the same clearance
+                // the 4-char "100%" battery readout does (+150) plus a hair,
+                // else the leading digits fall into the physical notch cutout.
+                return NotchSizing(width: w + 160, height: h + 2, topRadius: 8, bottomRadius: 11)
             }
 
         case let .hud(kind):
@@ -90,10 +94,10 @@ struct NotchSizing: Equatable {
             // calling it directly without hopping actors.
             let options = MainActor.assumeIsolated { HUDOptions(from: SettingsStore.shared) }
             let width = hudWidth(base: w + 250, kind: kind, options: options)
-            return NotchSizing(width: width, height: h + 28, topRadius: 9, bottomRadius: 18)
+            return NotchSizing(width: width, height: h + 36, topRadius: 9, bottomRadius: 18)
 
         case .notification:
-            return NotchSizing(width: w + 300, height: h + 30, topRadius: 9, bottomRadius: 20)
+            return NotchSizing(width: w + 300, height: h + 38, topRadius: 9, bottomRadius: 20)
 
         case .mirror:
             return NotchSizing(width: max(w + 40, 360), height: 250, topRadius: 10, bottomRadius: 24)
@@ -124,35 +128,48 @@ struct NotchSizing: Equatable {
             }
 
         case let .expanded(activity):
+            let sizing: NotchSizing
             switch activity {
             case .playing, .none, .auto:
-                return NotchSizing(width: max(w + 40, 480), height: 178, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 480), height: 178, topRadius: 10, bottomRadius: 24)
             case .calendar:
-                return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .duo:
-                return NotchSizing(width: max(w + 40, 560), height: 158, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 540), height: 158, topRadius: 10, bottomRadius: 24)
             case .dictation:
-                return NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 480), height: h + 74, topRadius: 10, bottomRadius: 24)
             case .battery:
-                return NotchSizing(width: max(w + 40, 360), height: 128, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 360), height: 110, topRadius: 10, bottomRadius: 24)
             case .stats:
-                return NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 140, topRadius: 10, bottomRadius: 24)
             case .timer:
-                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             case .clipboard:
-                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             case .todos:
-                return NotchSizing(width: max(w + 40, 420), height: 220, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 210, topRadius: 10, bottomRadius: 24)
             case .privacy:
-                return NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 360), height: 120, topRadius: 10, bottomRadius: 24)
             case .claudeUsage:
-                return NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 470), height: 196, topRadius: 10, bottomRadius: 24)
             case .goals:
                 // Placeholder sizing until Task 7 ships the real expanded view.
-                return NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 420), height: 200, topRadius: 10, bottomRadius: 24)
             case .meeting:
-                return NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
+                sizing = NotchSizing(width: max(w + 40, 380), height: 128, topRadius: 10, bottomRadius: 24)
             }
+
+            // The tab strip's left window (3 glyphs) and right battery sit in
+            // the wings beside the centred hardware notch. On narrower panels
+            // those wings can collide with the cutout, so floor the width —
+            // but only when the strip is actually shown (`showTabBar`).
+            let showStrip = MainActor.assumeIsolated { SettingsStore.shared.showTabBar }
+            let minWidth = NotchTabBar.minPanelWidth(notchWidth: w)
+            if showStrip, sizing.width < minWidth {
+                return NotchSizing(width: minWidth, height: sizing.height,
+                                   topRadius: sizing.topRadius, bottomRadius: sizing.bottomRadius)
+            }
+            return sizing
         }
     }
 }

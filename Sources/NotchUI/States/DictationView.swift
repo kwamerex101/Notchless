@@ -16,11 +16,21 @@ struct DictationView: View {
     var onCancel: () -> Void
 
     var body: some View {
-        content
-            .padding(.top, metrics.notchHeight + 8)
-            .padding(.horizontal, 22)
-            .padding(.bottom, 12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        switch phase {
+        case .recording, .transcribing, .cleaning:
+            // Top-anchored panel: content starts below the wings strip.
+            content
+                .padding(.top, metrics.notchHeight + 8)
+                .padding(.horizontal, 22)
+                .padding(.bottom, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        case .success, .error:
+            // Compact result chip: bottom-anchored, no wings strip.
+            content
+                .padding(.horizontal, 22)
+                .padding(.bottom, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
     }
 
     @ViewBuilder private var content: some View {
@@ -30,10 +40,17 @@ struct DictationView: View {
         case .transcribing, .cleaning:
             processingBody
         case let .success(text):
-            resultChip(system: "checkmark.circle.fill", tint: .green, title: phase.label,
+            // Spec §3 "Dictation states → Completed" titles this "Inserted" —
+            // `phase.label` ("Done") is the shared model-level status word
+            // used elsewhere (menu bar, etc.), so it's overridden here rather
+            // than changed at the source.
+            resultChip(system: "checkmark.circle.fill", tint: NotchTheme.positive, title: "Inserted",
                        subtitle: text.isEmpty ? "Pasted" : text)
         case let .error(message):
-            resultChip(system: "exclamationmark.triangle.fill", tint: .orange, title: phase.label,
+            // Spec §3 "Dictation states → Error" titles this "Couldn't
+            // transcribe"; see the `.success` case above for why this
+            // overrides `phase.label` rather than changing it.
+            resultChip(system: "exclamationmark.triangle.fill", tint: NotchTheme.warning, title: "Couldn't transcribe",
                        subtitle: message)
         }
     }
@@ -50,12 +67,12 @@ struct DictationView: View {
     }
 
     private var processingBody: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             ShimmerBar()
             LiveTranscriptView(text: audio.dictationPartial, reduceMotion: reduceMotion)
             Text(phase.label)
                 .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(NotchTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -63,11 +80,11 @@ struct DictationView: View {
     private func resultChip(system: String, tint: Color, title: String, subtitle: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: system)
-                .font(.system(size: 18))
+                .font(.system(size: 17))
                 .foregroundStyle(tint)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
-                Text(subtitle).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(NotchTheme.textPrimary)
+                Text(subtitle).font(.system(size: 11)).foregroundStyle(NotchTheme.textSecondary).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
@@ -108,16 +125,16 @@ struct DictationHintView: View {
         HStack(spacing: 12) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(NotchTheme.textPrimary)
                 .frame(width: 40, height: 40)
-                .background(Circle().fill(Color.teal.gradient))
+                .background(Circle().fill(NotchTheme.chip))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Dictate anywhere")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(NotchTheme.textPrimary)
                 Text("Hold \(settings.hotkey.title), then speak")
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(NotchTheme.textSecondary)
             }
             Spacer(minLength: 0)
         }

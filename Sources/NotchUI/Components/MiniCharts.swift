@@ -28,7 +28,7 @@ struct MiniPie: View {
 /// A simple line chart with a soft area fill, used in the expanded view.
 struct MiniLineChart: View {
     let values: [Double]
-    var color: Color = .green
+    var color: Color = NotchTheme.positive
 
     var body: some View {
         GeometryReader { geo in

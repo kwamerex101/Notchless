@@ -11,7 +11,7 @@ struct LiveTranscriptView: View {
     var body: some View {
         Text(text.isEmpty ? "Listening…" : text)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.white.opacity(text.isEmpty ? 0.55 : 0.95))
+            .foregroundStyle(text.isEmpty ? NotchTheme.textSecondary : NotchTheme.textPrimary.opacity(0.95))
             .lineLimit(1)
             .truncationMode(.head)
             .frame(maxWidth: .infinity, alignment: .center)

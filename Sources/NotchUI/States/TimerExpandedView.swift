@@ -14,36 +14,41 @@ struct TimerExpandedView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if let timer, timer.isActive {
                     Text(timer.label)
-                        .font(.system(size: 26, weight: .bold).monospacedDigit())
-                        .foregroundStyle(.white)
+                        .font(.system(size: 24, weight: .bold).monospacedDigit())
+                        .foregroundStyle(NotchTheme.textPrimary)
                     controls(for: timer)
                 } else {
                     Text("Timer")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(NotchTheme.textSecondary)
                     presetRow
                 }
             }
             Spacer(minLength: 0)
         }
         .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 19)
+        .padding(.horizontal, 24)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
+    /// Colour only where it means something: white while counting down,
+    /// `warning` once the timer has finished.
+    private var ringColor: Color {
+        (timer?.isFinished ?? false) ? NotchTheme.warning : NotchTheme.fill
+    }
+
     private var ring: some View {
         ZStack {
-            Circle().stroke(Color.white.opacity(0.12), lineWidth: 6)
+            Circle().stroke(NotchTheme.ringTrack, lineWidth: 6)
             Circle()
                 .trim(from: 0, to: timer?.progress ?? 0)
-                .stroke((timer?.isFinished ?? false) ? Color.orange : Color.accentColor,
-                        style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 1), value: timer?.progress ?? 0)
             Image(systemName: "timer")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(NotchTheme.textPrimary)
         }
         .frame(width: 58, height: 58)
     }
@@ -54,9 +59,9 @@ struct TimerExpandedView: View {
                 Button(preset.0) { TimerController.shared?.begin(seconds: preset.1) }
                     .buttonStyle(.borderless)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(NotchTheme.textPrimary)
                     .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Capsule().fill(Color.white.opacity(0.14)))
+                    .background(Capsule().fill(NotchTheme.chip))
             }
         }
     }
@@ -77,9 +82,9 @@ struct TimerExpandedView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(Color.white.opacity(0.14)))
+                .foregroundStyle(NotchTheme.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(NotchTheme.chip))
         }
         .buttonStyle(.plain)
     }

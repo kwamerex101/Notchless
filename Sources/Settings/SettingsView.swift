@@ -118,70 +118,94 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     @ObservedObject var meeting: MeetingController
-    @State private var selection: SettingsSection = .general
+    @State private var selection: SettingsSection
+
+    /// `initialSelection` is a debug-harness seam (see `DebugStateDump`) so a
+    /// caller outside this file can render a specific pane — the sidebar
+    /// itself still owns `selection` via normal `@State` after that.
+    init(settings: SettingsStore, meeting: MeetingController, initialSelection: SettingsSection = .general) {
+        self.settings = settings
+        self.meeting = meeting
+        _selection = State(initialValue: initialSelection)
+    }
 
     var body: some View {
-        NavigationSplitView {
-            List(selection: $selection) {
-                row(.general)
-                Section("Notifications") {
-                    ForEach([SettingsSection.battery, .connectivity, .focus, .display, .sound]) { row($0) }
-                }
-                Section("Live Activities") {
-                    ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
-                             .stats, .claudeStats, .timer, .clipboard, .tasks, .privacyDot, .goals,
-                             .meetings]) { row($0) }
-                }
-                Section("Notchless") {
-                    ForEach([SettingsSection.permissions, .about]) { row($0) }
-                }
-            }
-            .navigationSplitViewColumnWidth(220)
-        } detail: {
+        HStack(spacing: 0) {
+            sidebar
             ScrollView {
                 content
                     .environment(\.paneTint, selection.tint)
-                    .padding(20)
+                    .padding(.horizontal, 26).padding(.vertical, 22)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .background(SettingsTheme.windowBody)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Monochrome sidebar (spec §5): no colored icon chips, selection is the
+    /// only highlight. Top padding leaves room for the window's own traffic
+    /// lights, which sit inside this dark surface.
+    private var sidebar: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 2) {
+                Color.clear.frame(height: 26) // room for traffic lights
+                row(.general)
+                sectionHeader("Notifications")
+                ForEach([SettingsSection.battery, .connectivity, .focus, .display, .sound]) { row($0) }
+                sectionHeader("Live Activities")
+                ForEach([SettingsSection.nowPlaying, .calendar, .fileTray, .dictation,
+                         .stats, .claudeStats, .timer, .clipboard, .tasks, .privacyDot, .goals,
+                         .meetings]) { row($0) }
+                sectionHeader("Notchless")
+                ForEach([SettingsSection.permissions, .about]) { row($0) }
+            }
+            .padding(.horizontal, 8).padding(.top, 2).padding(.bottom, 14)
+        }
+        .frame(width: 212)
+        .background(SettingsTheme.sidebar)
+        .overlay(alignment: .trailing) {
+            Rectangle().fill(SettingsTheme.sidebarBorder).frame(width: 1)
         }
     }
 
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 10, weight: .semibold))
+            .kerning(0.5)
+            .foregroundStyle(SettingsTheme.sidebarHeader)
+            .padding(.horizontal, 8)
+            .padding(.top, 16).padding(.bottom, 4)
+    }
+
     private func row(_ section: SettingsSection) -> some View {
-        Label {
-            HStack {
+        let selected = selection == section
+        return Button {
+            selection = section
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: section.systemImage)
+                    .font(.system(size: 13, weight: .regular))
+                    .frame(width: 13, height: 13)
                 Text(section.title)
+                    .font(.system(size: 12, weight: .medium))
                 if section.comingSoon {
                     Text("Soon")
                         .font(.caption2)
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Capsule().fill(Color.secondary.opacity(0.2)))
                 }
+                Spacer(minLength: 0)
             }
-        } icon: {
-            Image(systemName: section.systemImage)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    section.tint.opacity(0.92),
-                                    section.tint,
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
-                        )
-                )
+            .foregroundStyle(selected ? SettingsTheme.text : SettingsTheme.textMuted)
+            .padding(.horizontal, 8).padding(.vertical, 5)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(selected ? SettingsTheme.sidebarSelected : .clear)
+            )
         }
-        .tag(section)
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder private var content: some View {
@@ -244,24 +268,16 @@ struct PaneHeader: View {
     var body: some View {
         HStack(spacing: 11) {
             Image(systemName: section.systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(SettingsTheme.text)
                 .frame(width: 34, height: 34)
                 .background(
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(
-                            LinearGradient(colors: [section.tint.opacity(0.9), section.tint],
-                                           startPoint: .top, endPoint: .bottom)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
-                        )
-                        .shadow(color: section.tint.opacity(0.35), radius: 5, y: 2)
+                        .fill(SettingsTheme.iconChip)
                 )
             VStack(alignment: .leading, spacing: 2) {
-                Text(section.title).font(.title2.bold())
-                Text(section.description).font(.callout).foregroundStyle(.secondary)
+                Text(section.title).font(.system(size: 17, weight: .bold)).foregroundStyle(SettingsTheme.text)
+                Text(section.description).font(.system(size: 12)).foregroundStyle(SettingsTheme.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

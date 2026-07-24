@@ -1,43 +1,39 @@
 import SwiftUI
 
 /// The expanded privacy panel: shows which sensors (camera / microphone) are
-/// currently active, with a coloured dot each — mirroring macOS's indicator.
+/// currently active, with a pulsing dot each — mirroring macOS's indicator.
+/// Flat-dark: monochrome text, colour only on the sensor dots
+/// (docs/flat-dark-spec.md §3).
 struct PrivacyExpandedView: View {
     let privacy: PrivacyStatus?
     let metrics: NotchMetrics
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("In use")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.6))
+        VStack(alignment: .leading, spacing: 10) {
             if privacy?.cameraActive ?? false {
-                row(dot: .green, icon: "camera.fill", label: "Camera")
+                row(dot: NotchTheme.positive, label: "Camera in use", phaseOffset: 0)
             }
             if privacy?.micActive ?? false {
-                row(dot: .orange, icon: "mic.fill", label: "Microphone")
+                row(dot: NotchTheme.warning, label: "Microphone in use", phaseOffset: 0.8)
             }
             if !(privacy?.isActive ?? false) {
                 Text("Camera and microphone are off.")
-                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.5))
+                    .font(.system(size: 12))
+                    .foregroundStyle(NotchTheme.textSecondary)
             }
         }
-        .padding(.top, metrics.notchHeight + 10)
-        .padding(.horizontal, 19)
+        .padding(.top, 42)
+        .padding(.horizontal, 24)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private func row(dot: Color, icon: String, label: String) -> some View {
+    private func row(dot: Color, label: String, phaseOffset: TimeInterval) -> some View {
         HStack(spacing: 10) {
-            Circle().fill(dot).frame(width: 9, height: 9)
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 20)
-            Text("\(label) in use")
-                .font(.system(size: 13))
-                .foregroundStyle(.white)
+            PulsingDot(color: dot, size: 8, phaseOffset: phaseOffset)
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(NotchTheme.textPrimary)
             Spacer()
         }
     }
