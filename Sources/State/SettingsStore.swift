@@ -194,7 +194,7 @@ final class SettingsStore: ObservableObject, StoredHost {
         defaults.register(defaults: [
             Keys.launchAtLogin: true,
             Keys.syncViaICloud: true,
-            Keys.hideInFullscreen: false,   // stay visible over fullscreen by default
+            Keys.hideInFullscreen: true,    // auto-hide in fullscreen; reveal on top-edge hover (macOS-native feel)
             Keys.collapseInFullscreen: true, // ...but rest bare there, so wings never cover content
             Keys.hideInMissionControl: true,
             Keys.hideFromScreenCapture: false,
