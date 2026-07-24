@@ -2,6 +2,21 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.7.1] — 2026-07-24
+
+### Fixed
+- **Fullscreen auto-hide on external monitors.** The notch now detects a
+  fullscreen app on an external display and hides, revealing on a top-edge
+  hover. The previous check used a menu-bar heuristic that never passed on
+  external monitors, so the notch stayed on top of fullscreen content there.
+- **Battery panel.** The expanded battery ring no longer overflows and clips
+  at the bottom of the panel.
+
+### Changed
+- **Hide in fullscreen is now on by default**, matching the native menu-bar
+  behaviour (auto-hide in fullscreen, reveal on a top-edge hover). Turn it off
+  in Settings › General.
+
 ## [1.7.0] — 2026-07-24
 
 ### Changed
