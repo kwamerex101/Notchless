@@ -87,4 +87,42 @@ enum WidgetPlacement {
         let height = max(minSize.height, min(proposedSize.height, maxHeight))
         return CGRect(x: frame.minX, y: frame.maxY - height, width: width, height: height)
     }
+
+    /// Shrinks `frame` to fit fully within whichever of `screens` it most
+    /// overlaps (or `fallback` when it overlaps none), preserving its top-left
+    /// position where there's room and nudging it back on-screen otherwise.
+    /// This is the size counterpart to `clamped`, which only rescues position:
+    /// together they keep a widget resized larger than a screen — e.g. after
+    /// that display's resolution dropped or it was swapped for a smaller one —
+    /// from spilling its bottom-right corner, and the resize grip there, off
+    /// the screen. Never shrinks below `minimumSize`. Returns a frame equal to
+    /// `frame` when it already fits.
+    static func fitted(frame: CGRect, screens: [CGRect], fallback: CGRect) -> CGRect {
+        let host = bestOverlap(of: frame, in: screens) ?? fallback
+        let width = max(minimumSize.width, min(frame.width, host.width))
+        let height = max(minimumSize.height, min(frame.height, host.height))
+        // Cap size to the host screen, then move the origin the least amount
+        // needed to bring the whole frame (top-left through bottom-right grip)
+        // inside it. When a dimension already fits, its edge is left where it
+        // was; when it overflows, that edge is pulled flush to the screen.
+        let x = min(max(frame.minX, host.minX), host.maxX - width)
+        let y = min(max(frame.minY, host.minY), host.maxY - height)
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    /// The screen in `screens` that `frame` overlaps most, or nil if it
+    /// overlaps none of them.
+    private static func bestOverlap(of frame: CGRect, in screens: [CGRect]) -> CGRect? {
+        screens
+            .map { (screen: $0, area: overlapArea(frame, $0)) }
+            .filter { $0.area > 0 }
+            .max { $0.area < $1.area }?
+            .screen
+    }
+
+    /// Area of the intersection of `a` and `b`, or 0 when they don't overlap.
+    private static func overlapArea(_ a: CGRect, _ b: CGRect) -> CGFloat {
+        let intersection = a.intersection(b)
+        return intersection.isNull ? 0 : intersection.width * intersection.height
+    }
 }
