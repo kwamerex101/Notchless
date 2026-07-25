@@ -102,4 +102,37 @@ final class WidgetControllerScreenAndDragTests: XCTestCase {
             "a rescue is ephemeral — the user's real remembered position must survive it untouched"
         )
     }
+
+    // MARK: - An oversized panel must also be fitted, and the fit must be ephemeral
+
+    func testReconcileFitsAnOversizedPanelWithoutPersistingTheShrunkFrame() {
+        let (controller, defaults) = makeController()
+
+        // Seed a remembered large frame before the widget is shown, then
+        // point the controller at a screen big enough that show() keeps it
+        // as-is (fully visible, so WidgetPlacement.clamped leaves it alone).
+        WidgetPersistence(defaults: defaults).setFrame(CGRect(x: 100, y: 100, width: 2000, height: 1500), for: .todos)
+        controller.screenFramesProvider = { [CGRect(x: 0, y: 0, width: 3000, height: 2000)] }
+        controller.show(.todos)
+
+        guard let panel = controller.existingPanel(for: .todos) else {
+            return XCTFail("expected show(.todos) to create a backing panel")
+        }
+        XCTAssertEqual(panel.frame, CGRect(x: 100, y: 100, width: 2000, height: 1500), "precondition: show() kept the oversized remembered frame")
+
+        // Swap to a screen the oversized frame still overlaps above the
+        // 80x40 visibility floor, but that's far too small to hold it —
+        // standing in for a resolution drop or a monitor swap.
+        controller.screenFramesProvider = { [CGRect(x: 0, y: 0, width: 800, height: 600)] }
+        controller.reconcilePanelsForScreenChange()
+
+        XCTAssertLessThanOrEqual(panel.frame.maxX, 800, "the resize grip must land back on the new, smaller screen")
+        XCTAssertLessThanOrEqual(panel.frame.maxY, 600, "the resize grip must land back on the new, smaller screen")
+        XCTAssertNotEqual(panel.frame, CGRect(x: 100, y: 100, width: 2000, height: 1500), "the panel should actually have been fitted")
+
+        XCTAssertEqual(
+            WidgetPersistence(defaults: defaults).frame(for: .todos), CGRect(x: 100, y: 100, width: 2000, height: 1500),
+            "the fit is ephemeral — the user's remembered size must survive it untouched"
+        )
+    }
 }

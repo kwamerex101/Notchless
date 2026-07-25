@@ -228,10 +228,14 @@ import SwiftUI
     }
 
     /// `NSApplication.didChangeScreenParametersNotification` handler:
-    /// re-clamps every open panel's frame back onto a live screen. A widget
-    /// parked on a display that disconnects would otherwise sit at
-    /// coordinates on no screen at all, unreachable, with its close button
-    /// unclickable.
+    /// re-clamps every open panel's frame back onto a live screen, then
+    /// re-fits its size to that screen too. A widget parked on a display
+    /// that disconnects would otherwise sit at coordinates on no screen at
+    /// all, unreachable, with its close button unclickable; a widget
+    /// resized larger than its screen — after that display's resolution
+    /// dropped, or it was swapped for a smaller one, while keeping enough
+    /// overlap to still count as visible — would otherwise keep an
+    /// oversized frame with its bottom-right resize grip off-screen.
     ///
     /// Two guards keep this from doing more harm than good:
     ///
@@ -240,13 +244,15 @@ import SwiftUI
     ///   would treat every screen as disconnected and rescue every open
     ///   widget onto a `.zero` fallback for no reason — bail out instead and
     ///   let the next, real notification do the reconciling.
-    /// - A rescue here is ephemeral: it moves the panel so the widget stays
-    ///   reachable right now, but must NOT overwrite the user's remembered
-    ///   frame (bug 4) — an external display blinking out for a moment
-    ///   would otherwise permanently teleport the widget to the built-in
-    ///   screen, even after the display returns. `isApplyingProgrammaticFrame`
-    ///   also keeps the `didMove` persist (bug 3) from re-persisting this
-    ///   rescued position under our feet.
+    /// - Both the position rescue and the size fit here are ephemeral: they
+    ///   move/shrink the panel so the widget stays fully reachable right
+    ///   now, but must NOT overwrite the user's remembered frame (bug 4) —
+    ///   an external display blinking out for a moment would otherwise
+    ///   permanently teleport the widget to the built-in screen, or
+    ///   permanently shrink it, even after the display returns.
+    ///   `isApplyingProgrammaticFrame` also keeps the `didMove`/`didResize`
+    ///   persist (bug 3) from re-persisting this rescued/fitted frame under
+    ///   our feet.
     ///
     /// Not `private`: also a test seam. Production code only reaches this
     /// through the `didChangeScreenParametersNotification` observer set up
@@ -263,8 +269,9 @@ import SwiftUI
         for kind in open {
             guard let panel = panels[kind] else { continue }
             let clamped = WidgetPlacement.clamped(frame: panel.frame, screens: screens, fallback: fallback)
-            if clamped != panel.frame {
-                panel.setFrame(clamped, display: true)
+            let fitted = WidgetPlacement.fitted(frame: clamped, screens: screens, fallback: fallback)
+            if fitted != panel.frame {
+                panel.setFrame(fitted, display: true)
             }
         }
     }

@@ -144,4 +144,39 @@ final class WidgetPlacementTests: XCTestCase {
         XCTAssertEqual(result.minX, 100 as CGFloat)
         XCTAssertEqual(result.maxY, 400 as CGFloat)
     }
+
+    // MARK: - fitted(frame:screens:fallback:)
+
+    func testFittedShrinksAnOversizedFrameToFillItsScreen() {
+        let frame = CGRect(x: 100, y: 100, width: 2000, height: 1500)
+        let screen = CGRect(x: 0, y: 0, width: 800, height: 600)
+        let result = WidgetPlacement.fitted(frame: frame, screens: [screen], fallback: screen)
+        XCTAssertEqual(result, CGRect(x: 0, y: 0, width: 800, height: 600))
+    }
+
+    func testFittedPreservesTheAxisThatStillHasRoom() {
+        let frame = CGRect(x: 100, y: 100, width: 500, height: 1500)
+        let screen = CGRect(x: 0, y: 0, width: 800, height: 600)
+        let result = WidgetPlacement.fitted(frame: frame, screens: [screen], fallback: screen)
+        XCTAssertEqual(result, CGRect(x: 100, y: 0, width: 500, height: 600))
+    }
+
+    func testFittedLeavesAnAlreadyFittingFrameUnchanged() {
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 300)
+        let screen = CGRect(x: 0, y: 0, width: 1000, height: 1000)
+        let result = WidgetPlacement.fitted(frame: frame, screens: [screen], fallback: screen)
+        XCTAssertEqual(result, frame)
+    }
+
+    func testFittedChoosesTheMostOverlappedScreen() {
+        // Overlaps screen1 (x[900,1000], width 100) less than screen2
+        // (x[1000,1500], width 500), so screen2 is the host: width/height
+        // both fit, but x=900 sits left of screen2.minX and must be pulled
+        // on-screen.
+        let frame = CGRect(x: 900, y: 100, width: 600, height: 400)
+        let screen1 = CGRect(x: 0, y: 0, width: 1000, height: 1000)
+        let screen2 = CGRect(x: 1000, y: 0, width: 1000, height: 1000)
+        let result = WidgetPlacement.fitted(frame: frame, screens: [screen1, screen2], fallback: screen1)
+        XCTAssertEqual(result, CGRect(x: 1000, y: 100, width: 600, height: 400))
+    }
 }
