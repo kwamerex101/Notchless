@@ -2,6 +2,14 @@
 
 All notable changes to Notchless are documented here.
 
+## [1.7.4] — 2026-07-25
+
+### Added
+- **Resizable widgets.** The floating Tasks and Goals widgets can now be resized by dragging the grip in their bottom-right corner. The top-left corner stays put as the widget grows, the content reflows to show more (more task rows, more room) rather than magnifying, and the size is remembered across close/reopen and relaunch. Resizing is bounded so a widget can't grow past the edge of its screen.
+
+### Fixed
+- **Oversized widgets after a display change.** A widget resized close to full-screen no longer strands its resize grip or title bar off-screen when its display's resolution drops or it moves to a smaller monitor — it's re-fitted onto the screen automatically, without forgetting the size you chose.
+
 ## [1.7.3] — 2026-07-24
 
 ### Added
