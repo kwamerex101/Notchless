@@ -66,4 +66,16 @@ enum WidgetPlacement {
         let y = screen.maxY - defaultTopInset - size.height
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
+
+    /// Returns `frame` resized to `proposedSize`, clamped to
+    /// [`minSize`, `maxSize`] on each axis, with the top-left corner held
+    /// fixed (preserves `minX` and `maxY`) so a bottom-right resize grip
+    /// grows the widget down and to the right. `maxSize` is normally the
+    /// widget's current screen `visibleFrame` size.
+    static func resized(frame: CGRect, proposedSize: CGSize, minSize: CGSize, maxSize: CGSize) -> CGRect {
+        let width = max(minSize.width, min(proposedSize.width, maxSize.width))
+        let height = max(minSize.height, min(proposedSize.height, maxSize.height))
+        let top = frame.maxY
+        return CGRect(x: frame.minX, y: top - height, width: width, height: height)
+    }
 }

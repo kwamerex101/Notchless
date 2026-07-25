@@ -10,9 +10,6 @@ struct GoalWidgetView: View {
 
     private var symbol: String { SettingsStore.shared.currencySymbol }
 
-    private static let width: CGFloat = 360
-    private static let height: CGFloat = 460
-
     var body: some View {
         WidgetCardView(title: "Goals", onClose: { WidgetController.shared.close(.goals) }) {
             VStack(alignment: .leading, spacing: 10) {
@@ -40,7 +37,7 @@ struct GoalWidgetView: View {
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .frame(width: Self.width, height: Self.height)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         // Unlike GoalExpandedView, the widget doesn't borrow key focus on
         // appear — see the comment in `TodoWidgetView.body`. Focus is
         // borrowed on click and released on resign-key, via `WidgetPanel`.

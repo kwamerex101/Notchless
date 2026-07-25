@@ -12,6 +12,8 @@ struct WidgetCardView<Content: View>: View {
     let onClose: () -> Void
     @ViewBuilder var content: () -> Content
 
+    @State private var gripHover = false
+
     private static var cornerRadius: CGFloat { 16 }
 
     var body: some View {
@@ -24,6 +26,7 @@ struct WidgetCardView<Content: View>: View {
                 .fill(Color.black.opacity(0.9))
         )
         .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
+        .overlay(alignment: .bottomTrailing) { resizeGrip }
         .shadow(color: .black.opacity(0.45), radius: 24, y: 10)
     }
 
@@ -50,6 +53,23 @@ struct WidgetCardView<Content: View>: View {
         // close button still hits the button — it's in front of this handle.
         .background(WindowDragHandle())
     }
+
+    /// Bottom-right resize grip, overlaid on the card after clipping so its
+    /// glyph isn't cut off by `clipShape`. Subtle by default, brightening on
+    /// hover like a native macOS resize corner; the actual resizing is done
+    /// by `ResizeHandle`'s backing `NSView` below, this just draws the glyph
+    /// on top of it.
+    private var resizeGrip: some View {
+        Image(systemName: "arrow.down.right")
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.white.opacity(gripHover ? 0.55 : 0.25))
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
+            .background(ResizeHandle())
+            .onHover { gripHover = $0 }
+            .padding(4)
+            .accessibilityLabel("Resize")
+    }
 }
 
 /// Marks a view whose clicks must NOT borrow keyboard focus through
@@ -70,6 +90,51 @@ private struct WindowDragHandle: NSViewRepresentable {
     final class DragHandleView: NSView, NonBorrowingClickTarget {
         override func mouseDown(with event: NSEvent) {
             window?.performDrag(with: event)
+        }
+    }
+}
+
+/// Resizes the host window from the bottom-right corner, anchoring the
+/// top-left in place — the drag handle's resize counterpart. Conforms to
+/// `NonBorrowingClickTarget` so a resize drag doesn't borrow key focus
+/// either, mirroring `WindowDragHandle` above. Also overrides
+/// `mouseDownCanMoveWindow` to false so a drag starting on the grip never
+/// triggers the panel's `isMovableByWindowBackground` move — the Goals and
+/// Meeting panels are background-movable, and without this override a
+/// resize drag on them would instead reposition the whole window.
+private struct ResizeHandle: NSViewRepresentable {
+    func makeNSView(context: Context) -> ResizeHandleView { ResizeHandleView() }
+    func updateNSView(_ nsView: ResizeHandleView, context: Context) {}
+
+    final class ResizeHandleView: NSView, NonBorrowingClickTarget {
+        private var initialFrame: CGRect = .zero
+        private var initialMouse: CGPoint = .zero
+
+        override var mouseDownCanMoveWindow: Bool { false }
+
+        override func mouseDown(with event: NSEvent) {
+            guard let window else { return }
+            initialFrame = window.frame
+            initialMouse = NSEvent.mouseLocation
+        }
+
+        override func mouseDragged(with event: NSEvent) {
+            guard let window else { return }
+            let current = NSEvent.mouseLocation
+            let dx = current.x - initialMouse.x
+            let dy = current.y - initialMouse.y
+            // Grip is bottom-right: rightward drag widens, downward
+            // drag (negative dy in AppKit's upward-y space) heightens.
+            let proposed = CGSize(width: initialFrame.width + dx,
+                                  height: initialFrame.height - dy)
+            let maxSize = window.screen?.visibleFrame.size ?? proposed
+            let newFrame = WidgetPlacement.resized(
+                frame: initialFrame,
+                proposedSize: proposed,
+                minSize: WidgetPlacement.minimumSize,
+                maxSize: maxSize
+            )
+            window.setFrame(newFrame, display: true)
         }
     }
 }

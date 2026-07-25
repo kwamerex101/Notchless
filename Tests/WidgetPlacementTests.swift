@@ -92,4 +92,47 @@ final class WidgetPlacementTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.width, WidgetPlacement.minimumSize.width)
         XCTAssertGreaterThanOrEqual(result.height, WidgetPlacement.minimumSize.height)
     }
+
+    // MARK: - resized(frame:proposedSize:minSize:maxSize:)
+
+    func testResizedAppliesProposedSizeAndPreservesTopLeftAnchor() {
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let result = WidgetPlacement.resized(
+            frame: frame,
+            proposedSize: CGSize(width: 350, height: 420),
+            minSize: CGSize(width: 240, height: 200),
+            maxSize: CGSize(width: 1000, height: 1000)
+        )
+        XCTAssertEqual(result.size, CGSize(width: 350, height: 420))
+        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
+        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+    }
+
+    func testResizedClampsProposedSizeBelowMinimumUpToMinimum() {
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let minSize = CGSize(width: 240, height: 200)
+        let result = WidgetPlacement.resized(
+            frame: frame,
+            proposedSize: CGSize(width: 50, height: 40),
+            minSize: minSize,
+            maxSize: CGSize(width: 1000, height: 1000)
+        )
+        XCTAssertEqual(result.size, minSize)
+        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
+        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+    }
+
+    func testResizedClampsProposedSizeAboveMaximumDownToMaximum() {
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let maxSize = CGSize(width: 500, height: 600)
+        let result = WidgetPlacement.resized(
+            frame: frame,
+            proposedSize: CGSize(width: 5000, height: 6000),
+            minSize: CGSize(width: 240, height: 200),
+            maxSize: maxSize
+        )
+        XCTAssertEqual(result.size, maxSize)
+        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
+        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+    }
 }
