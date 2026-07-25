@@ -4,7 +4,7 @@
 
 <br/>
 
-[![Release](https://img.shields.io/badge/release-v1.7.3-6C63E8)](https://github.com/kwamerex101/Notchless/releases)
+[![Release](https://img.shields.io/badge/release-v1.7.4-6C63E8)](https://github.com/kwamerex101/Notchless/releases)
 [![Platform](https://img.shields.io/badge/macOS-14.0%2B-000000?logo=apple&logoColor=white)](#requirements)
 [![Swift](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![AI](https://img.shields.io/badge/AI-on--device-35C6CE)](#dictation-ported-from-a-standalone-app-fully-integrated)
@@ -61,7 +61,7 @@ notch — with an iOS-style, physics-driven feel, and the AI runs **on-device**.
 - **Liquid Glass** theming (Clear / Tinted + intensity) on macOS 26; the primary accent follows your macOS accent colour.
 - iCloud-synced settings, launch-at-login, hide-from-screen-capture, and per-feature toggles.
 - Two-finger swipe gestures over the notch.
-- **Pop-out widgets** — float **Tasks** and **Goals** as standalone windows; keep them above everything or place them **on the desktop behind your app windows** (like native macOS desktop widgets), and drag them anywhere.
+- **Pop-out widgets** — float **Tasks** and **Goals** as standalone windows; keep them above everything or place them **on the desktop behind your app windows** (like native macOS desktop widgets). Drag them anywhere and **resize them** by the bottom-right corner — the content reflows to show more, and each widget remembers its size and place.
 
 ## Requirements
 
