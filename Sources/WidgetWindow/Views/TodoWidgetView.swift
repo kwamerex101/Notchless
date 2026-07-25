@@ -10,9 +10,6 @@ struct TodoWidgetView: View {
     @State private var newTitle = ""
     @FocusState private var addFocused: Bool
 
-    private static let width: CGFloat = 340
-    private static let height: CGFloat = 440
-
     var body: some View {
         WidgetCardView(title: "Tasks", onClose: { WidgetController.shared.close(.todos) }) {
             VStack(alignment: .leading, spacing: 10) {
@@ -41,7 +38,7 @@ struct TodoWidgetView: View {
             }
             .padding(16)
         }
-        .frame(width: Self.width, height: Self.height)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         // Unlike TodoExpandedView, the widget doesn't borrow key focus (or
         // jump into the quick-add field) just because it's visible — a
         // widget is persistent, so borrowing on appear would steal the caret

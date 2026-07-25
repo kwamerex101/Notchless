@@ -25,8 +25,18 @@ import SwiftUI
 
     /// Per-panel `NSWindow.didMoveNotification` observers backing the
     /// drag-persists-position fix (bug 3) — one per panel, added once when
-    /// the panel is created and removed in `deinit`.
+    /// the panel is created and removed in `deinit`. A sibling
+    /// `NSWindow.didResizeNotification` observer (`resizeObservers` below)
+    /// backs drag-to-resize the same way: both funnel into the same
+    /// debounced `scheduleMovePersist`, and both are ignored while
+    /// `isApplyingProgrammaticFrame` is set, so a programmatic `setFrame` in
+    /// `show`/`reconcilePanelsForScreenChange` never gets persisted as if it
+    /// were a user drag or resize.
     private var moveObservers: [WidgetKind: NSObjectProtocol] = [:]
+
+    /// Per-panel `NSWindow.didResizeNotification` observers backing
+    /// drag-to-resize persistence — see `moveObservers` above.
+    private var resizeObservers: [WidgetKind: NSObjectProtocol] = [:]
 
     /// Coalesces the burst of `didMove` notifications a single drag emits
     /// into one persisted write, per widget.
@@ -94,6 +104,9 @@ import SwiftUI
             NotificationCenter.default.removeObserver(screenParamsObserver)
         }
         for (_, observer) in moveObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        for (_, observer) in resizeObservers {
             NotificationCenter.default.removeObserver(observer)
         }
         for (_, work) in pendingMovePersists {
@@ -170,6 +183,13 @@ import SwiftUI
         created.applyDesktopPlacement(SettingsStore.shared.widgetsOnDesktop)
         moveObservers[kind] = NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification,
+            object: created,
+            queue: .main
+        ) { [weak self] _ in
+            self?.scheduleMovePersist(for: kind, panel: created)
+        }
+        resizeObservers[kind] = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification,
             object: created,
             queue: .main
         ) { [weak self] _ in

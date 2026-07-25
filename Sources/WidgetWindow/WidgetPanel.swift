@@ -152,20 +152,25 @@ final class WidgetPanel: NSPanel {
     private var host: NSHostingView<AnyView>?
 
     /// Wraps `view` in an `NSHostingView` (reusing the existing one if
-    /// present), sets it as the panel's content, and sizes the panel to fit
-    /// the hosted view's intrinsic content size.
+    /// present) and sets it as the panel's content. Sizing now flows the
+    /// other way from before: the panel's frame — set by `WidgetController`
+    /// from persisted state, a default size, or a user resize — is
+    /// authoritative, and the hosting view fills whatever content rect that
+    /// frame implies, rather than an intrinsic content size driving the
+    /// panel. A freshly created host is given `[.width, .height]`
+    /// autoresizing so it tracks the content rect as the window resizes;
+    /// `WidgetController.show` always calls `setFrame` immediately after
+    /// `setContent`, so even a brand-new panel ends up with a concrete size
+    /// rather than sitting at the `.zero` `contentRect` it was created with.
     func setContent<V: View>(_ view: V) {
-        let resolvedHost: NSHostingView<AnyView>
         if let host {
             host.rootView = AnyView(view)
-            resolvedHost = host
         } else {
             let newHost = NSHostingView(rootView: AnyView(view))
+            newHost.autoresizingMask = [.width, .height]
             contentView = newHost
             host = newHost
-            resolvedHost = newHost
         }
-        resolvedHost.frame = NSRect(origin: .zero, size: resolvedHost.intrinsicContentSize)
     }
 }
 
