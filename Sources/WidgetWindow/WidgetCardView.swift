@@ -58,16 +58,19 @@ struct WidgetCardView<Content: View>: View {
     /// glyph isn't cut off by `clipShape`. Subtle by default, brightening on
     /// hover like a native macOS resize corner; the actual resizing is done
     /// by `ResizeHandle`'s backing `NSView` below, this just draws the glyph
-    /// on top of it.
+    /// on top of it. Sized and inset to sit entirely within the widgets'
+    /// 16pt content padding (`TodoWidgetView`/`GoalWidgetView` both pad their
+    /// content by 16pt) — a 14pt hit area inset 2pt reaches 2...16pt from the
+    /// corner, so the grip can never overlap a control near the edge.
     private var resizeGrip: some View {
         Image(systemName: "arrow.down.right")
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(.white.opacity(gripHover ? 0.55 : 0.25))
-            .frame(width: 22, height: 22)
+            .frame(width: 14, height: 14)
             .contentShape(Rectangle())
             .background(ResizeHandle())
             .onHover { gripHover = $0 }
-            .padding(4)
+            .padding(2)
             .accessibilityLabel("Resize")
     }
 }
@@ -109,6 +112,7 @@ private struct ResizeHandle: NSViewRepresentable {
     final class ResizeHandleView: NSView, NonBorrowingClickTarget {
         private var initialFrame: CGRect = .zero
         private var initialMouse: CGPoint = .zero
+        private var screenBounds: CGRect = .zero
 
         override var mouseDownCanMoveWindow: Bool { false }
 
@@ -116,6 +120,14 @@ private struct ResizeHandle: NSViewRepresentable {
             guard let window else { return }
             initialFrame = window.frame
             initialMouse = NSEvent.mouseLocation
+            // Capture the resize ceiling once, at the drag's start, so it can't
+            // jump mid-drag if the grip crosses onto another display (NSWindow.screen
+            // tracks whichever screen holds the window's majority). Fall back to the
+            // main screen, then to the starting frame (a no-grow cap) if somehow
+            // there is no screen — the size must never be left unbounded.
+            screenBounds = window.screen?.visibleFrame
+                ?? NSScreen.main?.visibleFrame
+                ?? initialFrame
         }
 
         override func mouseDragged(with event: NSEvent) {
@@ -127,12 +139,11 @@ private struct ResizeHandle: NSViewRepresentable {
             // drag (negative dy in AppKit's upward-y space) heightens.
             let proposed = CGSize(width: initialFrame.width + dx,
                                   height: initialFrame.height - dy)
-            let maxSize = window.screen?.visibleFrame.size ?? proposed
             let newFrame = WidgetPlacement.resized(
                 frame: initialFrame,
                 proposedSize: proposed,
                 minSize: WidgetPlacement.minimumSize,
-                maxSize: maxSize
+                within: screenBounds
             )
             window.setFrame(newFrame, display: true)
         }

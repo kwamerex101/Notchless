@@ -67,15 +67,24 @@ enum WidgetPlacement {
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
 
-    /// Returns `frame` resized to `proposedSize`, clamped to
-    /// [`minSize`, `maxSize`] on each axis, with the top-left corner held
-    /// fixed (preserves `minX` and `maxY`) so a bottom-right resize grip
-    /// grows the widget down and to the right. `maxSize` is normally the
-    /// widget's current screen `visibleFrame` size.
-    static func resized(frame: CGRect, proposedSize: CGSize, minSize: CGSize, maxSize: CGSize) -> CGRect {
-        let width = max(minSize.width, min(proposedSize.width, maxSize.width))
-        let height = max(minSize.height, min(proposedSize.height, maxSize.height))
-        let top = frame.maxY
-        return CGRect(x: frame.minX, y: top - height, width: width, height: height)
+    /// Returns `frame` resized to `proposedSize`, holding the top-left corner
+    /// fixed (preserves `minX` and `maxY`) so a bottom-right resize grip grows
+    /// the widget down and to the right. Width and height are clamped to at
+    /// least `minSize` and at most the room between the anchored top-left
+    /// corner and `visibleFrame`'s right and bottom edges, so the widget can
+    /// never grow past the screen. `visibleFrame` is the widget's current
+    /// screen visible frame, captured once when the resize drag begins.
+    static func resized(frame: CGRect, proposedSize: CGSize, minSize: CGSize, within visibleFrame: CGRect) -> CGRect {
+        // Top-left is fixed, so the widget grows rightward only until its right
+        // edge reaches visibleFrame.maxX and downward only until its bottom
+        // reaches visibleFrame.minY. Floor each ceiling at minSize so a widget
+        // whose anchor already sits past the screen edge (a rescued frame, or a
+        // display mid-reconfiguration) still yields a usable size rather than a
+        // collapsed one.
+        let maxWidth = max(minSize.width, visibleFrame.maxX - frame.minX)
+        let maxHeight = max(minSize.height, frame.maxY - visibleFrame.minY)
+        let width = max(minSize.width, min(proposedSize.width, maxWidth))
+        let height = max(minSize.height, min(proposedSize.height, maxHeight))
+        return CGRect(x: frame.minX, y: frame.maxY - height, width: width, height: height)
     }
 }

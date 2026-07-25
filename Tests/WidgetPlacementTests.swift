@@ -93,46 +93,55 @@ final class WidgetPlacementTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.height, WidgetPlacement.minimumSize.height)
     }
 
-    // MARK: - resized(frame:proposedSize:minSize:maxSize:)
+    // MARK: - resized(frame:proposedSize:minSize:within:)
 
     func testResizedAppliesProposedSizeAndPreservesTopLeftAnchor() {
-        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 300)
+        let visibleFrame = CGRect(x: 0, y: 0, width: 2000, height: 2000)
         let result = WidgetPlacement.resized(
             frame: frame,
-            proposedSize: CGSize(width: 350, height: 420),
+            proposedSize: CGSize(width: 400, height: 350),
             minSize: CGSize(width: 240, height: 200),
-            maxSize: CGSize(width: 1000, height: 1000)
+            within: visibleFrame
         )
-        XCTAssertEqual(result.size, CGSize(width: 350, height: 420))
-        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
-        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+        XCTAssertEqual(result.size, CGSize(width: 400, height: 350))
+        XCTAssertEqual(result.minX, 100 as CGFloat)
+        XCTAssertEqual(result.maxY, 400 as CGFloat)
     }
 
     func testResizedClampsProposedSizeBelowMinimumUpToMinimum() {
-        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 300)
+        let visibleFrame = CGRect(x: 0, y: 0, width: 2000, height: 2000)
         let minSize = CGSize(width: 240, height: 200)
         let result = WidgetPlacement.resized(
             frame: frame,
-            proposedSize: CGSize(width: 50, height: 40),
+            proposedSize: CGSize(width: 100, height: 80),
             minSize: minSize,
-            maxSize: CGSize(width: 1000, height: 1000)
+            within: visibleFrame
         )
         XCTAssertEqual(result.size, minSize)
-        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
-        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+        XCTAssertEqual(result.minX, 100 as CGFloat)
+        XCTAssertEqual(result.maxY, 400 as CGFloat)
     }
 
-    func testResizedClampsProposedSizeAboveMaximumDownToMaximum() {
-        let frame = CGRect(x: 100, y: 100, width: 300, height: 400)
-        let maxSize = CGSize(width: 500, height: 600)
+    func testResizedClampsToScreenEdgeWhenAnchorIsNotAtTopLeftOfScreen() {
+        // The widget's anchored top-left (100, maxY 400) isn't flush with
+        // `visibleFrame`'s origin, so the size ceiling must come from the
+        // room actually remaining to the screen's right/bottom edges, not
+        // from a fixed maximum — otherwise a huge proposed size would push
+        // the far edge past the screen.
+        let frame = CGRect(x: 100, y: 100, width: 300, height: 300)
+        let visibleFrame = CGRect(x: 0, y: 0, width: 1000, height: 2000)
         let result = WidgetPlacement.resized(
             frame: frame,
-            proposedSize: CGSize(width: 5000, height: 6000),
+            proposedSize: CGSize(width: 5000, height: 5000),
             minSize: CGSize(width: 240, height: 200),
-            maxSize: maxSize
+            within: visibleFrame
         )
-        XCTAssertEqual(result.size, maxSize)
-        XCTAssertEqual(result.minX, frame.minX, accuracy: 0.001)
-        XCTAssertEqual(result.maxY, frame.maxY, accuracy: 0.001)
+        XCTAssertEqual(result.size, CGSize(width: 900, height: 400))
+        XCTAssertEqual(result.maxX, 1000 as CGFloat)
+        XCTAssertEqual(result.minY, 0 as CGFloat)
+        XCTAssertEqual(result.minX, 100 as CGFloat)
+        XCTAssertEqual(result.maxY, 400 as CGFloat)
     }
 }
